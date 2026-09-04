@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KashFlow — Maquette Interactive (Code Couleur YAS & Trio IA)</title>
+  <!-- Google Fonts: Archivo & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,500;0,600;0,700;0,800;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ============================================================ */
+    /* DESIGN TOKENS & SYSTEME DE DESIGN KASHFLOW (CONTRAT CHARTE)   */
+    /* ============================================================ */
+    :root {
+      /* Palette officielle tokens.ts */
+      --brand-yellow: #FFD400;
+      --brand-yellow-deep: #F5B800;
+      --brand-ink: #111418;
+      
+      --unlock-green: #177A43;
+      --unlock-green-soft: #E7F4EC;
+      
+      --accent-lime: #A9CB3B;
+      --accent-navy: #16357A;
+      
+      --alert-red: #E03B2C;
+      --alert-red-soft: #FDE8E7;
+      
+      --surface-white: #FFFFFF;
+      --surface-raised: #F7F7F4;
+      --surface-dark: #0D1117;
+      
+      --line: #E4E4DE;
+      --text-muted: #6C6F73;
+      
+      /* Typographie */
+      --font-display: 'Archivo', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      
+      /* Rayons */
+      --radius-block: 12px;
+      --radius-pill: 999px;
+      
+      /* Ombres */
+      --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.06);
+      --shadow-modal: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: #0E1217;
+      color: var(--brand-ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .num-tabular {
+      font-family: var(--font-display);
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+
+    /* ============================================================ */
+    /* TOP NAVIGATION HEADER & CONTROL BAR                          */
+    /* ============================================================ */
+    header.app-header {
+      background: var(--brand-ink);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-badge {
+      background: var(--brand-yellow);
+      color: var(--brand-ink);
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 20px;
+      padding: 4px 12px;
+      border-radius: var(--radius-pill);
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .logo-tagline {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .space-nav {
+      display: flex;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 4px;
+      border-radius: var(--radius-pill);
+      gap: 4px;
+    }
+
+    .space-btn {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.7);
+      padding: 8px 16px;
+      border-radius: var(--radius-pill);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .space-btn:hover {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .space-btn.active {
+      background: var(--brand-yellow);
+      color: var(--brand-ink);
+    }
+
+    .ai-indicator-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ai-chip {
+      background: rgba(255, 212, 0, 0.15);
+      border: 1px solid rgba(255, 212, 0, 0.4);
+      color: var(--brand-yellow);
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ============================================================ */
+    /* LAYOUT PRINCIPAL DES ESPACES                                 */
+    /* ============================================================ */
+    main.main-viewport {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .space-view {
+      display: none;
+      width: 100%;
+      max-width: 1280px;
+    }
+
+    .space-view.active {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ============================================================ */
+    /* ESPACE 1: MOBILE ACHETEUR (PHONE MOCKUP FRAME)               */
+    /* ============================================================ */
+    .phone-container {
+      width: 380px;
+      height: 780px;
+      background: var(--surface-white);
+      border-radius: 44px;
+      box-shadow: 0 0 0 12px #1E2530, 0 20px 50px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      border: 4px solid #2B3340;
+    }
+
+    .phone-notch {
+      width: 140px;
+      height: 24px;
+      background: #1E2530;
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      border-bottom-left-radius: 16px;
+      border-bottom-right-radius: 16px;
+      z-index: 50;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .phone-camera {
+      width: 10px;
+      height: 10px;
+      background: #0D1117;
+      border-radius: 50%;
+    }
+
+    .phone-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding-top: 32px;
+      background: var(--surface-white);
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .sub-screen {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .sub-screen.active {
+      display: flex;
+    }
+
+    /* Sub-screen Navigator Bar on Top of Phone */
+    .mobile-nav-bar {
+      background: var(--surface-raised);
+      border-bottom: 1px solid var(--line);
+      padding: 8px 12px;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .mobile-nav-bar::-webkit-scrollbar { display: none; }
+
+    .sub-nav-btn {
+      background: white;
+      border: 1px solid var(--line);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .sub-nav-btn.active {
+      background: var(--brand-ink);
+      color: var(--brand-yellow);
+      border-color: var(--brand-ink);
+    }
+
+    /* Bottom Phone Tab Bar */
+    .phone-tab-bar {
+      height: 64px;
+      background: var(--surface-white);
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding-bottom: 8px;
+    }
+
+    .tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .tab-item.active {
+      color: var(--brand-ink);
+    }
+
+    .tab-item.active .tab-icon {
+      background: var(--brand-yellow);
+      color: var(--brand-ink);
+      padding: 4px 12px;
+      border-radius: var(--radius-pill);
+    }
+
+    /* Mobile Screens UI Components */
+    .screen-padded {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .hero-banner {
+      background: linear-gradient(135deg, var(--brand-ink) 0%, #1A2332 100%);
+      color: white;
+      padding: 20px;
+      border-radius: var(--radius-block);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-banner::after {
+      content: '';
+      position: absolute;
+      top: -20px;
+      right: -20px;
+      width: 100px;
+      height: 100px;
+      background: var(--brand-yellow);
+      opacity: 0.15;
+      border-radius: 50%;
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+
+    .hero-subtitle {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 14px;
+    }
+
+    /* Buttons */
+    .btn-primary {
+      background: var(--brand-yellow);
+      color: var(--brand-ink);
+      border: none;
+      padding: 12px 20px;
+      border-radius: var(--radius-pill);
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      transition: background 0.15s;
+    }
+
+    .btn-primary:hover {
+      background: var(--brand-yellow-deep);
+    }
+
+    .btn-green {
+      background: var(--unlock-green);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: var(--radius-pill);
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--brand-ink);
+      padding: 10px 16px;
+      border-radius: var(--radius-pill);
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+    }
+
+    /* Product & Group Cards */
+    .card {
+      background: var(--surface-white);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-block);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .card-raised {
+      background: var(--surface-raised);
+      border: 1px solid var(--line);
+    }
+
+    .product-img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: #F0F0EC;
+    }
+
+    .badge-tier {
+      background: var(--unlock-green-soft);
+      color: var(--unlock-green);
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      font-weight: 700;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .badge-urgent {
+      background: var(--alert-red-soft);
+      color: var(--alert-red);
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      font-weight: 700;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Jauge & Counter Progression */
+    .gauge-wrapper {
+      background: var(--surface-raised);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-block);
+      padding: 16px;
+      text-align: center;
+      position: relative;
+    }
+
+    .gauge-circle {
+      width: 110px;
+      height: 110px;
+      margin: 0 auto 12px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gauge-circle svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .gauge-circle circle {
+      fill: none;
+      stroke-width: 8;
+      stroke-linecap: round;
+    }
+
+    .gauge-bg { stroke: var(--line); }
+    .gauge-fill {
+      stroke: var(--brand-yellow);
+      stroke-dasharray: 283;
+      stroke-dashoffset: 76; /* 73% filled */
+      transition: stroke-dashoffset 0.9s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.4s;
+    }
+
+    .gauge-text {
+      position: absolute;
+      text-align: center;
+    }
+
+    .gauge-val {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .gauge-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* Progress bar */
+    .progress-bar-bg {
+      height: 10px;
+      background: var(--line);
+      border-radius: var(--radius-pill);
+      overflow: hidden;
+      width: 100%;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--brand-yellow);
+      width: 73%;
+      border-radius: var(--radius-pill);
+      transition: width 0.9s ease-in-out, background-color 0.4s ease;
+    }
+
+    .unlocked-pulse {
+      animation: flashGreen 0.9s ease forwards;
+    }
+
+    @keyframes flashGreen {
+      0% { background: var(--brand-yellow); }
+      50% { background: #22C55E; transform: scaleY(1.3); }
+      100% { background: var(--unlock-green); }
+    }
+
+    /* Price Table Tier Display */
+    .tier-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      font-size: 13px;
+    }
+
+    .tier-row.active-tier {
+      background: var(--unlock-green-soft);
+      border-color: var(--unlock-green);
+      font-weight: 700;
+      color: var(--unlock-green);
+    }
+
+    .tier-row.next-tier {
+      background: rgba(255, 212, 0, 0.15);
+      border-color: var(--brand-yellow-deep);
+    }
+
+    /* Price tag strike animation */
+    .price-display-box {
+      background: var(--surface-raised);
+      padding: 14px;
+      border-radius: var(--radius-block);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .old-price {
+      text-decoration: line-through;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .current-price {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--brand-ink);
+      transition: color 0.4s;
+    }
+
+    .current-price.green-unlocked {
+      color: var(--unlock-green);
+    }
+
+    /* ============================================================ */
+    /* ESPACE 2: COMMERÇANT                                        */
+    /* ============================================================ */
+    .dashboard-layout {
+      width: 100%;
+      background: white;
+      border-radius: var(--radius-block);
+      box-shadow: var(--shadow-subtle);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .dashboard-header {
+      background: var(--accent-navy);
+      color: white;
+      padding: 20px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .dashboard-body {
+      padding: 32px;
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 32px;
+    }
+
+    /* Form UI */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--brand-ink);
+    }
+
+    .form-input {
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .form-input:focus {
+      border-color: var(--brand-ink);
+    }
+
+    /* ============================================================ */
+    /* ESPACE 4: ADMIN WEB DASHBOARD JURY                           */
+    /* ============================================================ */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .kpi-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-block);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .kpi-val {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--brand-ink);
+    }
+
+    .kpi-val.highlight {
+      color: var(--unlock-green);
+    }
+
+    .kpi-trend {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--unlock-green);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Data Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .data-table th {
+      background: var(--surface-raised);
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .data-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    /* AI Modal Drawer */
+    .ai-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(17, 20, 24, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ai-modal-overlay.active {
+      display: flex;
+    }
+
+    .ai-modal-card {
+      background: white;
+      border-radius: 20px;
+      width: 480px;
+      max-width: 90vw;
+      padding: 28px;
+      box-shadow: var(--shadow-modal);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      border: 2px solid var(--brand-yellow);
+    }
+
+    .ai-sparkle-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--brand-ink);
+    }
+
+    .ai-badge {
+      background: var(--brand-yellow);
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================ -->
+  <!-- TOP NAVIGATION HEADER                                         -->
+  <!-- ============================================================ -->
+  <header class="app-header">
+    <div class="logo-container">
+      <div class="logo-badge">
+        <span>⚡ KashFlow</span>
+      </div>
+      <div class="logo-tagline">Regrouper. Débloquer. Économiser.</div>
+    </div>
+
+    <!-- Space Selector Navigation Tabs -->
+    <nav class="space-nav">
+      <button class="space-btn active" onclick="switchSpace('mobile')">
+        📱 App Mobile Acheteur
+      </button>
+      <button class="space-btn" onclick="switchSpace('merchant')">
+        🏪 Espace Commerçant
+      </button>
+      <button class="space-btn" onclick="switchSpace('group-admin')">
+        👑 Admin Groupe
+      </button>
+      <button class="space-btn" onclick="switchSpace('admin-web')">
+        📊 Admin Web (Jury Dashboard)
+      </button>
+    </nav>
+
+    <!-- AI Feature Status Chips -->
+    <div class="ai-indicator-bar">
+      <div class="ai-chip" onclick="openAiModal('ia1')">✨ IA-1 Assistant Paliers</div>
+      <div class="ai-chip" onclick="openAiModal('ia2')">💬 IA-2 Partage WhatsApp</div>
+      <div class="ai-chip" onclick="openAiModal('ia3')">🧠 IA-3 Smart Match</div>
+    </div>
+  </header>
+
+  <!-- ============================================================ -->
+  <!-- MAIN VIEWPORT                                                -->
+  <!-- ============================================================ -->
+  <main class="main-viewport">
+
+    <!-- ============================================================ -->
+    <!-- ESPACE 1: MOBILE ACHETEUR                                    -->
+    <!-- ============================================================ -->
+    <div id="space-mobile" class="space-view active">
+      <div style="margin-bottom: 12px; color: rgba(255,255,255,0.7); font-size: 13px;">
+        💡 <strong>Cliquez sur les onglets du sous-menu</strong> dans le téléphone pour explorer le parcours acheteur complet.
+      </div>
+
+      <div class="phone-container">
+        <div class="phone-notch">
+          <div class="phone-camera"></div>
+        </div>
+
+        <!-- Phone Top Sub-Screen Navigator -->
+        <div class="mobile-nav-bar">
+          <button class="sub-nav-btn" onclick="switchMobileSub('onboarding')">1. Intro</button>
+          <button class="sub-nav-btn" onclick="switchMobileSub('login')">2. Connexion</button>
+          <button class="sub-nav-btn" onclick="switchMobileSub('catalogue')">3. Catalogue</button>
+          <button class="sub-nav-btn" onclick="switchMobileSub('produit')">4. Produit</button>
+          <button class="sub-nav-btn active" onclick="switchMobileSub('groupe')">5. Groupe Live 🔥</button>
+          <button class="sub-nav-btn" onclick="switchMobileSub('partage')">6. Partage IA</button>
+          <button class="sub-nav-btn" onclick="switchMobileSub('commande')">7. Commande</button>
+          <button class="sub-nav-btn" onclick="switchMobileSub('paiement')">8. Paiement</button>
+          <button class="sub-nav-btn" onclick="switchMobileSub('economies')">9. Économies</button>
+        </div>
+
+        <!-- Phone Screen Content Viewport -->
+        <div class="phone-screen">
+
+          <!-- 1. ONBOARDING -->
+          <div id="sub-onboarding" class="sub-screen screen-padded" style="justify-content: space-between;">
+            <div style="text-align: center; margin-top: 20px;">
+              <div style="font-size: 36px; margin-bottom: 10px;">🌾🤝</div>
+              <h2 style="font-family: var(--font-display); font-size: 22px; font-weight: 800;">La force du groupe pour payer moins cher</h2>
+              <p style="color: var(--text-muted); font-size: 13px; margin-top: 10px; line-height: 1.4;">
+                Rejoignez des milliers de producteurs et acheteurs au Togo pour débloquer les meilleurs prix de gros.
+              </p>
+            </div>
+            <div style="background: var(--surface-raised); padding: 16px; border-radius: 12px; text-align: center;">
+              <div style="font-size: 12px; font-weight: 700; color: var(--unlock-green); margin-bottom: 4px;">PRIX RÉTROACTIF UNIVERSEL</div>
+              <p style="font-size: 12px; color: var(--brand-ink);">Dès qu'un palier tombe, tout le monde bénéficie du prix réduit, même ceux déjà inscrits !</p>
+            </div>
+            <button class="btn-primary" onclick="switchMobileSub('catalogue')">Commencer maintenant ➔</button>
+          </div>
+
+          <!-- 2. LOGIN -->
+          <div id="sub-login" class="sub-screen screen-padded">
+            <h2 style="font-family: var(--font-display); font-size: 22px; font-weight: 800;">Bienvenue 👋</h2>
+            <p style="color: var(--text-muted); font-size: 13px;">Connectez-vous avec votre numéro Togo Cellulaire ou Moov.</p>
+
+            <div class="form-group">
+              <label class="form-label">Numéro de téléphone</label>
+              <input type="text" class="form-input" value="+228 90 12 34 56" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mot de passe</label>
+              <input type="password" class="form-input" value="••••••••" />
+            </div>
+
+            <button class="btn-primary" onclick="switchMobileSub('catalogue')">Se connecter</button>
+            <div style="text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 10px;">
+              Ou connexion rapide Mobile Money TMoney / Moov Flooz
+            </div>
+          </div>
+
+          <!-- 3. CATALOGUE -->
+          <div id="sub-catalogue" class="sub-screen screen-padded">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span style="font-size: 12px; color: var(--text-muted);">Bonjour,</span>
+                <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 800;">Alex (Kovié) 🌾</h3>
+              </div>
+              <div style="background: var(--surface-raised); padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;">
+                📍 Tsévié
+              </div>
+            </div>
+
+            <!-- IA-3 Smart Search Bar -->
+            <div style="position: relative;">
+              <input type="text" class="form-input" placeholder="🔍 Chercher un engrais, semences..." style="width: 100%; padding-right: 70px;" value="Engrais NPK" />
+              <span class="ai-chip" style="position: absolute; right: 8px; top: 8px; cursor: pointer;" onclick="openAiModal('ia3')">✨ IA Match</span>
+            </div>
+
+            <div style="font-size: 13px; font-weight: 700;">Groupes d'Achat Populaires</div>
+
+            <!-- Featured Product Card -->
+            <div class="card card-raised" onclick="switchMobileSub('produit')" style="cursor: pointer;">
+              <img src="C:/Users/LENOVO/.gemini/antigravity-ide/brain/7822fc80-15f8-48ea-951f-ca5a20668121/engrais_npk_bag_1788525653908.jpg" class="product-img" alt="Engrais NPK" />
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                  <h4 style="font-size: 15px; font-weight: 700;">Engrais NPK 15-15-15 (50kg)</h4>
+                  <p style="font-size: 11px; color: var(--text-muted);">Agro-Intrants Zio · Tsévié</p>
+                </div>
+                <span class="badge-tier">Palier 3 Actif</span>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                <div>
+                  <span style="font-size: 11px; color: var(--text-muted); text-decoration: line-through;">22 000 F</span>
+                  <div style="font-family: var(--font-display); font-size: 18px; font-weight: 800; color: var(--unlock-green);">19 000 FCFA</div>
+                </div>
+                <button class="btn-primary" style="padding: 6px 14px; font-size: 12px; width: auto;">Voir Groupe ➔</button>
+              </div>
+            </div>
+
+            <!-- Second Product Card -->
+            <div class="card" onclick="switchMobileSub('produit')" style="cursor: pointer;">
+              <div style="display: flex; gap: 12px;">
+                <img src="C:/Users/LENOVO/.gemini/antigravity-ide/brain/7822fc80-15f8-48ea-951f-ca5a20668121/semences_mais_bag_1788525690828.jpg" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;" alt="Semences" />
+                <div>
+                  <h4 style="font-size: 13px; font-weight: 700;">Semences de Maïs Hybride 25kg</h4>
+                  <p style="font-size: 11px; color: var(--text-muted);">AgriCorp Semences</p>
+                  <div style="font-family: var(--font-display); font-weight: 800; color: var(--brand-ink); font-size: 14px; margin-top: 2px;">
+                    14 500 FCFA <span style="font-size: 10px; color: var(--text-muted); font-weight: 400;">(-15%)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. FICHE PRODUIT -->
+          <div id="sub-produit" class="sub-screen screen-padded">
+            <img src="C:/Users/LENOVO/.gemini/antigravity-ide/brain/7822fc80-15f8-48ea-951f-ca5a20668121/engrais_npk_bag_1788525653908.jpg" class="product-img" style="height: 160px;" alt="Engrais NPK" />
+            <div>
+              <span style="font-size: 11px; font-weight: 700; color: var(--unlock-green);">COMMERCE VÉRIFIÉ · TSÉVIÉ</span>
+              <h2 style="font-family: var(--font-display); font-size: 18px; font-weight: 800;">Engrais NPK 15-15-15 (Sac 50kg)</h2>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Formule enrichie pour maïs, coton et vivriers. Qualité certifiée Togo Agri-Fert.</p>
+            </div>
+
+            <!-- Grille des Paliers du Produit -->
+            <div style="background: var(--surface-raised); padding: 12px; border-radius: 12px;">
+              <div style="font-size: 12px; font-weight: 700; margin-bottom: 8px;">Paliers de Prix Dégressifs</div>
+              <div class="tier-row">
+                <span>1 – 49 sacs</span>
+                <span class="num-tabular">22 000 FCFA</span>
+              </div>
+              <div class="tier-row">
+                <span>50 – 99 sacs</span>
+                <span class="num-tabular">20 500 FCFA</span>
+              </div>
+              <div class="tier-row active-tier">
+                <span>100 – 199 sacs (Actuel ✓)</span>
+                <span class="num-tabular">19 000 FCFA</span>
+              </div>
+              <div class="tier-row next-tier">
+                <span>200+ sacs (Objectif 🔥)</span>
+                <span class="num-tabular">17 500 FCFA</span>
+              </div>
+            </div>
+
+            <button class="btn-primary" onclick="switchMobileSub('groupe')">Rejoindre le Groupe Actif (38 membres) ➔</button>
+          </div>
+
+          <!-- 5. ÉCRAN GROUPE LIVE (LE MOMENT PHARE) -->
+          <div id="sub-groupe" class="sub-screen screen-padded">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span style="font-size: 11px; color: var(--text-muted);">Groupe #KF78GH</span>
+                <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 800;">Producteurs de Kovié</h3>
+              </div>
+              <span class="badge-urgent">⏰ Fin J+2</span>
+            </div>
+
+            <!-- Jauge Temps Réel -->
+            <div class="gauge-wrapper">
+              <div class="gauge-circle">
+                <svg viewBox="0 0 100 100">
+                  <circle class="gauge-bg" cx="50" cy="50" r="45" />
+                  <circle id="live-gauge-fill" class="gauge-fill" cx="50" cy="50" r="45" />
+                </svg>
+                <div class="gauge-text">
+                  <div id="live-count-text" class="gauge-val">146/200</div>
+                  <div class="gauge-sub">Sacs commandés</div>
+                </div>
+              </div>
+
+              <!-- Live Progress Bar -->
+              <div class="progress-bar-bg">
+                <div id="live-progress-bar" class="progress-bar-fill"></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 11px; margin-top: 6px; font-weight: 600;">
+                <span>38 participants</span>
+                <span id="live-missing-text" style="color: var(--alert-red);">Il manque 54 sacs !</span>
+              </div>
+            </div>
+
+            <!-- Animated Price Display Box -->
+            <div class="price-display-box">
+              <span style="font-size: 11px; font-weight: 600; color: var(--text-muted);">PRIX ACTUEL POUR TOUT LE GROUPE</span>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span class="old-price">22 000 FCFA</span>
+                <span id="live-current-price" class="current-price">19 000 FCFA</span>
+              </div>
+              <span id="live-savings-tag" class="badge-tier">Économie collective: 438 000 FCFA</span>
+            </div>
+
+            <!-- INTERACTIVE SIMULATOR CONTROL (DEMO WOW FACTOR) -->
+            <div style="background: #111418; color: white; padding: 12px; border-radius: 12px; text-align: center;">
+              <div style="font-size: 11px; font-weight: 700; color: var(--brand-yellow); margin-bottom: 6px;">⚡ SIMULATEUR DE DÉBLOCAGE HACKATHON</div>
+              <p style="font-size: 10px; color: rgba(255,255,255,0.7); margin-bottom: 8px;">Cliquez pour simuler l'arrivée de nouveaux achats et voir le prix franchir le palier en direct !</p>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-primary" style="padding: 6px; font-size: 11px;" onclick="simulateAddBags(10)">+10 Sacs</button>
+                <button class="btn-green" style="padding: 6px; font-size: 11px;" onclick="simulateAddBags(54)">🔥 Débloquer Palier 200 Sacs (+54)</button>
+                <button class="btn-outline" style="padding: 6px; font-size: 11px; color: white; border-color: rgba(255,255,255,0.3);" onclick="resetGroupSimulation()">Reset</button>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-outline" onclick="switchMobileSub('partage')">💬 Inviter (IA-2)</button>
+              <button class="btn-primary" onclick="switchMobileSub('commande')">Rejoindre / Payer ➔</button>
+            </div>
+          </div>
+
+          <!-- 6. PARTAGE IA MULTILINGUE (IA-2) -->
+          <div id="sub-partage" class="sub-screen screen-padded">
+            <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 800;">Inviter des proches ✨</h3>
+            <p style="font-size: 12px; color: var(--text-muted);">Plus on est nombreux à commander, plus le prix baisse pour tous.</p>
+
+            <div style="text-align: center; background: var(--surface-raised); padding: 14px; border-radius: 12px;">
+              <!-- QR Code Mock -->
+              <div style="width: 110px; height: 110px; background: white; border: 2px solid var(--brand-ink); margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 40px;">
+                🏁
+              </div>
+              <div style="font-size: 11px; font-family: monospace; color: var(--text-muted);">kashflow.tg/g/kf78gh</div>
+            </div>
+
+            <!-- IA-2 Generator Settings -->
+            <div style="background: rgba(255, 212, 0, 0.1); border: 1px solid var(--brand-yellow-deep); padding: 12px; border-radius: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 12px; font-weight: 700; color: var(--brand-ink);">✨ Assistant WhatsApp Multilingue IA</span>
+                <span class="ai-badge">IA-2</span>
+              </div>
+              <div class="form-group" style="margin-bottom: 8px;">
+                <label class="form-label">Langue du message</label>
+                <select id="ia2-lang" class="form-input" onchange="generateIa2Message()">
+                  <option value="fr">🇫🇷 Français</option>
+                  <option value="ewe">🇹🇬 Éwé (Togo)</option>
+                  <option value="mina">🇹🇬 Mina (Lomé/Maritime)</option>
+                </select>
+              </div>
+
+              <div style="background: white; border: 1px solid var(--line); padding: 10px; border-radius: 8px; font-size: 12px; line-height: 1.4; color: var(--brand-ink);" id="ia2-preview-box">
+                "Salut ! On a un groupe KashFlow pour l'engrais NPK 50kg. Plus que 54 sacs pour tomber à 17.500 F ! Rejoins-nous ici : kashflow.tg/g/kf78gh"
+              </div>
+            </div>
+
+            <button class="btn-green" onclick="alert('Message généré prêt pour WhatsApp !')">📱 Partager sur WhatsApp</button>
+          </div>
+
+          <!-- 7. COMMANDE -->
+          <div id="sub-commande" class="sub-screen screen-padded">
+            <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 800;">Ma Commande 📦</h3>
+
+            <div class="card card-raised">
+              <div style="font-size: 13px; font-weight: 700;">Engrais NPK 15-15-15 (50kg)</div>
+              <div style="font-size: 11px; color: var(--text-muted);">Groupe #KF78GH · Producteurs de Kovié</div>
+
+              <div class="form-group" style="margin-top: 10px;">
+                <label class="form-label">Quantité souhaitée (Sacs)</label>
+                <input type="number" id="order-qty-input" class="form-input" value="5" onchange="recalcOrderTotal()" />
+              </div>
+
+              <div style="display: flex; justify-content: space-between; font-size: 13px; padding-top: 8px; border-top: 1px solid var(--line);">
+                <span>Prix unitaire garanti (Palier actuel)</span>
+                <span id="order-unit-price" class="num-tabular">19 000 FCFA</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 800; padding-top: 8px; color: var(--brand-ink);">
+                <span>Total à régler</span>
+                <span id="order-total-price" class="num-tabular" style="color: var(--unlock-green);">95 000 FCFA</span>
+              </div>
+            </div>
+
+            <div style="background: var(--unlock-green-soft); color: var(--unlock-green); padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 600;">
+              💡 Si le groupe atteint 200 sacs avant la fin, votre total tombera automatiquement à 87 500 FCFA (économie supplémentaire de 7 500 F) !
+            </div>
+
+            <button class="btn-primary" onclick="switchMobileSub('paiement')">Procéder au Paiement ➔</button>
+          </div>
+
+          <!-- 8. PAIEMENT MOBILE MONEY -->
+          <div id="sub-paiement" class="sub-screen screen-padded">
+            <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 800;">Paiement Sécurisé 💳</h3>
+            <p style="font-size: 12px; color: var(--text-muted);">Montant à régler: 95 000 FCFA</p>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <label style="border: 2px solid var(--brand-yellow); background: var(--surface-raised); padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                <input type="radio" name="pay" checked />
+                <div>
+                  <div style="font-weight: 700; font-size: 13px;">TMoney (Togo Cellulaire)</div>
+                  <div style="font-size: 11px; color: var(--text-muted);">Paiement mobile instantané</div>
+                </div>
+              </label>
+
+              <label style="border: 1px solid var(--line); padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                <input type="radio" name="pay" />
+                <div>
+                  <div style="font-weight: 700; font-size: 13px;">Moov Money (Flooz)</div>
+                  <div style="font-size: 11px; color: var(--text-muted);">Paiement mobile Moov Togo</div>
+                </div>
+              </label>
+            </div>
+
+            <button class="btn-green" onclick="completePaymentSimulation()">Payer 95 000 FCFA via TMoney</button>
+          </div>
+
+          <!-- 9. MES ÉCONOMIES -->
+          <div id="sub-economies" class="sub-screen screen-padded">
+            <div style="background: var(--unlock-green); color: white; padding: 20px; border-radius: 16px; text-align: center;">
+              <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;">Total Économisé avec KashFlow</span>
+              <div style="font-family: var(--font-display); font-size: 32px; font-weight: 800; margin: 4px 0;">125 000 FCFA</div>
+              <div style="font-size: 12px; opacity: 0.9;">Grâce à vos 6 achats groupés réalisés 🤝</div>
+            </div>
+
+            <h4 style="font-size: 13px; font-weight: 700; margin-top: 10px;">Détail des économies réalisées</h4>
+
+            <div class="card">
+              <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700;">
+                <span>Engrais NPK 15-15-15 (5 sacs)</span>
+                <span style="color: var(--unlock-green);">+15 000 FCFA</span>
+              </div>
+              <div style="font-size: 11px; color: var(--text-muted);">Commande du 12/05/2026 · Groupe Kovié</div>
+            </div>
+
+            <div class="card">
+              <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700;">
+                <span>Semences Maïs Hybride (10 sacs)</span>
+                <span style="color: var(--unlock-green);">+60 000 FCFA</span>
+              </div>
+              <div style="font-size: 11px; color: var(--text-muted);">Commande du 01/04/2026 · Groupe Tsévié</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Phone Bottom Tab Bar -->
+        <nav class="phone-tab-bar">
+          <a class="tab-item active" onclick="switchMobileSub('catalogue')">
+            <span class="tab-icon">🏠</span>
+            <span>Accueil</span>
+          </a>
+          <a class="tab-item" onclick="switchMobileSub('groupe')">
+            <span>👥</span>
+            <span>Groupes</span>
+          </a>
+          <a class="tab-item" onclick="switchMobileSub('commande')">
+            <span>📦</span>
+            <span>Commandes</span>
+          </a>
+          <a class="tab-item" onclick="switchMobileSub('economies')">
+            <span>💰</span>
+            <span>Économies</span>
+          </a>
+        </nav>
+
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ESPACE 2: COMMERÇANT                                        -->
+    <!-- ============================================================ -->
+    <div id="space-merchant" class="space-view">
+      <div class="dashboard-layout">
+        <div class="dashboard-header">
+          <div>
+            <span style="font-size: 11px; text-transform: uppercase; opacity: 0.8; font-weight: 700;">ESPACE COMMERÇANT</span>
+            <h2 style="font-family: var(--font-display); font-size: 22px; font-weight: 800;">Agro-Intrants Zio (Tsévié) ✓</h2>
+          </div>
+          <button class="btn-primary" style="width: auto;" onclick="openAiModal('ia1')">✨ Assistant Paliers IA (IA-1)</button>
+        </div>
+
+        <div class="dashboard-body">
+          <div>
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">Ajouter une Offre avec Paliers de Prix</h3>
+
+            <div class="form-group">
+              <label class="form-label">Nom du Produit</label>
+              <input type="text" id="merchant-prod-name" class="form-input" value="Engrais NPK 15-15-15 (Sac 50kg)" />
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div class="form-group">
+                <label class="form-label">Prix de détail unitaire (FCFA)</label>
+                <input type="number" id="merchant-base-price" class="form-input" value="22000" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Stock Total Disponible</label>
+                <input type="number" id="merchant-stock" class="form-input" value="600" />
+              </div>
+            </div>
+
+            <!-- Grille des paliers commerçant -->
+            <div style="background: var(--surface-raised); padding: 16px; border-radius: 12px; margin: 16px 0;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span style="font-size: 13px; font-weight: 700;">Grille des Paliers Dégressifs</span>
+                <button class="btn-outline" style="padding: 4px 10px; font-size: 11px; width: auto;" onclick="openAiModal('ia1')">✨ Générer via IA-1</button>
+              </div>
+
+              <table style="width: 100%; font-size: 12px; text-align: left;">
+                <thead>
+                  <tr style="color: var(--text-muted);">
+                    <th>Palier</th>
+                    <th>Quantité Min</th>
+                    <th>Prix Unitaire FCFA</th>
+                    <th>Remise</th>
+                  </tr>
+                </thead>
+                <tbody id="merchant-tier-tbody">
+                  <tr>
+                    <td>Palier 1</td>
+                    <td>1 sac</td>
+                    <td>22 000 FCFA</td>
+                    <td>0%</td>
+                  </tr>
+                  <tr>
+                    <td>Palier 2</td>
+                    <td>50 sacs</td>
+                    <td>20 500 FCFA</td>
+                    <td>-6.8%</td>
+                  </tr>
+                  <tr>
+                    <td>Palier 3</td>
+                    <td>100 sacs</td>
+                    <td>19 000 FCFA</td>
+                    <td>-13.6%</td>
+                  </tr>
+                  <tr style="font-weight: 700; color: var(--unlock-green);">
+                    <td>Palier 4 (Grossiste)</td>
+                    <td>200 sacs</td>
+                    <td>17 500 FCFA</td>
+                    <td>-20.4%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <button class="btn-primary" style="width: 240px;">Publier l'Offre ➔</button>
+          </div>
+
+          <!-- Sidebar Commerçant -->
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div class="card card-raised">
+              <h4 style="font-size: 13px; font-weight: 700;">Statistiques de Vente</h4>
+              <div style="font-size: 24px; font-weight: 800; font-family: var(--font-display); color: var(--unlock-green); margin: 6px 0;">
+                146 Sacs Réservés
+              </div>
+              <p style="font-size: 12px; color: var(--text-muted);">2 774 000 FCFA de chiffre d'affaires engagé sur le groupe en cours.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ESPACE 3: ADMIN GROUPE                                       -->
+    <!-- ============================================================ -->
+    <div id="space-group-admin" class="space-view">
+      <div class="dashboard-layout" style="max-width: 800px;">
+        <div class="dashboard-header" style="background: var(--brand-ink);">
+          <div>
+            <span style="font-size: 11px; text-transform: uppercase; color: var(--brand-yellow); font-weight: 700;">ESPACE ADMIN GROUPE</span>
+            <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 800;">Gestion Groupe #KF78GH</h2>
+          </div>
+          <span class="badge-tier">GROUPE ACTIF</span>
+        </div>
+
+        <div style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h3 style="font-size: 16px; font-weight: 700;">Producteurs de Kovié</h3>
+                <p style="font-size: 12px; color: var(--text-muted);">Produit: Engrais NPK 15-15-15 (50kg)</p>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--unlock-green);">146 / 200 Sacs</div>
+                <div style="font-size: 11px; color: var(--text-muted);">38 Membres inscrits</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <button class="btn-primary" onclick="openAiModal('ia2')">💬 Relancer le groupe sur WhatsApp (IA-2)</button>
+            <button class="btn-outline" onclick="alert('Lien de groupe copié !')">🔗 Copier le lien de partage</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ESPACE 4: ADMINISTRATEUR WEB / DASHBOARD IMPACT JURY          -->
+    <!-- ============================================================ -->
+    <div id="space-admin-web" class="space-view">
+      <div class="dashboard-layout">
+        <div class="dashboard-header" style="background: #0D1117;">
+          <div>
+            <span style="font-size: 11px; text-transform: uppercase; color: var(--brand-yellow); font-weight: 700;">TABLEAU DE BORD GLOBAL DE L'IMPACT</span>
+            <h2 style="font-family: var(--font-display); font-size: 24px; font-weight: 800;">KashFlow Admin & Analytics Jury 📊</h2>
+          </div>
+          <div style="color: rgba(255,255,255,0.7); font-size: 13px;">Données en direct au Togo</div>
+        </div>
+
+        <div style="padding: 32px;">
+          <!-- Top KPI Cards -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Acheteurs Inscrits</span>
+              <div class="kpi-val">12 458</div>
+              <span class="kpi-trend">↑ +18.5% ce mois</span>
+            </div>
+
+            <div class="kpi-card">
+              <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Commerçants Partenaires</span>
+              <div class="kpi-val">1 245</div>
+              <span class="kpi-trend">↑ +12.3% ce mois</span>
+            </div>
+
+            <div class="kpi-card">
+              <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Groupes d'Achat Actifs</span>
+              <div class="kpi-val">458</div>
+              <span class="kpi-trend">↑ +8.2% ce mois</span>
+            </div>
+
+            <!-- THE KEY PITCH KPI FOR THE JURY -->
+            <div class="kpi-card" style="border: 2px solid var(--unlock-green); background: var(--unlock-green-soft);">
+              <span style="font-size: 12px; color: var(--unlock-green); font-weight: 700;">🌟 ÉCONOMIES COMMUNAUTAIRES</span>
+              <div class="kpi-val highlight">125M FCFA</div>
+              <span style="font-size: 11px; color: var(--unlock-green); font-weight: 600;">Montant total débloqué collectivement</span>
+            </div>
+          </div>
+
+          <!-- Table Dernières Commandes -->
+          <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 14px;">Dernières Commandes Groupées</h3>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Produit</th>
+                <th>Commerçant</th>
+                <th>Participants</th>
+                <th>Montant Total</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>#CMD-1258</td>
+                <td>Engrais NPK 15-15-15 (50kg)</td>
+                <td>Agro-Intrants Zio</td>
+                <td>78/100 sacs</td>
+                <td class="num-tabular">1 482 000 FCFA</td>
+                <td><span class="badge-tier">Palier Actif</span></td>
+              </tr>
+              <tr>
+                <td>#CMD-1257</td>
+                <td>Semences Maïs Hybride 25kg</td>
+                <td>AgriCorp Semences</td>
+                <td>120/120 sacs</td>
+                <td class="num-tabular">1 740 000 FCFA</td>
+                <td><span class="badge-tier" style="background: var(--unlock-green); color: white;">COMPLÉTÉ ✓</span></td>
+              </tr>
+              <tr>
+                <td>#CMD-1256</td>
+                <td>Kit Scolaire Complet 2026</td>
+                <td>Maison du Livre Lomé</td>
+                <td>45/50 kits</td>
+                <td class="num-tabular">675 000 FCFA</td>
+                <td><span class="badge-urgent">⏰ Fin dans 4h</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ============================================================ -->
+  <!-- AI DEMO MODAL (IA-1, IA-2, IA-3 DEMONSTRATION)               -->
+  <!-- ============================================================ -->
+  <div id="ai-modal" class="ai-modal-overlay" onclick="closeAiModal(event)">
+    <div class="ai-modal-card" onclick="event.stopPropagation()">
+      <div class="ai-sparkle-header">
+        <span class="ai-badge" id="modal-ai-tag">IA-1</span>
+        <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 800;" id="modal-ai-title">Assistant Paliers IA</h3>
+      </div>
+
+      <div id="modal-ai-content" style="font-size: 13px; line-height: 1.5; color: var(--brand-ink);">
+        <!-- Content inserted dynamically -->
+      </div>
+
+      <button class="btn-primary" onclick="document.getElementById('ai-modal').classList.remove('active')">Fermer</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- JAVASCRIPT SIMULATION LOGIC                                  -->
+  <!-- ============================================================ -->
+  <script>
+    // Navigation entre Epaaces Principaux
+    function switchSpace(spaceId) {
+      document.querySelectorAll('.space-view').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.space-btn').forEach(el => el.classList.remove('active'));
+
+      document.getElementById('space-' + spaceId).classList.add('active');
+      event.currentTarget.classList.add('active');
+    }
+
+    // Navigation entre sous-écrans Mobile Acheteur
+    function switchMobileSub(subId) {
+      document.querySelectorAll('.sub-screen').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.sub-nav-btn').forEach(el => el.classList.remove('active'));
+
+      document.getElementById('sub-' + subId).classList.add('active');
+      
+      const btn = Array.from(document.querySelectorAll('.sub-nav-btn')).find(b => b.getAttribute('onclick').includes(subId));
+      if (btn) btn.classList.add('active');
+    }
+
+    // Interactive Group Simulator (+10 Sacs, +54 Sacs, Unlock Animation)
+    let currentBags = 146;
+    const targetBags = 200;
+
+    function simulateAddBags(added) {
+      currentBags += added;
+      if (currentBags > 250) currentBags = 250;
+      updateGroupUI();
+    }
+
+    function resetGroupSimulation() {
+      currentBags = 146;
+      updateGroupUI();
+    }
+
+    function updateGroupUI() {
+      const countText = document.getElementById('live-count-text');
+      const progressBar = document.getElementById('live-progress-bar');
+      const gaugeFill = document.getElementById('live-gauge-fill');
+      const currentPriceEl = document.getElementById('live-current-price');
+      const missingText = document.getElementById('live-missing-text');
+      const savingsTag = document.getElementById('live-savings-tag');
+
+      countText.innerText = `${currentBags}/200`;
+      
+      const ratio = Math.min(1, currentBags / targetBags);
+      const percentage = ratio * 100;
+      
+      progressBar.style.width = `${percentage}%`;
+
+      // SVG Gauge dashoffset (total = 283)
+      const dashOffset = 283 - (283 * ratio);
+      gaugeFill.style.strokeDashoffset = dashOffset;
+
+      if (currentBags >= targetBags) {
+        // TIER UNLOCKED ANIMATION (900ms)
+        progressBar.classList.add('unlocked-pulse');
+        currentPriceEl.innerText = "17 500 FCFA";
+        currentPriceEl.classList.add('green-unlocked');
+        missingText.innerHTML = "🎉 PALIER DE 200 SACS FRANCHI !";
+        missingText.style.color = "var(--unlock-green)";
+        savingsTag.innerText = "Économie collective: 900 000 FCFA !";
+        savingsTag.style.background = "var(--unlock-green)";
+        savingsTag.style.color = "white";
+      } else {
+        progressBar.classList.remove('unlocked-pulse');
+        currentPriceEl.innerText = "19 000 FCFA";
+        currentPriceEl.classList.remove('green-unlocked');
+        const remaining = targetBags - currentBags;
+        missingText.innerText = `Il manque ${remaining} sacs !`;
+        missingText.style.color = "var(--alert-red)";
+        savingsTag.innerText = `Économie collective: ${currentBags * 3000} FCFA`;
+        savingsTag.style.background = "var(--unlock-green-soft)";
+        savingsTag.style.color = "var(--unlock-green)";
+      }
+    }
+
+    // IA-2 Multilingual Message Generator
+    function generateIa2Message() {
+      const lang = document.getElementById('ia2-lang').value;
+      const box = document.getElementById('ia2-preview-box');
+
+      if (lang === 'ewe') {
+        box.innerText = "💬 Ndi ngdi! Míle KashFlow kpó ta le NPK amadé 50kg gbé. Bag 54 koe tsi be wàa 17.500 F! Kpó mí le fií: kashflow.tg/g/kf78gh";
+      } else if (lang === 'mina') {
+        box.innerText = "💬 Mi dzo! KashFlow zɔ̃ le engrais NPK 50kg gbe. Bag 54 tsi be vɔ 17.500 FCFA! Va kpe mí le: kashflow.tg/g/kf78gh";
+      } else {
+        box.innerText = "💬 Salut ! On a un groupe KashFlow pour l'engrais NPK 50kg. Plus que 54 sacs pour tomber à 17.500 F ! Rejoins-nous ici : kashflow.tg/g/kf78gh";
+      }
+    }
+
+    // Recalculate Order Total
+    function recalcOrderTotal() {
+      const qty = parseInt(document.getElementById('order-qty-input').value) || 1;
+      const unit = 19000;
+      const total = qty * unit;
+      document.getElementById('order-total-price').innerText = total.toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    // Payment Simulation
+    function completePaymentSimulation() {
+      alert("✅ PAIEMENT CONFIRMÉ VIA TMONEY !\nVotre commande de 5 sacs (95 000 FCFA) a été enregistrée.");
+      switchMobileSub('economies');
+    }
+
+    // AI Feature Demo Modals
+    function openAiModal(type) {
+      const modal = document.getElementById('ai-modal');
+      const tag = document.getElementById('modal-ai-tag');
+      const title = document.getElementById('modal-ai-title');
+      const content = document.getElementById('modal-ai-content');
+
+      modal.classList.add('active');
+
+      if (type === 'ia1') {
+        tag.innerText = "IA-1";
+        title.innerText = "Assistant Commerçant Paliers Intelligents";
+        content.innerHTML = `
+          <p><strong>Rôle:</strong> Aide le commerçant à concevoir sa grille de prix dégressive optimale.</p>
+          <div style="background: var(--surface-raised); padding: 12px; border-radius: 8px; margin: 10px 0;">
+            <strong>Analyse du marché Togolais:</strong><br/>
+            Prix unitaire détail: 22 000 FCFA · Stock: 600 sacs<br/>
+            <em>Paliers suggérés par le LLM (Marges garanties):</em>
+            <ul style="margin-left: 20px; margin-top: 6px;">
+              <li>50 sacs ➔ 20 500 F (-6.8%)</li>
+              <li>100 sacs ➔ 19 000 F (-13.6%)</li>
+              <li>200+ sacs ➔ 17 500 F (-20.4% Gros)</li>
+            </ul>
+          </div>
+          <button class="btn-green" onclick="applyIa1Tiers()">Appliquer ces paliers au formulaire</button>
+        `;
+      } else if (type === 'ia2') {
+        tag.innerText = "IA-2";
+        title.innerText = "Générateur Partage WhatsApp Multilingue";
+        content.innerHTML = `
+          <p><strong>Rôle:</strong> Génère 3 variantes de messages viraux en Français, Éwé et Mina avec les données du groupe injectées en direct.</p>
+          <p style="margin-top: 8px; color: var(--text-muted);">Format ultra-court (< 220 caract.) pour WhatsApp au Togo.</p>
+        `;
+      } else if (type === 'ia3') {
+        tag.innerText = "IA-3";
+        title.innerText = "Smart Group Discovery & Matching";
+        content.innerHTML = `
+          <p><strong>Rôle:</strong> Empêche la fragmentation de la demande. Si un utilisateur cherche "engrais maïs" ou crée un groupe similaire, l'IA détecte le groupe existant le plus proche (ex: #KF78GH - Score Match 96%).</p>
+          <div style="background: var(--unlock-green-soft); color: var(--unlock-green); padding: 10px; border-radius: 8px; margin-top: 10px; font-weight: 600;">
+            ✓ Regroupement automatique recommandé vers l'offre Agro-Intrants Zio !
+          </div>
+        `;
+      }
+    }
+
+    function applyIa1Tiers() {
+      document.getElementById('ai-modal').classList.remove('active');
+      switchSpace('merchant');
+      alert("✅ Paliers pré-remplis automatiquement par l'IA-1 !");
+    }
+
+    function closeAiModal(e) {
+      document.getElementById('ai-modal').classList.remove('active');
+    }
+  </script>
+</body>
+</html>
