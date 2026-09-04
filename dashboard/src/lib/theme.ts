@@ -20,6 +20,8 @@ export const themeVariables = {
   "--weight-bold": fontWeights.numbersBold,
   "--display-size": px(typeScale.display.size),
   "--display-line": px(typeScale.display.lineHeight),
+  "--title-size": px(typeScale.title.size),
+  "--title-line": px(typeScale.title.lineHeight),
   "--heading-size": px(typeScale.heading.size),
   "--heading-line": px(typeScale.heading.lineHeight),
   "--label-size": px(typeScale.label.size),

@@ -13,7 +13,7 @@ export function App() {
       <header className="app-header">
         <div className="header-content">
           <NavLink className="brand" to="/offres" aria-label="KashFlow, accueil du dashboard">
-            KashFlow
+            <span>KashFlow</span><span className="brand-context">Pro</span>
           </NavLink>
           <nav aria-label="Navigation principale">
             <NavLink className="nav-link" to="/offres">Mes offres</NavLink>

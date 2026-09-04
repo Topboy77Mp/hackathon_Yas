@@ -19,8 +19,13 @@ export function ImpactPage() {
 
   return (
     <section className="impact-page" aria-labelledby="impact-title">
-      <div className="eyebrow">Impact de la communauté</div>
-      <h1 id="impact-title">Ensemble, nous achetons mieux.</h1>
+      <div className="page-heading impact-heading">
+        <div>
+          <div className="eyebrow">Impact de la communauté</div>
+          <h1 id="impact-title">Ce que le collectif a rendu possible.</h1>
+        </div>
+        <span className="data-label">Vue d’ensemble</span>
+      </div>
 
       <article className="hero-kpi">
         <p>Économies générées</p>

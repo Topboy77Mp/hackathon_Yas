@@ -22,6 +22,13 @@ export function OffersPage() {
         <Link className="button button-primary" to="/offres/nouvelle">Créer une offre</Link>
       </div>
 
+      <div className="merchant-summary" aria-label="Synthèse de l’activité">
+        <div><span>Commandes</span><strong>{amount.format(dashboard.orders)}</strong></div>
+        <div><span>Unités réservées</span><strong>{amount.format(dashboard.units)}</strong></div>
+        <div><span>Valeur engagée</span><strong>{amount.format(dashboard.revenue)} FCFA</strong></div>
+        <div><span>En attente</span><strong>{amount.format(dashboard.pendingOrders)}</strong></div>
+      </div>
+
       <div className="offer-grid">
         {dashboard.rows.map((group) => (
           <article className="offer-card" key={group.groupId}>
@@ -30,7 +37,11 @@ export function OffersPage() {
               <span className="muted">{group.participants} participants</span>
             </div>
             <h2>{group.productName}</h2>
-            <p>{group.groupName} · {amount.format(group.currentQuantity)} / {amount.format(group.targetQuantity)} unités</p>
+            <p>{group.groupName}</p>
+            <div className="card-progress" aria-label={`${group.currentQuantity} unités sur ${group.targetQuantity}`}>
+              <span style={{ width: `${Math.round((group.currentQuantity / group.targetQuantity) * 100)}%` }} />
+            </div>
+            <span className="card-progress-label">{amount.format(group.currentQuantity)} / {amount.format(group.targetQuantity)} unités</span>
             <div className="offer-metric">
               <strong>{amount.format(group.totalAmount)} FCFA</strong>
               <span>valeur engagée · prix actuel {amount.format(group.currentUnitPrice)} FCFA</span>

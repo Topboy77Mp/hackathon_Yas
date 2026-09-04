@@ -113,7 +113,7 @@ export function CreateOfferPage() {
                 </div>;
               })}
             </div>
-            <button className="button button-ghost" onClick={addTier} type="button">+ Ajouter un palier</button>
+            <button className="button button-ghost" onClick={addTier} type="button">Ajouter un palier</button>
           </div>
           <div className="form-actions">
             <button className="button button-primary" disabled={isSubmitting} type="submit">{isSubmitting ? "Publication…" : "Publier l’offre"}</button>
@@ -124,9 +124,9 @@ export function CreateOfferPage() {
 
         <aside className="editor-aside">
           <div className="aside-card">
-            <span className="aside-kicker">Assistant paliers</span>
-            <h2>Une remise réaliste, qui protège votre marge.</h2>
-            <p>La suggestion IA est disponible en mode démo. L’appel réel sera ajouté au backend.</p>
+            <span className="aside-kicker">Assistant de paliers</span>
+            <h2>Une première grille à ajuster.</h2>
+            <p>Proposez un prix de détail et votre stock. Vous gardez le contrôle avant publication.</p>
             <button className="button button-secondary" disabled={isSuggesting} onClick={generateTiers} type="button">Voir la suggestion</button>
           </div>
           <div className="aside-card aside-success">
