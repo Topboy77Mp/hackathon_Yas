@@ -334,3 +334,75 @@ Impacte : AGENT_FRONT (propriétaire du fichier), AGENT_DASH (contourné).
 Notifié : non — à diffuser aux autres sessions par l'orchestrateur.
 
 ---
+
+## [18:40] Ajouts au catalogue — `best_open_group_price` et bornes de paliers
+
+**Ajouts**, aucune rupture. Les deux portent sur des payloads **non gelés** :
+seul `GroupDetail` est un `<payload_critique>`.
+
+**1. `ProductCard.best_open_group_price: int | null`**
+
+Prix réellement en vigueur dans le groupe ouvert le moins cher pour ce produit,
+`null` s'il n'y en a aucun. `best_price` reste inchangé et garde son sens : le
+dernier palier, donc une *promesse*.
+
+AGENT_UI avait construit `ProductCard` avec une propriété `bestOpenGroupPrice`
+qu'aucun champ d'API ne pouvait remplir. Il refusait — à juste titre — d'y mettre
+`best_price` : cela aurait affiché une remise que personne n'avait débloquée.
+La carte n'avait donc que deux issues, mentir ou ne rien montrer.
+
+**2. `ProductDetail.tiers[].max_quantity`, via un `ProductTierOut` distinct**
+
+La fiche produit affiche des intervalles (« 1–49 sacs »). Sans borne haute, les
+quatre paliers se lisaient tous « 1+ ».
+
+`TierOut` n'est **pas** modifié : c'est la forme gelée de `current_tier` et
+`next_tier` dans `GroupDetail`. Un test vérifie explicitement que ces deux objets
+gardent leurs deux champs.
+
+Couvert par `backend/tests/test_api_catalogue_enrichi.py` (9 tests). 162 au total.
+
+Impacte : AGENT_FRONT (les deux), AGENT_DASH (aucun — le dashboard ne lit pas
+`/products`).
+
+Notifié : non — à diffuser aux autres sessions par l'orchestrateur.
+
+---
+
+## [18:40] Demandes d'AGENT_UI du [13:20] — réponses
+
+Trois manques de données avaient été signalés pour rendre l'écran groupe conforme
+à la maquette. Réponses, une par une :
+
+**1. `GroupDetail.tiers[]` — la maquette affiche 4 paliers, le payload en porte 2.**
+
+**Non tranché, et volontairement.** `GroupDetail` est le `<payload_critique>` du
+`<contrat_partage>` ; `CLAUDE.md` interdit d'arbitrer seul une contradiction dans
+ce bloc. Or il y a bien contradiction : le contrat fige une liste de 20 champs
+sans `tiers[]`, tout en écrivant dans le même paragraphe que le payload est
+« auto-suffisant : l'écran groupe se dessine intégralement à partir de lui, sans
+second appel ». Les deux ne peuvent pas être vrais si la maquette demande la
+grille complète.
+
+Ajouter `tiers[]` va dans le sens du principe et ne casse aucun consommateur.
+C'est ma recommandation, mais elle appartient à l'humain. En attendant, l'écran
+affiche le palier courant et le suivant — ce qui reste juste, jamais faux.
+
+**2. Aperçu des participants (initiales ou prénoms).**
+
+**Refusé.** Exposer le nom d'autres acheteurs à quiconque détient un lien de
+partage est une décision de confidentialité, pas un détail d'affichage — et le
+lien est public par conception. Les silhouettes anonymes déjà en place couvrent
+le besoin visuel sans inventer d'identité ni en divulguer.
+
+**3. Localisation du commerçant dans `product`.**
+
+**Non ajouté à `GroupDetail`**, pour la même raison qu'au point 1 : `product` y
+est un objet gelé à six champs. `merchant_location` existe déjà sur
+`ProductDetail` et y est renseigné (« Tsévié » dans le jeu de démo).
+
+Impacte : AGENT_UI, AGENT_FRONT.
+
+Notifié : non — à diffuser aux autres sessions par l'orchestrateur.
+
+---
