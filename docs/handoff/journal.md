@@ -18,3 +18,7 @@ Format : `[HH:MM] AGENT_X — fait / bloqué par / attend`
 [11:44] AGENT_BACK — fait : modèle arrêté à `qwen/qwen3.8-27b`, IA-2 réduite au français. Correction d'une erreur d'analyse consignée dans `contract-changes.md`
 [11:47] AGENT_BACK — fait : contradiction du journal arbitrée par l'orchestrateur, `CLAUDE.md` et `.env.example` mis à jour
 [11:47] AGENT_BACK — attend : gate humain de fin de Phase 1A et gel du contrat avant de passer à l'étape 3 (auth JWT) puis 5 (join/leave transactionnel)
+[11:52] AGENT_BACK — fait : reset de base rejoué deux fois, sortie identique au sac près. La démo est rejouable autant que nécessaire
+[11:54] AGENT_BACK — fait : Phase 1A fusionnée sur `main` et poussée. Les autres sessions doivent **repartir de `main`** : `CLAUDE.md` a changé et `backend/openapi.json` est disponible pour générer les types sans lancer le serveur
+[11:56] AGENT_BACK — fait : README complété (étape de seed manquante, création de la base, comptes de démo). Un clone qui suivait le README démarrait sur une base vide
+[11:56] AGENT_BACK — attend : `tokens.ts` + spec écran groupe (AGENT_UI), types TS + fixtures + squelette de routes (AGENT_FRONT). Backend en pause volontaire, aucun code de Phase 2 écrit
