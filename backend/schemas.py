@@ -10,7 +10,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from models import GroupStatus, OrderStatus, PaymentStatus, UserRole
+from models import GroupStatus, OrderStatus, PaymentStatus, ProductStatus, UserRole
 
 
 class TierOut(BaseModel):
@@ -213,6 +213,30 @@ class MerchantDashboard(BaseModel):
     revenue_simule: int
     pending_orders: int
     rows: list[MerchantGroupRow]
+
+
+class MerchantProductRow(BaseModel):
+    """Une offre vue par son commerçant, grille comprise.
+
+    Le catalogue public (`ProductCard`) masque les brouillons et n'expose pas le
+    stock : le commerçant, lui, doit voir ses deux.
+    """
+
+    id: int
+    name: str
+    unit_label: str
+    image_url: str | None
+    stock: int
+    individual_price: int
+    best_price: int
+    status: ProductStatus
+    tiers: list[TierOut]
+    groups_count: int
+    reserved_units: int
+
+
+class MerchantProductsOut(BaseModel):
+    products: list[MerchantProductRow]
 
 
 class NotificationOut(BaseModel):

@@ -1,0 +1,10 @@
+<!--
+  Icône d'onglet. Un favicon est lu par le navigateur avant tout script : il ne
+  peut pas consulter shared/theme/tokens.ts. Les deux couleurs ci-dessous sont
+  donc recopiées de `colors.brand.yellow` et `colors.brand.ink` — seule copie
+  assumée dans le dashboard, à répercuter si les tokens changent.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#FFD400"/>
+  <path d="M20 14h9v16.5L43.5 14H55L38.5 32.5 55.5 50H44L29 33.5V50h-9z" fill="#111418"/>
+</svg>

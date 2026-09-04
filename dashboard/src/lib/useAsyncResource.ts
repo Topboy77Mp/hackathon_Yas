@@ -1,40 +1,103 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface AsyncResource<T> {
   data: T | null;
   error: Error | null;
+  /** Vrai uniquement au premier chargement, quand l'écran est encore vide. */
   isLoading: boolean;
-  retry: () => void;
+  /** Vrai pendant un rafraîchissement, quand des données sont déjà affichées. */
+  isRefreshing: boolean;
+  refresh: () => void;
 }
 
-export function useAsyncResource<T>(load: () => Promise<T>, dependencies: readonly unknown[]): AsyncResource<T> {
-  const [attempt, setAttempt] = useState(0);
+interface Options {
+  /** Cadence de rafraîchissement automatique, en millisecondes. 0 = désactivé. */
+  pollMs?: number;
+}
+
+/**
+ * Chargement asynchrone avec rechargement manuel et scrutation optionnelle.
+ *
+ * Deux points décisifs pour la démonstration :
+ * — un rafraîchissement ne repasse **jamais** l'écran en état de chargement.
+ *   Une première version le faisait : après une simulation, la page groupe se
+ *   vidait, le panneau de démonstration était démonté et son résultat perdu.
+ *   Seul le tout premier chargement affiche l'écran d'attente ;
+ * — la scrutation se met en pause quand l'onglet passe en arrière-plan, pour ne
+ *   pas marteler l'API pendant une présentation.
+ */
+export function useAsyncResource<T>(
+  load: () => Promise<T>,
+  dependencies: readonly unknown[],
+  { pollMs = 0 }: Options = {},
+): AsyncResource<T> {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const retry = useCallback(() => setAttempt((current) => current + 1), []);
+  // Le chargeur est redéfini à chaque rendu au point d'usage ; le garder dans
+  // une ref évite de relancer l'effet à chaque rendu du parent.
+  const loadRef = useRef(load);
+  loadRef.current = load;
+
+  const actif = useRef(true);
+  const aDesDonnees = useRef(false);
 
   useEffect(() => {
-    let active = true;
-    setIsLoading(true);
+    actif.current = true;
+    return () => { actif.current = false; };
+  }, []);
+
+  const executer = useCallback(async (arrierePlan: boolean) => {
+    if (arrierePlan) setIsRefreshing(true);
+    else setIsLoading(true);
+
+    try {
+      const resultat = await loadRef.current();
+      if (!actif.current) return;
+      setData(resultat);
+      setError(null);
+      aDesDonnees.current = true;
+    } catch (raison) {
+      if (!actif.current) return;
+      const echec = raison instanceof Error ? raison : new Error("Une erreur est survenue.");
+      // Un échec de rafraîchissement ne doit pas effacer ce qui est affiché.
+      if (!arrierePlan || !aDesDonnees.current) setError(echec);
+    } finally {
+      if (!actif.current) return;
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  // Premier chargement, et rechargement complet quand les dépendances changent.
+  useEffect(() => {
+    aDesDonnees.current = false;
     setError(null);
+    void executer(false);
+    // Les dépendances sont déclarées explicitement au point d'usage.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [...dependencies]);
 
-    load()
-      .then((result) => {
-        if (active) setData(result);
-      })
-      .catch((reason: unknown) => {
-        if (active) setError(reason instanceof Error ? reason : new Error("Une erreur est survenue."));
-      })
-      .finally(() => {
-        if (active) setIsLoading(false);
-      });
+  // Rafraîchissement manuel : en arrière-plan, sans vider l'écran.
+  const [attempt, setAttempt] = useState(0);
+  const refresh = useCallback(() => setAttempt((n) => n + 1), []);
 
-    return () => { active = false; };
-  // Le chargeur est volontairement défini au point d'usage ; les dépendances explicites pilotent le rechargement.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...dependencies, attempt]);
+  useEffect(() => {
+    if (attempt === 0) return; // le montage est déjà couvert par l'effet ci-dessus
+    void executer(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attempt]);
 
-  return { data, error, isLoading, retry };
+  // Scrutation.
+  useEffect(() => {
+    if (pollMs <= 0) return;
+    const minuteur = window.setInterval(() => {
+      if (document.visibilityState === "visible") void executer(true);
+    }, pollMs);
+    return () => window.clearInterval(minuteur);
+  }, [pollMs, executer]);
+
+  return { data, error, isLoading, isRefreshing, refresh };
 }

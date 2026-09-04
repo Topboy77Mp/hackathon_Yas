@@ -8,8 +8,24 @@ from sqlmodel import Session, select
 import pricing
 from auth import require_merchant
 from db import get_session
-from models import Merchant, PriceTier, Product, ProductStatus
-from schemas import ErrorOut, ProductCreateIn, ProductDetail, TierOut, TiersIn
+from models import (
+    Group,
+    Merchant,
+    Order,
+    OrderStatus,
+    PriceTier,
+    Product,
+    ProductStatus,
+)
+from schemas import (
+    ErrorOut,
+    MerchantProductRow,
+    MerchantProductsOut,
+    ProductCreateIn,
+    ProductDetail,
+    TierOut,
+    TiersIn,
+)
 from services import product_tiers
 
 router = APIRouter(tags=["commerçant"])
@@ -41,6 +57,63 @@ def _detail(product: Product, merchant: Merchant, session: Session) -> ProductDe
         tiers=[TierOut(min_quantity=t.min_quantity, unit_price=t.unit_price) for t in tiers],
         open_groups=[],
     )
+
+
+@router.get(
+    "/merchant/products",
+    response_model=MerchantProductsOut,
+    summary="Lister ses propres offres, brouillons compris",
+)
+def list_my_products(
+    merchant: Merchant = Depends(require_merchant),
+    session: Session = Depends(get_session),
+) -> MerchantProductsOut:
+    """Le catalogue public masque les brouillons ; le commerçant doit les voir.
+
+    Sans cet endpoint, un produit créé sans grille de paliers devenait
+    invisible à celui-là même qui venait de le saisir.
+    """
+    products = session.exec(
+        select(Product).where(Product.merchant_id == merchant.id).order_by(Product.id)
+    ).all()
+    if not products:
+        return MerchantProductsOut(products=[])
+
+    ids = [p.id for p in products]
+    groups = session.exec(select(Group).where(Group.product_id.in_(ids))).all()
+    orders = session.exec(
+        select(Order).where(
+            Order.product_id.in_(ids),
+            Order.order_status != OrderStatus.CANCELLED,
+        )
+    ).all()
+
+    rows = []
+    for product in products:
+        tiers = pricing.sort_tiers(product_tiers(product.id, session))
+        rows.append(
+            MerchantProductRow(
+                id=product.id,
+                name=product.name,
+                unit_label=product.unit_label,
+                image_url=product.image_url,
+                stock=product.stock,
+                individual_price=product.individual_price,
+                # Sans grille, le meilleur prix reste le prix de détail.
+                best_price=tiers[-1].unit_price if tiers else product.individual_price,
+                status=product.status,
+                tiers=[
+                    TierOut(min_quantity=t.min_quantity, unit_price=t.unit_price)
+                    for t in tiers
+                ],
+                groups_count=sum(1 for g in groups if g.product_id == product.id),
+                reserved_units=sum(
+                    o.quantity for o in orders if o.product_id == product.id
+                ),
+            )
+        )
+
+    return MerchantProductsOut(products=rows)
 
 
 @router.post(

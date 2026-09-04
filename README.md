@@ -12,7 +12,7 @@ Backend :   cd backend && python -m venv .venv && source .venv/bin/activate && p
             python seed.py --reset   # obligatoire : injecte le jeu de démo, rejouable à volonté
             uvicorn main:app --reload
 Acheteur :  npx expo start          (touche w pour la cible web)
-Dashboard : cd dashboard && npm install && npm run dev
+Dashboard : cd dashboard && cp .env.example .env && npm install && npm run dev
 
 La base PostgreSQL doit exister au préalable :
 
@@ -20,7 +20,35 @@ La base PostgreSQL doit exister au préalable :
                           -c "CREATE DATABASE kashflow OWNER kashflow;"
 
 API : http://localhost:8000 · doc interactive /docs · contrat figé backend/openapi.json
-Compte de démo : +22891000001 / demo1234 · groupe de démo /groups/code/KOVIE
+Dashboard : http://localhost:5174
+
+## Comptes de démonstration
+
+| Rôle       | Téléphone     | Mot de passe |
+|------------|---------------|--------------|
+| Acheteur   | +22891000001  | demo1234     |
+| Commerçant | +22890000001  | demo1234     |
+
+Groupe de démonstration : `/groups/code/KOVIE` — 146 sacs sur 200, 19 000 FCFA,
+il en manque 54 pour tomber à 17 500.
+
+Le dashboard est réservé aux commerçants et n'a **aucun mode maquette** : il
+affiche ce que l'API renvoie, ou une erreur. Un backend arrêté se voit tout de
+suite, plutôt que d'exposer des chiffres inventés au jury.
+
+### Faire monter le compteur pendant la démonstration
+
+L'écran groupe du dashboard porte un panneau « Mode démonstration » qui ajoute des
+participants fictifs et déclenche le franchissement de palier en direct. Il
+n'apparaît que si `VITE_DEMO_TOKEN` (dashboard) correspond à `DEMO_TOKEN`
+(backend). En ligne de commande :
+
+    curl -X POST localhost:8000/demo/simulate-joins \
+         -H 'X-Demo-Token: jokkoo-demo' -H 'Content-Type: application/json' \
+         -d '{"group_id":1,"count":18,"quantity":3}'
+
+`python seed.py --reset` remet la démonstration à son état de départ, autant de
+fois que nécessaire.
 
 ## Pour les agents Claude Code
 
