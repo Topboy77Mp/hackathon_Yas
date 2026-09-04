@@ -16,6 +16,7 @@ from routers import (
     demo,
     groups,
     merchant,
+    notifications,
     orders,
     products,
     stats,
@@ -62,6 +63,7 @@ app.include_router(products.router)
 app.include_router(groups.router)
 app.include_router(orders.router)
 app.include_router(merchant.router)
+app.include_router(notifications.router)
 app.include_router(stats.router)
 app.include_router(ai_routes.router)
 app.include_router(demo.router)

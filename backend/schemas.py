@@ -215,6 +215,20 @@ class MerchantDashboard(BaseModel):
     rows: list[MerchantGroupRow]
 
 
+class NotificationOut(BaseModel):
+    id: int
+    type: str
+    title: str
+    message: str
+    read: bool
+    created_at: datetime
+
+
+class NotificationsOut(BaseModel):
+    unread_count: int
+    notifications: list[NotificationOut]
+
+
 class TierIn(BaseModel):
     min_quantity: int = Field(ge=1)
     max_quantity: int | None = None

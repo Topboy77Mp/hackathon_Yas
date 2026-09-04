@@ -40,3 +40,10 @@ Format : `[HH:MM] AGENT_X — fait / bloqué par / attend`
 [14:55] AGENT_BACK — non-régression : 146 → 200 sacs, 19 000 → 17 500, économie communautaire 900 000 FCFA, un seul prix en base. Chiffre identique à celui du contrat
 [14:55] AGENT_BACK — l'API couvre désormais les 18 endpoints du contrat, plus `/demo/simulate-joins` et `/orders/{id}`. Étapes 1 à 7 terminées
 [14:55] AGENT_BACK — attend : la fusion de `back/phase-2` sur `main` par l'intégrateur. `UI` et `dash/phase-1a` sont toujours au commit zéro
+[15:35] AGENT_BACK — fait : `GET /notifications` et `POST /notifications/{id}/read`. Les lignes écrites au franchissement de palier et à l'annulation étaient illisibles, le badge in-app était impossible. Changement de contrat consigné
+[15:35] AGENT_BACK — arbitrage : `require_group_creator` reste en place. Je l'avais d'abord signalé comme code mort à retirer — c'était une erreur, l'étape 3 le liste nommément comme livrable. Consigné dans contract-changes.md
+[15:50] AGENT_BACK — fait : PHASE 3. 60 tests, 10,8 s. `test_pricing.py` couvre le moteur pur, `test_parcours_demo.py` couvre le parcours de démonstration de bout en bout
+[15:50] AGENT_BACK — les tests tournent sur SQLite isolé : la base PostgreSQL de démonstration n'est jamais touchée. Vérifié après exécution
+[15:50] AGENT_BACK — limite assumée : SQLite ignore `SELECT ... FOR UPDATE`, le verrou de ligne n'est donc pas couvert par la suite. Il reste validé à la main sur PostgreSQL avec 20 joins simultanés
+[15:50] AGENT_BACK — piège rencontré : la fixture hachait 38 mots de passe bcrypt par test, la suite dépassait plusieurs minutes. Une seule empreinte réutilisée ramène à 10,8 s
+[15:50] AGENT_BACK — étapes 1 à 7 terminées, Phase 3 terminée. Plus rien de critique côté backend

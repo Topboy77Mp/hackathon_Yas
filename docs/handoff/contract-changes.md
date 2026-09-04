@@ -115,3 +115,49 @@ Impacte : tous les agents — `CLAUDE.md` a changé, à relire.
 Notifié : non — à diffuser aux autres sessions par l'orchestrateur.
 
 ---
+
+## [15:20] Ajout de `GET /notifications` et `POST /notifications/{id}/read`
+
+Avant : le bloc `<endpoints>` ne prévoyait aucune route de notification.
+Après : deux routes ajoutées.
+
+    GET  /notifications              → {unread_count, notifications[]}
+    POST /notifications/{id}/read    → NotificationOut
+
+Raison : le backend écrivait déjà des lignes `Notification` au franchissement de
+palier et à l'annulation d'un groupe — 56 lignes en base au moment du constat —
+sans qu'aucune route permette de les lire. Le badge in-app était donc impossible
+à afficher. Le bloc `<exclus>` du contrat écarte le push mais retient
+explicitement « une liste de notifications en base + badge in-app suffit » : la
+moitié en base existait, la moitié lisible manquait. Ces deux routes ferment la
+boucle sans rien ajouter au périmètre fonctionnel.
+
+Forme du payload NotificationOut : `{id, type, title, message, read, created_at}`.
+Types émis à ce jour : `TIER_UNLOCKED`, `GROUP_CANCELLED`.
+
+Une notification appartenant à un autre utilisateur renvoie 404 et non 403 : on
+ne révèle pas son existence.
+
+Impacte : AGENT_FRONT (badge et liste in-app). AGENT_DASH n'est pas concerné.
+
+Notifié : non — à diffuser aux autres sessions par l'orchestrateur.
+
+---
+
+## [15:20] `require_group_creator` conservé sans consommateur — pour mémoire
+
+Ceci n'est pas un changement de contrat mais la trace d'un arbitrage.
+
+`auth.py` définit `require_group_creator`, qu'aucun endpoint n'utilise : la liste
+gelée ne contient aucune action réservée au créateur d'un groupe. AGENT_BACK avait
+d'abord recommandé de le retirer comme code mort. C'était une erreur : l'étape 3
+de `<ordre_de_travail_impose>` le liste nommément parmi les livrables, au même
+titre que `current_user` et `require_merchant`. Le supprimer aurait violé le
+contrat pour des raisons d'esthétique de code.
+
+Décision : la dépendance reste en place, prête à servir si une action de créateur
+de groupe est ajoutée plus tard (clôture anticipée par exemple). Aucune route
+n'est créée pour la justifier — le contrat interdit d'ajouter une fonctionnalité
+hors périmètre.
+
+---
