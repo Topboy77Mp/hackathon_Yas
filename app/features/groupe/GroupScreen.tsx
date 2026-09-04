@@ -1,8 +1,8 @@
 /**
  * KashFlow — Écran groupe.
- * Implémente la hiérarchie, les libellés et les états décrits dans docs/design/screens.md,
- * avec les composants primitifs d'AGENT_UI. Aucun calcul de prix : tout vient tel quel du
- * payload GroupDetail (D3).
+ * Aligné sur la maquette v2 : en-tête de groupe, prix dominant, progression,
+ * grille de paliers, participants, point de retrait, barre d'action fixe.
+ * Aucun calcul de prix : tout vient tel quel du payload GroupDetail (D3).
  */
 import { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
@@ -10,7 +10,19 @@ import { useRouter } from 'expo-router';
 import type { QueryKey } from '@tanstack/react-query';
 import type { GroupDetail } from '@shared/api/types';
 import { colors, spacing, radii } from '@shared/theme/tokens';
-import { Text, Button, Card, ProgressBar, PriceDisplay, CounterDisplay, EmptyState } from '../../components/ui';
+import {
+  Text,
+  Button,
+  Card,
+  Divider,
+  Badge,
+  ProgressBar,
+  PriceDisplay,
+  CounterDisplay,
+  TierRow,
+  AppBar,
+  EmptyState,
+} from '../../components/ui';
 import { useGroupPolling } from '../../lib/hooks/useGroupPolling';
 import { formatFcfa, formatCountdown, isDeadlineUrgent, pluralizeUnit } from '../../lib/format';
 
@@ -47,10 +59,12 @@ export function GroupScreen({ queryKey, fetcher, isAuthenticated }: GroupScreenP
   if (isLoading) {
     return (
       <View style={styles.screen}>
-        <View style={[styles.skeletonBlock, { height: 48, width: 220, marginTop: spacing.xxl }]} />
-        <View style={[styles.skeletonBlock, { height: 16, width: 120, marginTop: spacing.sm }]} />
-        <View style={[styles.skeletonBlock, { height: 12, width: '100%', marginTop: spacing.xl, borderRadius: radii.pill }]} />
-        <View style={[styles.skeletonBlock, { height: 80, width: '100%', marginTop: spacing.xl }]} />
+        <View style={styles.scrollContent}>
+          <View style={[styles.skeleton, { height: 20, width: 200 }]} />
+          <View style={[styles.skeleton, { height: 48, width: 240, marginTop: spacing.lg }]} />
+          <View style={[styles.skeleton, { height: 12, width: '100%', marginTop: spacing.xl, borderRadius: radii.pill }]} />
+          <View style={[styles.skeleton, { height: 120, width: '100%', marginTop: spacing.xl }]} />
+        </View>
       </View>
     );
   }
@@ -80,115 +94,153 @@ export function GroupScreen({ queryKey, fetcher, isAuthenticated }: GroupScreenP
   const unitLabelPlural = pluralizeUnit(unitLabel, group.current_quantity);
   const urgent = isDeadlineUrgent(group.seconds_remaining);
   const isTerminal = group.status === 'LOCKED' || group.status === 'COMPLETED';
+  const joined = group.my_membership?.joined ?? false;
 
   return (
     <View style={styles.screen}>
+      <AppBar
+        title={group.name}
+        subtitle={`Code ${group.share_code} · ${group.product.name}`}
+        onBack={() => router.back()}
+        right={
+          <Badge
+            label={formatCountdown(group.seconds_remaining).replace('Se termine dans ', 'fin dans ')}
+            tone={urgent ? 'urgent' : 'neutral'}
+          />
+        }
+      />
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text variant="caption" tone="muted">
-          {group.product.name} · {group.product.merchant_name}
-        </Text>
 
         {isTerminal && (
-          <Card variant="raised" style={styles.statusBanner}>
+          <Card variant="raised">
             <Text variant="label">{group.status === 'COMPLETED' ? 'Groupe complet' : 'Groupe verrouillé'}</Text>
           </Card>
         )}
 
-        {showUnlockBanner && (
-          <View style={styles.unlockBanner}>
-            <Text variant="label" tone="success">
-              Palier débloqué · nouveau prix pour tout le groupe
-            </Text>
-          </View>
-        )}
-
+        {/* La seule chose importante de l'écran */}
         <View style={styles.priceBlock}>
+          <Text variant="label" tone="muted">
+            prix actuel pour tout le groupe
+          </Text>
           <PriceDisplay
             value={group.current_unit_price}
             previousValue={previousUnitPrice}
-            unitLabel={`le ${unitLabel}`}
             highlightChange={showUnlockBanner}
           />
+          <Text variant="label" tone="muted">
+            par {unitLabel}, au lieu de {formatFcfa(group.product.individual_price)}
+          </Text>
         </View>
 
         <View style={styles.progressBlock}>
           <ProgressBar value={group.progress_ratio} />
           <View style={styles.progressLabels}>
-            <CounterDisplay value={group.current_quantity} variant="label" />
-            <Text variant="label" tabularNums>
-              / {group.target_quantity}
-            </Text>
+            <View style={styles.inlineRow}>
+              <CounterDisplay value={group.current_quantity} variant="label" />
+              <Text variant="label" tabularNums>
+                / {group.target_quantity} {unitLabelPlural}
+              </Text>
+            </View>
+            {group.quantity_to_next_tier !== null ? (
+              <Text variant="label" tone="muted">
+                il manque {group.quantity_to_next_tier} {unitLabelPlural}
+              </Text>
+            ) : (
+              <Text variant="label" tone="success">
+                objectif atteint
+              </Text>
+            )}
           </View>
+          {showUnlockBanner && (
+            <Text variant="label" tone="success">
+              Palier débloqué. Tout le groupe passe à {formatFcfa(group.current_unit_price)}.
+            </Text>
+          )}
         </View>
 
-        <Text variant="caption" tone="muted">
-          {group.participants_count} participants · {group.current_quantity} {unitLabelPlural}
-        </Text>
+        <Divider style={styles.divider} />
 
-        {group.next_tier && group.quantity_to_next_tier !== null ? (
+        <View style={styles.section}>
+          <Text variant="label">Paliers</Text>
+          <TierRow
+            range={`${group.current_tier.min_quantity} ${unitLabelPlural} et plus`}
+            price={formatFcfa(group.current_tier.unit_price)}
+            state="current"
+          />
+          {group.next_tier && (
+            <TierRow
+              range={`${group.next_tier.min_quantity} ${unitLabelPlural} et plus`}
+              price={formatFcfa(group.next_tier.unit_price)}
+              state="next"
+            />
+          )}
+        </View>
+
+        <Divider style={styles.divider} />
+
+        <View style={styles.section}>
+          <Text variant="label">
+            {group.participants_count} participants
+          </Text>
+          <Text variant="caption" tone="muted">
+            économie du groupe : {formatFcfa(group.group_total_saving)}
+          </Text>
+        </View>
+
+        <Card variant="raised" style={styles.section}>
+          <Text variant="label">Retrait</Text>
+          <Text variant="label" tone="muted">
+            {group.product.merchant_name}. À partir de la clôture du groupe.
+          </Text>
+        </Card>
+
+        {joined && group.my_membership && (
           <>
-            <Text variant="heading" style={styles.spacedTop}>
-              Il manque {group.quantity_to_next_tier} {unitLabelPlural}
-            </Text>
-            <Text variant="body" tone="muted">
-              pour débloquer le prochain prix
-            </Text>
-
-            <Card style={styles.spacedTop}>
-              <Text variant="label">Prochain palier</Text>
+            <Divider style={styles.divider} />
+            <View style={styles.section}>
+              <Text variant="heading">Ma participation</Text>
               <Text variant="body">
-                {formatFcfa(group.next_tier.unit_price)} le {unitLabel} à partir de {group.next_tier.min_quantity} {unitLabelPlural}
+                {group.my_membership.quantity} {unitLabelPlural} commandés · {formatFcfa(group.my_membership.total_amount)}
               </Text>
-              <Text variant="body" tone="muted">
-                Économie potentielle : {formatFcfa(group.potential_unit_saving)}/{unitLabel}
-              </Text>
-            </Card>
+            </View>
           </>
-        ) : (
-          <Card style={styles.spacedTop}>
-            <Text variant="label">Dernier prix atteint · palier maximal débloqué</Text>
-          </Card>
-        )}
-
-        <Text variant="label" tone={urgent ? 'alert' : 'muted'} style={styles.spacedTop} tabularNums>
-          {formatCountdown(group.seconds_remaining)}
-        </Text>
-
-        {group.my_membership?.joined && (
-          <View style={styles.membershipBlock}>
-            <Text variant="heading">Ma participation</Text>
-            <Text variant="body">
-              {group.my_membership.quantity} {unitLabelPlural} commandés · {formatFcfa(group.my_membership.total_amount)}
-            </Text>
-          </View>
         )}
       </ScrollView>
 
       {!isTerminal && (
         <View style={styles.actionBar}>
-          {group.my_membership?.joined ? (
+          {joined ? (
             <>
               <Button
                 label="Voir ma commande"
-                variant="ghost"
+                variant="secondary"
                 fullWidth={false}
                 onPress={() => router.push(`/confirmation/${group.my_membership!.order_id}`)}
               />
               <View style={styles.actionBarPrimary}>
-                <Button label="Inviter des proches" onPress={() => router.push(`/partager/${group.id}`)} />
+                <Button label="Inviter" onPress={() => router.push(`/partager/${group.id}`)} />
               </View>
             </>
           ) : (
-            <View style={styles.actionBarPrimary}>
+            <>
               <Button
-                label="Rejoindre le groupe"
-                onPress={() =>
-                  isAuthenticated
-                    ? router.push(`/rejoindre/${group.id}`)
-                    : router.push({ pathname: '/(auth)/inscription', params: { redirectTo: `/g/${group.share_code}` } })
-                }
+                label="Inviter"
+                variant="secondary"
+                fullWidth={false}
+                onPress={() => router.push(`/partager/${group.id}`)}
               />
-            </View>
+              <View style={styles.actionBarPrimary}>
+                <Button
+                  label="Rejoindre"
+                  onPress={() =>
+                    isAuthenticated
+                      ? router.push(`/rejoindre/${group.id}`)
+                      : router.push({ pathname: '/(auth)/inscription', params: { redirectTo: `/g/${group.share_code}` } })
+                  }
+                />
+              </View>
+            </>
           )}
         </View>
       )}
@@ -199,30 +251,17 @@ export function GroupScreen({ queryKey, fetcher, isAuthenticated }: GroupScreenP
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.surface.white },
   scrollContent: { padding: spacing.xl, paddingBottom: spacing.xxxl, gap: spacing.xs },
-  skeletonBlock: { backgroundColor: colors.surface.raised, borderRadius: radii.block },
-  priceBlock: { marginTop: spacing.sm },
-  progressBlock: { marginTop: spacing.xl, gap: spacing.xs },
-  progressLabels: { flexDirection: 'row', justifyContent: 'flex-end', gap: spacing.xs },
-  spacedTop: { marginTop: spacing.xl },
-  statusBanner: { marginTop: spacing.md },
-  unlockBanner: {
-    backgroundColor: colors.unlock.greenSoft,
-    borderRadius: radii.block,
-    padding: spacing.md,
-    marginTop: spacing.md,
-  },
-  membershipBlock: {
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-    marginTop: spacing.xxl,
-    paddingTop: spacing.lg,
-    gap: spacing.xs,
-  },
+  skeleton: { backgroundColor: colors.surface.raised, borderRadius: radii.block },
+  priceBlock: { gap: spacing.sm, marginTop: spacing.sm },
+  progressBlock: { marginTop: spacing.xl, gap: spacing.md },
+  progressLabels: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
+  inlineRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  divider: { marginVertical: spacing.xl },
+  section: { gap: spacing.sm },
   actionBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.lg,
+    gap: spacing.md,
     padding: spacing.lg,
     borderTopWidth: 1,
     borderTopColor: colors.line,

@@ -125,6 +125,8 @@ export const productCardsFixture: ProductCard[] = [
   {
     id: 'prod_npk_15_15_15',
     name: 'Engrais NPK 15-15-15 — sac de 50 kg',
+    description:
+      "Engrais minéral composé NPK 15-15-15, sac de 50 kg. Adapté aux cultures vivrières.",
     unit_label: 'sac',
     image_url: 'https://images.kashflow.demo/npk-15-15-15.jpg',
     individual_price: 22000,
@@ -134,6 +136,8 @@ export const productCardsFixture: ProductCard[] = [
   {
     id: 'prod_semences_mais',
     name: 'Semences de maïs améliorées — sachet 5 kg',
+    description:
+      "Semences de maïs améliorées, sachet de 5 kg. Rendement supérieur en zone soudanienne.",
     unit_label: 'sachet',
     image_url: 'https://images.kashflow.demo/semences-mais.jpg',
     individual_price: 6500,
@@ -143,6 +147,8 @@ export const productCardsFixture: ProductCard[] = [
   {
     id: 'prod_kit_scolaire',
     name: 'Kit scolaire complet',
+    description:
+      "Cahiers, stylos, ardoise et cartable. Kit complet pour une année scolaire.",
     unit_label: 'kit',
     image_url: 'https://images.kashflow.demo/kit-scolaire.jpg',
     individual_price: 12000,

@@ -102,6 +102,19 @@ export const breakpoints = {
   dashboardMaxContentWidth: 1280,
 } as const;
 
+/**
+ * Teinte un token de couleur. Évite de coder en dur des variantes rgba() dans les
+ * composants : la couleur reste définie une seule fois, seule l'opacité varie.
+ * Utilisé pour les fonds de pastilles (palier suivant, compte à rebours urgent).
+ */
+export function alpha(hex: string, opacity: number): string {
+  const value = hex.replace('#', '');
+  const r = parseInt(value.slice(0, 2), 16);
+  const g = parseInt(value.slice(2, 4), 16);
+  const b = parseInt(value.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
+
 export const tokens = {
   colors,
   spacing,

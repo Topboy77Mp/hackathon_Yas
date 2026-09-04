@@ -197,6 +197,7 @@ export interface GroupDetail {
 export interface ProductCard {
   id: string;
   name: string;
+  description: string;
   unit_label: string;
   image_url: string;
   individual_price: number;
