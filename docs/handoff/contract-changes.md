@@ -85,3 +85,33 @@ Aucun payload d'API modifié.
 Notifié : non — à diffuser aux autres sessions par l'orchestrateur.
 
 ---
+
+## [11:47] Canal de journal — contradiction `CLAUDE.md` / `PROMPT-CONCEPTION.xml`
+
+Avant : `CLAUDE.md` plaçait le journal d'avancement **hors dépôt**, sur le canal de
+l'équipe, tandis que `<collaboration>/<journal>` du prompt de conception impose
+`docs/handoff/journal.md` versionné, « seul canal de synchronisation asynchrone entre
+les sessions ». Les deux instructions se contredisaient frontalement.
+
+Après : `docs/handoff/journal.md` est créé et devient le journal **entre agents**.
+Le canal d'équipe reste celui des **humains** (logistique, moral, arbitrages).
+`CLAUDE.md` est corrigé en conséquence.
+
+Raison : arbitrage rendu par l'orchestrateur, appliqué par AGENT_BACK. Le prompt de
+conception prime — `CLAUDE.md` le désigne lui-même comme source de vérité. Argument
+décisif : les sessions Claude Code tournent sur des machines distinctes et ne lisent
+aucun canal externe. Le dépôt est leur seul support commun ; un journal hors dépôt ne
+synchronise donc rien du tout entre agents. La distinction tient au destinataire, pas
+au média : le XML parle de synchronisation entre *sessions*, `CLAUDE.md` parlait du
+suivi *humain*.
+
+Également corrigé dans le même mouvement : `/.env.example` remplace `ANTHROPIC_API_KEY`
+par `GROQ_API_KEY` + `GROQ_MODEL`, en cohérence avec l'entrée de 11:36. Ce fichier et
+`CLAUDE.md` sont hors du `<possede>` d'AGENT_BACK : les deux modifications ont été
+faites sur instruction explicite de l'orchestrateur.
+
+Impacte : tous les agents — `CLAUDE.md` a changé, à relire.
+
+Notifié : non — à diffuser aux autres sessions par l'orchestrateur.
+
+---

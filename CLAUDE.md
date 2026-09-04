@@ -47,7 +47,12 @@ toutes les deux heures maximum. Commits petits, fréquents, en français, conven
 
 - Changements de contrat → `docs/handoff/contract-changes.md` (versionné, propriétaire : AGENT_BACK)
 - Demandes de composants UI → `docs/handoff/ui-requests.md` (versionné)
-- Journal d'avancement et blocages → **hors dépôt**, sur le canal de l'équipe
+- Journal d'avancement et blocages entre agents → `docs/handoff/journal.md` (versionné)
+- Échanges humains, logistique, moral → hors dépôt, sur le canal de l'équipe
+
+Les sessions Claude Code tournent sur des machines distinctes et ne lisent aucun canal
+externe : le dépôt est leur seul support de synchronisation. Le canal d'équipe reste
+celui des humains.
 
 ## Franchise
 
