@@ -104,3 +104,14 @@ Format : `[HH:MM] AGENT_X — fait / bloqué par / attend`
 [18:40] AGENT_BACK — vérifié dans Chromium contre le backend réel : 16 étapes du parcours acheteur, inscription → rejoindre 54 sacs → confirmation → partage → mes commandes → mes groupes → profil → déconnexion. 146 → 200 sacs, 19 000 → 17 500 F, 900 000 F. Zéro erreur console. Base réinitialisée après chaque essai
 [18:40] AGENT_BACK — 162 tests backend verts
 [18:40] AGENT_BACK — attend : arbitrage humain sur `GroupDetail.tiers[]`, puis la phase UI/UX. `front/phase-2` prête à être fusionnée sur `main`
+[19:20] AGENT_BACK — audit de câblage : 10 endpoints sur 23 n'étaient appelés par aucun écran. Quatre correspondaient à des livrables **P0 absents de l'application**
+[19:20] AGENT_BACK — fait : **création de groupe** (P0). `POST /groups` n'était appelé nulle part — on ne pouvait que rejoindre le groupe seedé. IA-3 s'insère à cet endroit et nulle part ailleurs : interception du doublon avant création, avec « Créer quand même »
+[19:20] AGENT_BACK — fait : **quitter un groupe** (P0). Une commande passée était définitive côté interface. `Alert` n'existe pas sur react-native-web : sans garde-fou, le bouton n'aurait rien fait pendant une démonstration au navigateur
+[19:20] AGENT_BACK — fait : **paiement mocké** (P0), PENDING → SUCCESS depuis Mes commandes
+[19:20] AGENT_BACK — fait : **liste et badge de notifications**, le substitut au push explicitement accepté par le contrat. Les lignes étaient écrites en base depuis le début, rien ne les lisait
+[19:20] AGENT_BACK — défaut corrigé : `<button>` imbriqué dans `<button>` sur la carte de commande — HTML invalide et cible tactile ambiguë. Deux actions explicites à la place
+[19:20] AGENT_BACK — défauts corrigés : écran blanc définitif sur la fiche produit quand l'API est injoignable ; « Aucun produit trouvé » affiché sur l'accueil en cas de panne réseau ; confirmation réduite à un titre nu quand on y arrive par « Voir ma commande » ; messages d'erreur d'authentification génériques alors que l'API en renvoie de précis
+[19:20] AGENT_BACK — retiré : la surface commerçant de `app/lib/api/endpoints.ts`. Elle appartient à /dashboard ; la dupliquer laissait quatre fonctions que rien n'appelait
+[19:20] AGENT_BACK — vérifié dans Chromium contre le backend : 13 contrôles sur les livrables P0 + 16 sur le parcours acheteur, zéro erreur console. Base réinitialisée après chaque essai
+[19:20] AGENT_BACK — reste au contrat, hors application acheteur : l'espace commerçant (IA-1, création de produit) vit dans /dashboard et y est complet
+[19:20] AGENT_BACK — attend : arbitrage sur `GroupDetail.tiers[]`, puis phase UI/UX et compilation APK
