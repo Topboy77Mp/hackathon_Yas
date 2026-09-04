@@ -116,6 +116,65 @@ Notifié : non — à diffuser aux autres sessions par l'orchestrateur.
 
 ---
 
+## [16:35] Décision — les identifiants d'API sont des entiers, pas des chaînes
+
+Question posée par AGENT_DASH : le backend renvoie des `number`, `/shared/api/types.ts`
+déclare des `string`.
+
+Décision : **`number` (entier)**. Le backend est la source de vérité de l'API, et
+`backend/openapi.json` publie déjà `"type": "integer"` sur `id` dans l'ensemble des
+schémas — GroupDetail, ProductCard, OrderOut, NotificationOut, et tous les
+`*_id`. Les clés primaires sont des entiers auto-incrémentés SQLModel.
+
+Ce n'est donc pas un changement de contrat mais la correction d'une divergence :
+c'est `/shared/api/types.ts` qui doit s'aligner sur l'OpenAPI publié, pas
+l'inverse. Passer le backend en chaînes obligerait à toucher les huit modèles,
+toutes les clés étrangères et le moteur de paliers, à seize heures du vendredi,
+pour un gain nul.
+
+Rappel utile : ne pas se fier au typage TypeScript pour construire les URL. Un
+identifiant entier interpolé dans une chaîne fonctionne sans conversion.
+
+Impacte : AGENT_FRONT (propriétaire de `/shared/api/types.ts`), AGENT_DASH.
+
+Notifié : non — à diffuser par l'orchestrateur.
+
+---
+
+## [16:35] Décision — `GET /stats/impact` reste public
+
+Question posée par AGENT_DASH : endpoint public, ou protégé par JWT avec rôle ADMIN ?
+
+Décision : **public, sans authentification**. C'est l'état actuel du code.
+
+Raisons, dans l'ordre de poids :
+
+1. Le contrat désigne cette route comme « KPI globaux (dashboard jury) », et le
+   bloc `<role id="DASH">` décrit la page Impact comme « une page unique destinée
+   au jury ». Une page que le jury doit pouvoir ouvrir depuis le fond de la salle
+   ne peut pas dépendre d'une session.
+2. Une authentification sur le chemin de la démonstration est un risque net :
+   cinq minutes de présentation, un réseau incertain, un mot de passe à saisir au
+   vidéoprojecteur. Le contrat juge chaque décision à l'aune de « est-ce que ça
+   rend la démo plus solide ou est-ce que ça la met en danger ».
+3. La charge utile est strictement agrégée : compteurs et sommes, aucun nom,
+   aucun téléphone, aucune commande individuelle.
+4. Le rôle ADMIN n'a aucun parcours dans le périmètre — `<exclus>` écarte tout le
+   CRUD administrateur. Créer une route protégée par ADMIN supposerait un écran
+   de connexion administrateur qui n'existe pas et ne doit pas être construit.
+
+Limite assumée, pour mémoire : en production cette route mériterait au minimum
+une limitation de débit, voire une mise en cache. Hors périmètre ici.
+
+À ne pas confondre avec `GET /merchant/dashboard`, qui reste protégé et réservé
+au commerçant propriétaire des produits — un acheteur reçoit 403.
+
+Impacte : AGENT_DASH.
+
+Notifié : non — à diffuser par l'orchestrateur.
+
+---
+
 ## [15:20] Ajout de `GET /notifications` et `POST /notifications/{id}/read`
 
 Avant : le bloc `<endpoints>` ne prévoyait aucune route de notification.

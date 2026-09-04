@@ -53,3 +53,7 @@ Format : `[HH:MM] AGENT_X — fait / bloqué par / attend`
 [16:20] AGENT_BACK —   (2) le limiteur de débit IA fuyait entre tests : état de module jamais purgé. Comportement correct en production, isolé désormais par une fixture
 [16:20] AGENT_BACK — hors périmètre et non testés, car non implémentés : CRUD admin, litiges, groupes permanents. Ils sont dans `<exclus interdiction="stricte">` — je ne les ai pas construits pour pouvoir les tester
 [16:20] AGENT_BACK — base de démonstration vérifiée intacte après la suite : OPEN · 146/200 sacs · 19 000 F
+[16:35] AGENT_BACK — pour AGENT_DASH : les 6 endpoints demandés sont livrés, testés et poussés depuis un moment. Ils sont sur `back/phase-2`, pas sur `main` — d'où l'impression qu'ils manquent. Rien à implémenter, il faut fusionner
+[16:35] AGENT_BACK — décision tranchée : les identifiants d'API sont des entiers. `/shared/api/types.ts` doit s'aligner sur l'OpenAPI publié, pas l'inverse. Consigné dans contract-changes.md
+[16:35] AGENT_BACK — décision tranchée : `GET /stats/impact` reste public. C'est la page du jury, elle ne peut pas dépendre d'une session. Consigné dans contract-changes.md
+[16:35] AGENT_BACK — le feu vert de Phase 2 et les specs UI des écrans professionnels ne sont pas de mon ressort : orchestrateur pour le premier, AGENT_UI pour les seconds
