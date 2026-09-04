@@ -77,7 +77,7 @@ Format : `[HH:MM] AGENT_X — fait / bloqué par / attend`
 [17:40] AGENT_BACK — reprise du dashboard sur instruction de l'orchestrateur : `dash/phase-1a` livré par AGENT_DASH, branche `dash/phase-2` créée avec `back/phase-2` fusionné dedans
 [17:40] AGENT_BACK — `dash/phase-1a` ne touchait ni `backend/` ni `shared/` : fusion propre, seul `journal.md` en conflit, résolu par entrelacement chronologique
 [17:40] AGENT_BACK — fait : `GET /merchant/products`, le seul endpoint qui manquait vraiment. Sans lui « Mes offres » ne pouvait afficher que des groupes, et un brouillon devenait invisible à son auteur. 9 tests, changement de contrat consigné
-[17:40] AGENT_BACK — 153 tests verts. 24 chemins, 46 schémas publiés dans `openapi.json`
+[17:40] AGENT_BACK — 153 tests verts. 24 chemins, 46 schémas publiés dans `openapi.json`, désormais indenté pour être lisible en diff
 [17:40] AGENT_BACK — dashboard entièrement branché sur l'API : plus aucune fixture. `USE_MOCKS` et les 7 fichiers de données factices ont été supprimés
 [17:40] AGENT_BACK — décision assumée : suppression du mode maquette. Un dashboard qui bascule silencieusement sur des chiffres inventés quand l'API tombe montrerait 900 000 FCFA de fiction au jury sans que personne ne le sache. Le contrat dit « le front affiche ce que l'API renvoie » — en cas de panne, on affiche une erreur
 [17:40] AGENT_BACK — livré : session persistée + garde de route (401 ferme la session et renvoie à la connexion), cloche de notifications, écran groupe avec scrutation 3 s et détection de franchissement, grille complète du produit, partage IA-2, assistant de paliers IA-1 avec justifications, éditeur de paliers pour offre existante, page d'impact aux 11 KPI
@@ -87,4 +87,6 @@ Format : `[HH:MM] AGENT_X — fait / bloqué par / attend`
 [17:40] AGENT_BACK — vérifié dans Chromium, pas seulement au build : 9 écrans rendus + 13 parcours interactifs, zéro erreur console, aucun débordement horizontal à 390 px
 [17:40] AGENT_BACK — validé de bout en bout depuis l'interface : 146 → 200 sacs, 19 000 → 17 500 F, économie du groupe 438 000 → 900 000 F, page d'impact mise à jour. Base réinitialisée après chaque essai, état de démonstration intact
 [17:40] AGENT_BACK — pour AGENT_FRONT : `/shared/api/types.ts` diverge de l'OpenAPI sur 7 points (identifiants string, ImpactStats, SuggestTiers, ShareMessage, MerchantDashboard, deadline, GroupCard). Le dashboard a ses propres types en attendant. Détail dans contract-changes.md
-[17:40] AGENT_BACK — attend : la fusion sur `main` par l'orchestrateur. `dash/phase-2` porte le backend complet + le dashboard branché
+[18:10] AGENT_BACK — fait : `back/phase-2` fusionné sur `main` sur instruction de l'orchestrateur. `back/phase-1a` y était déjà. Backend complet sur `main` : 26 opérations, 24 chemins, 153 tests
+[18:10] AGENT_BACK — validé sur `main` en base PostgreSQL : parcours 146 → 200 sacs avec bascule rétroactive, et 20 joins simultanés au compteur exact (186 sacs, un seul prix). Base de démonstration réinitialisée après essai
+[18:10] AGENT_BACK — attend : l'intégration de `dash/phase-2` (dashboard) et de `UI` (application acheteur) sur `main`, décision de l'orchestrateur
