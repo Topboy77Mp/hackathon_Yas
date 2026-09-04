@@ -34,3 +34,43 @@ Format : `[HH:MM] AGENT_X — fait / bloqué par / attend`
 [12:20] AGENT_FRONT — vérifié de bout en bout au navigateur : parcours inscription → rejoindre → confirmation → écran groupe avec « Ma participation ». Zéro erreur console. Auth et join mockés pour que tout le parcours tourne sans backend
 [12:50] AGENT_UI — fait : `@expo/vector-icons` installé, absent alors que `connexion.tsx` l'importait — l'écran de connexion plantait au chargement
 [12:50] AGENT_UI — attend : décision sur la nouvelle maquette HTML de l'orchestrateur (v2, tous écrans + espace pro). L'interface sera reprise dessus
+[12:10] AGENT_BACK — reprise sur instruction de l'orchestrateur : les coéquipiers travaillent en local, le backend doit être prêt à accueillir leurs parties. Fin de la pause
+[12:40] AGENT_BACK — fait : étape 3, auth JWT complète (`/auth/register`, `/auth/login`, `/auth/me`) + dépendances `current_user`, `require_merchant`, `require_group_creator`
+[12:40] AGENT_BACK — fait : étape 5, `join` et `leave` transactionnels avec `SELECT … FOR UPDATE` sur la ligne groupe et propagation rétroactive du prix à toutes les commandes actives
+[12:40] AGENT_BACK — fait : étape 6, catalogue (`/products`), commandes, paiement mocké, `/merchant/dashboard`, `/stats/impact`
+[12:40] AGENT_BACK — fait : `POST /demo/simulate-joins` protégé par `X-Demo-Token`. Livrable de Phase 1 qui avait été oublié, désormais en place
+[12:40] AGENT_BACK — validé : 20 joins simultanés, compteur exact (186 sacs), un seul prix en base, zéro doublon de téléphone. Le verrou de ligne tient
+[12:40] AGENT_BACK — validé : franchissement de palier à 201 sacs, les 56 commandes basculent de 19 000 à 17 500 en base, y compris les 38 seedées
+[12:40] AGENT_BACK — reste à faire : étape 7 (endpoints IA avec fallback déterministe), clôture de groupe à échéance (D8), `POST /merchant/products` + paliers
+[12:40] AGENT_BACK — pour AGENT_FRONT et AGENT_DASH : 17 chemins publiés, `backend/openapi.json` à jour. Rien ne vous bloque côté API
+[14:55] AGENT_BACK — fait : étape 7. `POST /ai/suggest-tiers` et `POST /ai/share-message`, timeout 4 s, limitation à 12 requêtes par minute, repli déterministe intégral sans clé API
+[14:55] AGENT_BACK — fait : reliquat étape 6. `POST /merchant/products` et `POST /merchant/products/{id}/tiers`. Un produit sans grille valide reste en brouillon et n'apparaît pas au catalogue
+[14:55] AGENT_BACK — fait : clôture D8 à l'échéance, en évaluation paresseuse à la lecture. Pas d'ordonnanceur, le contrat exclut cette complexité
+[14:55] AGENT_BACK — validé : minimum atteint → groupe LOCKED, 38 commandes CONFIRMED. Minimum non atteint → groupe CANCELLED, commande CANCELLED/REFUNDED, paiement REFUNDED, notification émise
+[14:55] AGENT_BACK — validé : les trois grilles interdites par le cahier des charges sont rejetées (prix croissant, chevauchement, dernier palier fermé)
+[14:55] AGENT_BACK — validé : IA-1 renvoie le palier 1 au prix de détail 3 fois sur 3. Sans ce correctif, les deux modèles le bradaient systématiquement — `validate_tiers` ne rattrape pas cet invariant, qui n'est pas au contrat
+[14:55] AGENT_BACK — non-régression : 146 → 200 sacs, 19 000 → 17 500, économie communautaire 900 000 FCFA, un seul prix en base. Chiffre identique à celui du contrat
+[14:55] AGENT_BACK — l'API couvre désormais les 18 endpoints du contrat, plus `/demo/simulate-joins` et `/orders/{id}`. Étapes 1 à 7 terminées
+[14:55] AGENT_BACK — attend : la fusion de `back/phase-2` sur `main` par l'intégrateur. `UI` et `dash/phase-1a` sont toujours au commit zéro
+[15:35] AGENT_BACK — fait : `GET /notifications` et `POST /notifications/{id}/read`. Les lignes écrites au franchissement de palier et à l'annulation étaient illisibles, le badge in-app était impossible. Changement de contrat consigné
+[15:35] AGENT_BACK — arbitrage : `require_group_creator` reste en place. Je l'avais d'abord signalé comme code mort à retirer — c'était une erreur, l'étape 3 le liste nommément comme livrable. Consigné dans contract-changes.md
+[15:50] AGENT_BACK — fait : PHASE 3. 60 tests, 10,8 s. `test_pricing.py` couvre le moteur pur, `test_parcours_demo.py` couvre le parcours de démonstration de bout en bout
+[15:50] AGENT_BACK — les tests tournent sur SQLite isolé : la base PostgreSQL de démonstration n'est jamais touchée. Vérifié après exécution
+[15:50] AGENT_BACK — limite assumée : SQLite ignore `SELECT ... FOR UPDATE`, le verrou de ligne n'est donc pas couvert par la suite. Il reste validé à la main sur PostgreSQL avec 20 joins simultanés
+[15:50] AGENT_BACK — piège rencontré : la fixture hachait 38 mots de passe bcrypt par test, la suite dépassait plusieurs minutes. Une seule empreinte réutilisée ramène à 10,8 s
+[15:50] AGENT_BACK — étapes 1 à 7 terminées, Phase 3 terminée. Plus rien de critique côté backend
+[16:20] AGENT_BACK — fait : couverture élargie sur autorisation de l'orchestrateur. 125 tests, 27 s. Ajout de `test_api_catalogue_groupes.py`, `test_api_commercant_ia.py`, `test_securite_et_erreurs.py`
+[16:20] AGENT_BACK — la couverture élargie a trouvé 2 vrais défauts, corrigés :
+[16:20] AGENT_BACK —   (1) un groupe expiré restait annoncé OPEN dans `GET /groups`, dans les groupes ouverts d'une fiche produit et dans `groups_active` de `/stats/impact`. La clôture n'était branchée que sur les lectures de détail. Ajout de `settle_expired_groups()` sur les trois chemins de liste
+[16:20] AGENT_BACK —   (2) le limiteur de débit IA fuyait entre tests : état de module jamais purgé. Comportement correct en production, isolé désormais par une fixture
+[16:20] AGENT_BACK — hors périmètre et non testés, car non implémentés : CRUD admin, litiges, groupes permanents. Ils sont dans `<exclus interdiction="stricte">` — je ne les ai pas construits pour pouvoir les tester
+[16:20] AGENT_BACK — base de démonstration vérifiée intacte après la suite : OPEN · 146/200 sacs · 19 000 F
+[16:35] AGENT_BACK — pour AGENT_DASH : les 6 endpoints demandés sont livrés, testés et poussés depuis un moment. Ils sont sur `back/phase-2`, pas sur `main` — d'où l'impression qu'ils manquent. Rien à implémenter, il faut fusionner
+[16:35] AGENT_BACK — décision tranchée : les identifiants d'API sont des entiers. `/shared/api/types.ts` doit s'aligner sur l'OpenAPI publié, pas l'inverse. Consigné dans contract-changes.md
+[16:35] AGENT_BACK — décision tranchée : `GET /stats/impact` reste public. C'est la page du jury, elle ne peut pas dépendre d'une session. Consigné dans contract-changes.md
+[16:35] AGENT_BACK — le feu vert de Phase 2 et les specs UI des écrans professionnels ne sont pas de mon ressort : orchestrateur pour le premier, AGENT_UI pour les seconds
+[17:05] AGENT_BACK — fait : IA-3 activée sur feu vert de l'orchestrateur. `POST /ai/discover-groups`. Présélection SQL, un appel modèle, seuil 0,6, 3 résultats max, repli SQL silencieux
+[17:05] AGENT_BACK — défaut trouvé en conditions réelles et corrigé : la présélection cherchait la requête entière comme une seule sous-chaîne. « engrais pour mon maïs » ne remontait rien alors que le groupe existait. Recherche mot à mot désormais, test ajouté
+[17:05] AGENT_BACK — garde-fous ajoutés : un identifiant inventé par le modèle est écarté, un groupe expiré n'est jamais proposé
+[17:05] AGENT_BACK — fait : `groups_successful` compte LOCKED ou COMPLETED. Le KPI du jury affichait « 0 % de réussite » en permanence
+[17:05] AGENT_BACK — 144 tests verts. Backend terminé : étapes 1 à 7, Phase 3, IA-1, IA-2, IA-3
