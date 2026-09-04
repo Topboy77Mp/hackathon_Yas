@@ -1,0 +1,765 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  KASHFLOW — PROMPT DE CONCEPTION (PHASE 1)
+  Équipe Jokkoo · YAS Hackathon 48H · 04–05 septembre 2026 · UNIPOD, Université de Lomé
+  Cible : Claude Code (3 sessions parallèles, une par rôle)
+  Phase 2 = implémentation des features. Phase 3 = tests + seed démo. Prompts séparés.
+-->
+
+<prompt_conception projet="KashFlow" equipe="Jokkoo" phase="1-CONCEPTION">
+
+<!-- ============================================================ -->
+<!-- 0. COMMENT UTILISER CE PROMPT                                -->
+<!-- ============================================================ -->
+<mode_operatoire>
+  <instruction>
+    Ce prompt est lu par TROIS agents distincts travaillant en parallèle sur le même dépôt.
+    Chaque agent lit l'INTÉGRALITÉ du document mais n'exécute QUE le bloc &lt;role&gt; qui lui est
+    assigné au lancement de sa session.
+  </instruction>
+  <lancement>
+    Session 1 → "Tu es AGENT_UI. Exécute le bloc role id='UI'."
+    Session 2 → "Tu es AGENT_FRONT. Exécute le bloc role id='FRONT'."
+    Session 3 → "Tu es AGENT_BACK. Exécute le bloc role id='BACK'."
+    Session 4 → "Tu es AGENT_DASH. Exécute le bloc role id='DASH'."  (optionnelle, cf. son bloc &lt;activation&gt;)
+  </lancement>
+  <regle_absolue>
+    Les blocs &lt;contrat_partage&gt;, &lt;decisions_verrouillees&gt; et &lt;design_tokens&gt; sont la
+    SOURCE DE VÉRITÉ COMMUNE. Aucun agent ne les réinterprète, ne les "améliore" ni ne les
+    contourne. Toute contradiction détectée entre ce prompt et une décision technique est
+    remontée à l'humain, pas arbitrée unilatéralement.
+  </regle_absolue>
+  <ton>
+    Pas de complaisance. Si une instruction de ce prompt est techniquement mauvaise ou
+    infaisable dans le temps imparti, dis-le en une phrase et propose l'alternative. Ne
+    produis pas de code que tu sais bancal pour "respecter le brief".
+  </ton>
+</mode_operatoire>
+
+<!-- ============================================================ -->
+<!-- 1. CONTEXTE                                                  -->
+<!-- ============================================================ -->
+<contexte>
+  <produit>
+    KashFlow est une plateforme d'achat groupé. Plusieurs acheteurs se regroupent sur un même
+    produit ; plus le volume commandé monte, plus le prix unitaire baisse par paliers définis
+    par le commerçant. Le prix est rétroactif : quand un palier tombe, TOUS les participants
+    actifs du groupe paient le nouveau prix.
+  </produit>
+  <these>
+    Le vrai produit n'est pas le catalogue, c'est la DEMANDE AGRÉGÉE. KashFlow transforme du
+    pouvoir d'achat individuel en pouvoir de négociation collectif.
+  </these>
+  <contrainte_temps>
+    48 heures, équipe réduite. Toute fonctionnalité qui n'apparaît pas dans la démo finale de
+    5 minutes est une dette, pas une feature. En cas de doute : couper.
+  </contrainte_temps>
+  <jury>
+    Hackathon sponsorisé par un opérateur télécom (YAS) au Togo. Le jury retiendra deux choses :
+    le compteur qui monte en direct jusqu'au déblocage d'un palier, et le KPI
+    « économies générées par la communauté ». Tout le reste est du décor.
+  </jury>
+</contexte>
+
+<!-- ============================================================ -->
+<!-- 2. PÉRIMÈTRE                                                 -->
+<!-- ============================================================ -->
+<perimetre>
+  <inclus priorite="P0">
+    <item>Auth : inscription / connexion / me (téléphone + mot de passe, JWT)</item>
+    <item>Catalogue : 3 produits seedés, fiche produit</item>
+    <item>Groupe : création, consultation, rejoindre, quitter, progression temps réel</item>
+    <item>Moteur de paliers : calcul du prix côté serveur, exclusivement</item>
+    <item>Commande : créée au moment du join, prix recalculé à chaque palier</item>
+    <item>Paiement : mocké (PENDING → SUCCESS), aucun appel externe</item>
+    <item>Partage : lien de groupe + ouverture WhatsApp avec message pré-rempli</item>
+    <item>Espace commerçant : création produit + paliers, vue des groupes actifs sur ses produits</item>
+    <item>Dashboard admin : UNIQUEMENT les KPI. Aucun CRUD administrateur.</item>
+    <item>IA-1 : assistant de génération de paliers pour le commerçant</item>
+    <item>IA-2 : générateur de message de partage multilingue</item>
+  </inclus>
+  <inclus priorite="P2" condition="STRICTE">
+    <item>IA-3 : Smart Group Discovery — matching sémantique des groupes existants.</item>
+    <critere_entree>
+      Cette fonctionnalité n'est PAS ouverte tant que la Definition of Done de la Phase 2 n'est
+      pas intégralement remplie ET que l'horloge du hackathon indique moins de H+30. Aucun agent
+      ne commence IA-3 de sa propre initiative : l'humain donne le feu vert explicitement.
+      Si le feu vert n'est pas donné, IA-3 devient une slide de roadmap et rien d'autre.
+    </critere_entree>
+  </inclus>
+  <exclus interdiction="stricte">
+    <item>CRUD admin (gestion utilisateurs, validation boutiques, modération produits)</item>
+    <item>Module de litiges / tickets</item>
+    <item>Groupes permanents, favoris, avis, notation commerçant</item>
+    <item>Points relais, logistique, suivi de livraison détaillé</item>
+    <item>Remboursements réels, séquestre réel, Mobile Money réel</item>
+    <item>Notifications push (une liste de notifications en base + badge in-app suffit)</item>
+    <item>Upload d'images utilisateur (URLs seedées ou emoji/illustration locale)</item>
+    <item>Websockets, file de messages, cache Redis, Docker Compose multi-services</item>
+    <item>i18n complète de l'interface (le multilingue est cantonné au message de partage)</item>
+  </exclus>
+</perimetre>
+
+<!-- ============================================================ -->
+<!-- 3. DÉCISIONS VERROUILLÉES (arbitrages déjà tranchés)          -->
+<!-- ============================================================ -->
+<decisions_verrouillees>
+
+  <decision id="D1" titre="Les paliers portent sur la QUANTITÉ, pas sur le nombre de personnes">
+    Un commerçant vend des unités, pas des gens. Le déclenchement d'un palier se calcule sur
+    `SUM(order.quantity)` des commandes actives du groupe. L'interface affiche les deux
+    ("38 participants · 146 sacs") mais la barre de progression et le calcul du prix se basent
+    exclusivement sur la quantité. Une seule source de vérité, sinon deux compteurs divergeront
+    en pleine démo.
+  </decision>
+
+  <decision id="D2" titre="L'Order est créée au JOIN, pas à la clôture">
+    Rejoindre un groupe = créer une Order (statut PENDING). `GroupMember` est une simple table
+    de liaison SANS colonne quantity : la quantité vit dans Order et nulle part ailleurs.
+    À chaque changement de palier, le backend met à jour `unit_price` et `total_amount` de
+    TOUTES les orders actives du groupe (règle rétroactive → tout le monde a le même prix).
+  </decision>
+
+  <decision id="D3" titre="Le prix n'est JAMAIS calculé côté client">
+    Le frontend affiche `current_unit_price` renvoyé par l'API. Il ne recalcule rien, ne devine
+    rien, ne met rien en cache au-delà du polling. Toute logique de palier dupliquée côté client
+    est un bug en attente.
+  </decision>
+
+  <decision id="D4" titre="Machines à états minimales">
+    Group : OPEN → LOCKED → COMPLETED, plus CANCELLED (terminal, depuis OPEN).
+    Offer/Product : DRAFT → ACTIVE → CLOSED.
+    Order : PENDING → CONFIRMED → CANCELLED.
+    Payment : PENDING → SUCCESS | FAILED.
+    Pas d'état supplémentaire. Sept états de groupe, c'est sept bugs.
+  </decision>
+
+  <decision id="D5" titre="GROUP_ADMIN n'est pas un rôle">
+    Rôles système : USER, MERCHANT, ADMIN. Être administrateur d'un groupe est une RELATION
+    (`group.creator_id == current_user.id`), vérifiée par une dépendance, pas par l'enum de rôle.
+  </decision>
+
+  <decision id="D6" titre="Temps réel = polling 2s">
+    `GET /groups/{id}` toutes les 2 secondes tant que l'écran groupe est au premier plan.
+    Pas de websocket. L'endpoint doit être rapide et renvoyer un payload complet et auto-suffisant.
+  </decision>
+
+  <decision id="D7" titre="Aucun appel LLM sur le chemin critique de la démo">
+    Les deux features IA vivent dans des écrans annexes (création d'offre commerçant, écran de
+    partage). Le parcours de démo (fiche produit → rejoindre → compteur → palier débloqué →
+    économie) est 100 % déterministe, calculé en base, sans réseau externe. Chaque appel LLM a
+    un timeout de 4s et un fallback déterministe qui produit un résultat exploitable.
+  </decision>
+
+  <decision id="D8" titre="Si le groupe échoue">
+    Objectif minimum + date limite. Si la deadline tombe sans que l'objectif minimum soit atteint :
+    groupe CANCELLED, orders CANCELLED, payments REFUNDED (simulé). Narratif du pitch :
+    « autorisation au join, débit à la clôture ». Une seule phrase, apprise par cœur.
+  </decision>
+
+  <decision id="D9" titre="Produit phare de la démo = intrants agricoles">
+    Pas de smartphone. Engrais NPK 15-15-15, sac de 50 kg. C'est le cas d'usage qui parle à un
+    jury togolais : le petit producteur achète seul au prix de détail alors que le groupement
+    obtiendrait le prix de gros. Le smartphone raconte de la consommation ; l'engrais raconte
+    de l'inclusion économique.
+  </decision>
+
+</decisions_verrouillees>
+
+<!-- ============================================================ -->
+<!-- 4. STACK                                                     -->
+<!-- ============================================================ -->
+<stack>
+  <structure_du_depot>
+    /app         → application acheteur, Expo + expo-router (mobile ET web)
+    /dashboard   → application professionnelle, Vite + React + TypeScript (web uniquement)
+    /backend     → FastAPI
+    /shared      → tokens de design et types d'API, consommés par /app ET /dashboard
+    /docs        → design, handoff, journal
+    Un seul dépôt, deux applications front, un seul système de design. Pas de monorepo outillé
+    (pas de Turborepo, pas de pnpm workspaces) : des imports relatifs et un alias tsconfig suffisent.
+  </structure_du_depot>
+
+  <app_acheteur>
+    Expo SDK récent + React Native + expo-router. Cible mobile (Expo Go) ET cible web via
+    react-native-web. Mobile-first, sans exception.
+    La cible web n'est pas un bonus : c'est ce qui s'ouvre quand quelqu'un clique sur le lien
+    WhatsApp d'un groupe. La route `/g/{share_code}` doit être consultable dans un navigateur,
+    sans installation, sans compte, avec un bouton « Rejoindre » qui envoie vers l'inscription.
+    C'est le mécanisme de croissance du produit ET le mécanisme de la démo.
+    State serveur : TanStack Query — polling, invalidation et cache gratuits.
+    Pas de Redux, pas de state manager custom.
+  </app_acheteur>
+
+  <pwa portee="minimale">
+    L'app acheteur est installable : `manifest.json` (nom, icônes 192/512, theme_color =
+    brand.yellow, background_color = surface.white, display standalone), balises meta, écran
+    de démarrage. C'est tout.
+    INTERDIT : service worker, stratégie de cache offline, précaching. Aucun besoin hors-ligne
+    dans le parcours de démo, et un service worker mal configuré sert une version périmée de
+    l'application au pire moment possible. La PWA se fait en Phase 3 avec le polish, en 30 minutes.
+  </pwa>
+
+  <dashboard_professionnel>
+    Application SÉPARÉE : Vite + React + TypeScript, CSS natif (ou Tailwind si l'équipe le
+    maîtrise déjà). Couvre l'espace commerçant et le dashboard d'impact destiné au jury.
+    Raison du découpage : ces écrans sont denses en tableaux, listes et chiffres. Les reproduire
+    en primitives React Native coûte plusieurs heures de bagarre avec react-native-web pour un
+    résultat inférieur, alors que le HTML natif le fait sans effort. Le surcoût est d'environ
+    une heure de configuration.
+    Cette application importe `/shared/theme/tokens.ts` et `/shared/api/types.ts`. Elle ne
+    redéfinit AUCUNE couleur, AUCUNE taille de police, et ne duplique AUCUN type d'API.
+    Elle est conçue pour ≥1024px. En dessous, elle dégrade en colonne unique sans qu'on y
+    consacre du temps.
+  </dashboard_professionnel>
+  <backend>
+    FastAPI + SQLModel + PostgreSQL. JWT (python-jose) + passlib/bcrypt.
+    Pas d'Alembic pour le hackathon : `SQLModel.metadata.create_all()` + un script de reset.
+    Un seul module de logique métier `pricing.py` — pur, testable, sans I/O.
+  </backend>
+  <ia>
+    Anthropic API, appels serveur uniquement (jamais depuis l'app : la clé ne quitte pas le back).
+    Modèle : Claude Sonnet (rapport latence/coût adapté à un hackathon). Sorties structurées :
+    le modèle répond en JSON strict, le backend parse, VALIDE avec des règles déterministes, et
+    rejette silencieusement vers le fallback en cas d'échec.
+  </ia>
+  <infra>
+    PostgreSQL local ou Neon. Backend déployable sur Railway/Render. Front web sur Vercel ou
+    tunnel Expo. Le déploiement se fait en heure 40, pas avant, et ne bloque personne.
+  </infra>
+</stack>
+
+<!-- ============================================================ -->
+<!-- 5. DESIGN TOKENS — SOURCE DE VÉRITÉ VISUELLE                  -->
+<!-- ============================================================ -->
+<design_tokens>
+
+  <origine>
+    Palette dérivée du badge officiel du YAS Hackathon (jaune YAS dominant, dégradé vert-lime,
+    blocs vert profond, bleu marine institutionnel, rouge de la date) et de l'identité YAS
+    (jaune vif + contraste sombre). Les valeurs hexadécimales ci-dessous sont une extraction
+    photographique du badge, normalisée et rééquilibrée pour l'écran : elles ne prétendent pas
+    être la charte officielle YAS au pantone près, mais elles sont cohérentes avec elle et
+    reconnaissables par le jury.
+  </origine>
+
+  <palette>
+    <token name="brand.yellow"      hex="#FFD400" role="Action primaire. Boutons principaux, barre de progression, accent unique." />
+    <token name="brand.yellow.deep" hex="#F5B800" role="État pressé / bordure du jaune sur fond clair." />
+    <token name="brand.ink"         hex="#111418" role="Texte principal, texte SUR le jaune. Le jaune n'est jamais associé à du blanc." />
+    <token name="unlock.green"      hex="#177A43" role="RÉSERVÉ au succès : palier débloqué, économie réalisée, commande confirmée." />
+    <token name="unlock.green.soft" hex="#E7F4EC" role="Fond des blocs de succès." />
+    <token name="accent.lime"       hex="#A9CB3B" role="Second segment du dégradé de progression. Usage strictement décoratif et rare." />
+    <token name="accent.navy"       hex="#16357A" role="Institutionnel : en-têtes commerçant et dashboard KPI. Jamais sur l'app acheteur." />
+    <token name="alert.red"         hex="#E03B2C" role="RÉSERVÉ à l'urgence temporelle : compte à rebours, deadline &lt; 6h, erreurs." />
+    <token name="surface.white"     hex="#FFFFFF" role="Fond par défaut de tous les écrans." />
+    <token name="surface.raised"    hex="#F7F7F4" role="Fond des blocs secondaires. Très légèrement chaud, pas gris-bleu." />
+    <token name="line"              hex="#E4E4DE" role="Filets de séparation, 1px. Remplace les ombres." />
+    <token name="text.muted"        hex="#6C6F73" role="Labels, métadonnées, texte secondaire." />
+  </palette>
+
+  <regle_couleur nom="La couleur encode un état, jamais une décoration">
+    Le jaune signifie « tu peux agir ici ». Le vert signifie « quelque chose a été gagné ».
+    Le rouge signifie « le temps presse ». Le bleu marine signifie « tu es côté professionnel ».
+    Un écran qui utilise trois couleurs d'accent en même temps est un écran raté. Sur l'écran
+    groupe, la seule couleur autorisée en dehors du texte est le jaune de la progression — puis
+    le vert, une seule fois, à l'instant du déblocage.
+  </regle_couleur>
+
+  <typographie>
+    <famille role="chiffres et titres" nom="Archivo" source="@expo-google-fonts/archivo">
+      Chiffres tabulaires obligatoires (`fontVariant: ['tabular-nums']`). Le compteur et le prix
+      s'animent : sans chasse fixe, les chiffres sautent latéralement et l'effet est ruiné.
+      Poids utilisés : 600 et 700 uniquement.
+    </famille>
+    <famille role="texte courant" nom="Inter" source="@expo-google-fonts/inter">
+      Poids 400 et 500. Rien d'autre.
+    </famille>
+    <echelle>
+      display 44/48 · title 28/34 · heading 20/26 · body 16/24 · label 14/20 · caption 12/16
+    </echelle>
+    <interdits>
+      Pas de labels en MAJUSCULES espacées. Pas d'un seul mot coloré dans un titre. Pas de police
+      monospace pour les données. Pas d'em-dash décoratif dans les libellés. Casse de phrase partout.
+    </interdits>
+  </typographie>
+
+  <layout>
+    <espacement>Échelle de 4 : 4, 8, 12, 16, 24, 32, 48. Gouttière écran 20px en mobile, 32px en web.</espacement>
+    <rayons>
+      Rayon 12 pour les blocs de contenu, rayon 999 pour les boutons et pastilles.
+      DEUX rayons dans toute l'application, pas cinq.
+    </rayons>
+    <profondeur>
+      Aucune ombre portée. La hiérarchie se fait par le fond (`surface.raised`) et les filets 1px.
+      Une seule exception : la barre d'action fixe en bas de l'écran groupe.
+    </profondeur>
+    <responsive>
+      App acheteur (/app) : &lt;600 colonne unique, ≥600 contenu centré à 560px maximum.
+      Elle ne devient jamais une interface "desktop" — sur grand écran, c'est une colonne
+      mobile centrée sur fond blanc, et c'est un choix assumé.
+      Dashboard (/dashboard) : conçu à ≥1024px, contenu centré max 1280px. En dessous de 900px
+      il passe en colonne unique sans mise en page particulière. On n'y consacre pas de temps.
+    </responsive>
+  </layout>
+
+  <principe_directeur>
+    Épuré signifie : fond blanc, beaucoup de vide, une seule chose importante par écran.
+    Sur l'écran groupe, la chose importante est le prix actuel en display 44 et la barre de
+    progression. Le reste du contenu descend sous la ligne de flottaison et se lit calmement.
+    Tout élément qui n'aide pas l'utilisateur à comprendre « combien on est, combien ça coûte,
+    combien il manque » est supprimé.
+  </principe_directeur>
+
+  <moment_unique>
+    Une seule animation non déclenchée par l'utilisateur dans toute l'application : le passage
+    de palier. Compteur qui s'incrémente, barre qui atteint le seuil, ancien prix barré qui
+    glisse vers le nouveau prix en vert. 900 ms, une fois. Aucune autre entrée en fondu, aucun
+    hover animé, aucun effet de carte. C'est là qu'on dépense toute l'audace visuelle du projet.
+  </moment_unique>
+
+</design_tokens>
+
+<!-- ============================================================ -->
+<!-- 6. CONTRAT PARTAGÉ (gelé après la Phase 1A)                   -->
+<!-- ============================================================ -->
+<contrat_partage>
+
+  <modele_donnees>
+    User(id, first_name, last_name, phone UNIQUE, email?, password_hash, role[USER|MERCHANT|ADMIN], created_at)
+    Merchant(id, user_id FK, business_name, description, location, status, created_at)
+    Product(id, merchant_id FK, name, description, unit_label, image_url, stock,
+            individual_price, status[DRAFT|ACTIVE|CLOSED], created_at)
+    PriceTier(id, product_id FK, min_quantity, max_quantity NULLABLE, unit_price)
+    Group(id, creator_id FK, product_id FK, name, target_quantity, min_quantity,
+          deadline, status[OPEN|LOCKED|COMPLETED|CANCELLED], share_code UNIQUE, created_at)
+    GroupMember(id, group_id FK, user_id FK, joined_at)   <!-- PAS de quantity : cf. D2 -->
+    Order(id, user_id FK, group_id FK, product_id FK, quantity, unit_price, total_amount,
+          payment_status, order_status[PENDING|CONFIRMED|CANCELLED], created_at)
+    Payment(id, order_id FK, amount, method, status[PENDING|SUCCESS|FAILED|REFUNDED],
+            transaction_reference, created_at)
+    Notification(id, user_id FK, type, title, message, read, created_at)
+  </modele_donnees>
+
+  <invariants>
+    <item>current_quantity d'un groupe = SUM(order.quantity) WHERE order_status != CANCELLED. Jamais stocké en dur sans recalcul.</item>
+    <item>Les PriceTier d'un produit : min_quantity strictement croissants, unit_price strictement décroissants, sans chevauchement, le dernier a max_quantity NULL.</item>
+    <item>unit_price de toutes les orders actives d'un groupe est identique à tout instant (règle rétroactive).</item>
+    <item>economies = SUM((product.individual_price - order.unit_price) * order.quantity) sur les orders non annulées.</item>
+  </invariants>
+
+  <endpoints>
+    POST   /auth/register        → {token, user}
+    POST   /auth/login           → {token, user}
+    GET    /auth/me              → user
+
+    GET    /products             → [ProductCard]
+    GET    /products/{id}        → ProductDetail (inclut tiers[] et groupes ouverts)
+    POST   /merchant/products    → ProductDetail  (rôle MERCHANT)
+    POST   /merchant/products/{id}/tiers → tiers[]  (validation déterministe, cf. invariants)
+    GET    /merchant/dashboard   → {orders, groups, revenue_simule, units}
+
+    GET    /groups?product_id=   → [GroupCard]
+    POST   /groups               → GroupDetail
+    GET    /groups/{id}          → GroupDetail        <!-- endpoint du polling, cf. D6 -->
+    GET    /groups/code/{share_code} → GroupDetail    <!-- ouverture depuis un lien partagé -->
+    POST   /groups/{id}/join     → {order, group}
+    POST   /groups/{id}/leave    → {group}
+
+    POST   /orders/{id}/pay      → {payment, order}   <!-- mock -->
+    GET    /orders               → [Order]
+
+    GET    /stats/impact         → KPI globaux (dashboard jury)
+
+    POST   /ai/suggest-tiers     → paliers proposés   (rôle MERCHANT)
+    POST   /ai/share-message     → message de partage
+  </endpoints>
+
+  <payload_critique nom="GroupDetail">
+    Ce payload est LE contrat qui débloque le front. Il est auto-suffisant : l'écran groupe se
+    dessine intégralement à partir de lui, sans second appel et sans calcul local.
+    {
+      id, name, share_code, status, deadline, seconds_remaining,
+      product: { id, name, unit_label, image_url, individual_price, merchant_name },
+      participants_count,
+      current_quantity, target_quantity, min_quantity,
+      current_unit_price,
+      current_tier: { min_quantity, unit_price },
+      next_tier: { min_quantity, unit_price } | null,
+      quantity_to_next_tier: int | null,
+      progress_ratio: float 0..1,
+      unit_saving, potential_unit_saving,
+      group_total_saving,
+      my_membership: { joined: bool, order_id, quantity, total_amount } | null
+    }
+  </payload_critique>
+
+  <algorithme_prix>
+    def current_tier(tiers, quantity):
+        # tiers triés par min_quantity croissant
+        tier = tiers[0]
+        for t in tiers:
+            if quantity >= t.min_quantity:
+                tier = t
+            else:
+                break
+        return tier
+    Fonction pure, dans pricing.py, sans accès base. C'est le cœur du produit : elle est écrite
+    en premier, elle ne dépend de rien, et c'est la seule chose qui sera testée en Phase 3.
+  </algorithme_prix>
+
+  <jeu_de_donnees_demo>
+    Commerçant : « Agro-Intrants Zio », Tsévié.
+    Produit phare : Engrais NPK 15-15-15 — sac de 50 kg. Prix individuel : 22 000 FCFA. Stock 600.
+    Paliers : 1–49 → 22 000 · 50–99 → 20 500 · 100–199 → 19 000 · 200+ → 17 500
+    Groupe seedé : « Producteurs de Kovié », objectif 200 sacs, minimum 100, deadline J+2.
+    État initial : 38 participants · 146 sacs · prix 19 000 · il manque 54 sacs.
+    Cible de la démo : franchir 200 sacs → 17 500 FCFA → économie de 4 500 F/sac,
+    soit 900 000 FCFA d'économie communautaire affichée au dashboard.
+    Deux produits secondaires : semences de maïs améliorées, kit scolaire complet.
+  </jeu_de_donnees_demo>
+
+</contrat_partage>
+
+<!-- ============================================================ -->
+<!-- 7. FONCTIONNALITÉS IA                                        -->
+<!-- ============================================================ -->
+<features_ia>
+
+  <feature id="IA-1" nom="Assistant de paliers commerçant" ecran="Création d'offre">
+    <probleme>
+      Un commerçant du marché ne sait pas concevoir une grille de prix dégressive. C'est la
+      friction d'onboarding numéro un du modèle : sans paliers cohérents, il n'y a pas de produit.
+    </probleme>
+    <flux>
+      Le commerçant saisit : nom du produit, prix unitaire de détail, stock disponible,
+      et (optionnel) sa marge ou son prix plancher. Il appuie sur « Proposer des paliers ».
+      Le backend appelle le LLM avec ces éléments + le contexte marché (FCFA, Togo, vente en gros,
+      remises réalistes de 5 à 25 %). Le LLM renvoie du JSON strict : 3 à 4 paliers + une phrase
+      de justification par palier, en français simple.
+      Le backend VALIDE ensuite avec des règles déterministes (seuils croissants, prix
+      strictement décroissants, dernier palier ≥ prix plancher, quantité max ≤ stock).
+      Si la validation échoue : correction automatique ou fallback.
+      Le commerçant voit les paliers PRÉ-REMPLIS dans un formulaire éditable. Il garde la main :
+      l'IA propose, le commerçant décide, le serveur valide.
+    </flux>
+    <fallback>
+      Paliers déterministes : seuils à 10 % / 25 % / 50 % du stock, remises de 6 % / 12 % / 20 %.
+      Indistinguable d'un résultat IA pour un observateur, et jamais en panne.
+    </fallback>
+    <argument_jury>
+      L'IA ne remplace pas le commerçant, elle abaisse la barrière d'entrée du côté de l'offre.
+      Sans commerçants équipés, la demande agrégée ne sert à rien.
+    </argument_jury>
+  </feature>
+
+  <feature id="IA-2" nom="Générateur de message de partage" ecran="Après le join / bouton Inviter">
+    <probleme>
+      La croissance du groupe repose entièrement sur le partage. Un message générique se partage
+      mal ; un message dans la langue du destinataire, avec le bon chiffre au bon endroit, se
+      partage bien.
+    </probleme>
+    <flux>
+      Entrées : nom du produit, prix actuel, prix du prochain palier, quantité manquante, temps
+      restant, langue cible (français / éwé / mina), registre (familial, professionnel, associatif).
+      Sortie : 3 variantes de message courtes (&lt; 220 caractères), prêtes pour WhatsApp, avec
+      le lien du groupe.
+      L'utilisateur choisit une variante, appuie, WhatsApp s'ouvre pré-rempli.
+      Génération LANCÉE EN ARRIÈRE-PLAN dès l'affichage de l'écran groupe, pour que le résultat
+      soit déjà là quand l'utilisateur appuie sur « Inviter ». Aucune attente visible.
+    </flux>
+    <fallback>
+      Trois gabarits statiques par langue, avec interpolation des chiffres. Le bouton fonctionne
+      toujours, même hors ligne, même sans clé API.
+    </fallback>
+    <argument_jury>
+      Le multilingue local n'est pas cosmétique : la cible réelle (producteurs, marchés,
+      associations) ne communique pas en français écrit sur WhatsApp.
+    </argument_jury>
+  </feature>
+
+  <feature id="IA-3" nom="Smart Group Discovery" statut="P2 — CONDITIONNELLE" ecran="Recherche / Créer un groupe">
+    <ne_pas_commencer_sans_feu_vert>
+      Voir &lt;perimetre&gt;/&lt;inclus priorite="P2"&gt;. Tant que le feu vert n'est pas donné, cette
+      section n'est pas lue par les agents. Aucune table, aucune colonne, aucune dépendance
+      n'est ajoutée "au cas où".
+    </ne_pas_commencer_sans_feu_vert>
+    <probleme>
+      C'est le seul vrai risque existentiel du modèle : la fragmentation de la demande. Les
+      utilisateurs créeront « Engrais NPK », « npk 15 15 15 », « engrais maïs 50kg » comme
+      trois groupes distincts. Trois groupes de 60 sacs ne débloquent aucun palier ; un groupe
+      de 180 en débloque deux. Un matching sur `product_id` exact ne sauve rien dès que les
+      commerçants saisissent leurs produits à la main.
+    </probleme>
+    <implementation_minimale>
+      PAS d'embeddings, PAS de pgvector, PAS de base vectorielle. Un seul appel LLM :
+      on envoie la requête de l'utilisateur et les 20 groupes ouverts les plus proches
+      (présélection SQL grossière : ILIKE + catégorie), le modèle renvoie du JSON —
+      les ids pertinents avec un score de 0 à 1 et une raison courte.
+      Seuil de 0.6, maximum 3 résultats affichés.
+    </implementation_minimale>
+    <flux>
+      Quand l'utilisateur appuie sur « Créer un groupe », on l'intercepte AVANT le formulaire :
+      « 3 groupes existent déjà pour ce produit, dont un à 146/200 sacs. Rejoindre plutôt que
+      créer ? » Deux boutons : rejoindre le groupe suggéré, ou créer quand même.
+      L'interception est ce qui compte, pas la sophistication du matching.
+    </flux>
+    <fallback>
+      Recherche SQL par similarité de nom (ILIKE + trigram si disponible). Si le LLM échoue ou
+      dépasse le timeout, on affiche les résultats SQL bruts sans jamais signaler l'échec.
+    </fallback>
+    <argument_jury>
+      C'est la seule feature IA qui touche la thèse du produit : KashFlow ne vend pas des
+      produits, il agrège de la demande. Sans consolidation de la demande, il n'y a pas de
+      pouvoir de négociation. À défendre au pitch même si elle n'est pas codée.
+    </argument_jury>
+  </feature>
+
+  <regle_commune>
+    Timeout 4s. Aucune exception LLM ne remonte à l'utilisateur. Chaque appel est loggé avec sa
+    latence. Les deux endpoints IA sont derrière un rate-limit simple. Si la clé API est absente,
+    l'application fonctionne intégralement en mode fallback — c'est une exigence, pas un confort.
+  </regle_commune>
+</features_ia>
+
+<!-- ============================================================ -->
+<!-- 8. RÔLES                                                     -->
+<!-- ============================================================ -->
+<roles>
+
+  <role id="UI" nom="AGENT_UI — Design system et spécification d'écrans">
+    <mission>
+      Produire le système visuel et les spécifications d'écran dont AGENT_FRONT a besoin pour
+      coder sans jamais improviser une décision de design.
+    </mission>
+    <possede>
+      /shared/theme/tokens.ts
+      /shared/theme/typography.ts
+      /app/components/ui/**   (primitifs React Native, application acheteur)
+      /dashboard/src/ui/**    (primitifs HTML/CSS, application professionnelle)
+      /docs/design/**
+    </possede>
+    <ne_touche_jamais>
+      /app/(routes)/**, /app/features/**, /dashboard/src/pages/**, /backend/**
+    </ne_touche_jamais>
+    <note_deux_cibles>
+      tokens.ts est un fichier TypeScript sans dépendance : ni React Native, ni DOM, uniquement
+      des constantes. C'est ce qui lui permet d'être importé par les deux applications.
+      Les primitifs, eux, sont écrits DEUX fois — une version React Native, une version HTML —
+      avec les mêmes noms, les mêmes props et le même rendu visuel. C'est de la duplication
+      assumée : tenter d'abstraire les deux cibles derrière une couche commune coûte plus cher
+      que d'écrire deux fois six composants.
+    </note_deux_cibles>
+    <livrables>
+      <item>tokens.ts : toute la palette, l'échelle d'espacement, les rayons, les durées d'animation, exportés en constantes typées. Aucune valeur hexadécimale codée en dur ailleurs dans le projet.</item>
+      <item>Composants primitifs : Button (primary/secondary/ghost), Text (variantes de l'échelle typographique), Card, Divider, Badge, ProgressBar, PriceDisplay, CounterDisplay, Field, Sheet, EmptyState.</item>
+      <item>PriceDisplay et CounterDisplay gèrent eux-mêmes les chiffres tabulaires et l'animation d'incrémentation. Ce sont les deux composants qui portent la démo : ils sont soignés en premier et testés visuellement à la main.</item>
+      <item>/docs/design/screens.md : pour CHAQUE écran, un wireframe ASCII, la hiérarchie visuelle (qu'est-ce qui est le plus gros ?), les états (chargement, vide, erreur, action en cours) et les libellés exacts en français. Les libellés font partie du design, pas du code métier.</item>
+      <item>/docs/design/motion.md : spécification de l'unique séquence de déblocage de palier (timings, propriétés animées, ce qui ne bouge pas).</item>
+    </livrables>
+    <ecrans_a_specifier>
+      /app (mobile-first, spécifié en priorité) : Accueil · Fiche produit · Écran groupe (LE plus
+      important) · Rejoindre (feuille modale quantité + point de retrait) · Confirmation · Partager ·
+      Mes groupes · Mes commandes · Profil · Groupe en vue publique (visiteur non connecté arrivant
+      par un lien partagé — état spécifique, à ne pas oublier).
+      /dashboard (≥1024px) : Connexion pro · Créer une offre (avec le bloc assistant paliers) ·
+      Mes offres · Détail groupe côté commerçant · Dashboard impact (page unique destinée au jury :
+      les économies générées en display 44, les compteurs secondaires en dessous, rien d'autre).
+    </ecrans_a_specifier>
+    <exigences>
+      <item>Écran groupe : au premier coup d'œil, sans scroll, on doit lire le prix actuel, la progression, et ce qu'il manque. La règle des 10 secondes de compréhension est une contrainte de design, pas un slogan.</item>
+      <item>Les libellés parlent le langage de l'utilisateur : « il manque 54 sacs », pas « quantité restante avant palier N+1 ».</item>
+      <item>Un état vide n'est pas un message d'excuse, c'est une invitation à agir.</item>
+      <item>Accessibilité minimale : contraste AA sur tout texte, cibles tactiles ≥ 44px, focus visible sur la cible web.</item>
+    </exigences>
+  </role>
+
+  <role id="FRONT" nom="AGENT_FRONT — Application Expo">
+    <mission>
+      Construire l'application ACHETEUR Expo (mobile + web) qui consomme l'API, en s'appuyant
+      exclusivement sur les composants et les specs d'AGENT_UI. Le dashboard professionnel ne
+      fait pas partie de ce périmètre.
+    </mission>
+    <possede>
+      /app/(routes)/**
+      /app/features/**
+      /app/lib/**
+      /shared/api/types.ts   (propriétaire, mais toute modification suit la procédure de gel du contrat)
+    </possede>
+    <ne_touche_jamais>
+      /shared/theme/**, /app/components/ui/**, /dashboard/**, /backend/**
+      Si un composant primitif manque ou est inadapté : ouvrir une demande à AGENT_UI dans
+      /docs/handoff/ui-requests.md. Ne PAS créer un composant parallèle dans /app/features.
+    </ne_touche_jamais>
+    <livrables_phase1>
+      <item>Squelette expo-router complet : toutes les routes existent, naviguent, et affichent un écran stub conforme au wireframe. Un humain doit pouvoir parcourir toute l'application de bout en bout avant qu'une seule ligne d'API ne soit branchée.</item>
+      <item>Couche API typée : un type TypeScript par payload du contrat partagé, généré ou écrit à la main à partir de la section &lt;contrat_partage&gt;. Un client fetch unique avec injection du JWT et gestion centralisée des erreurs.</item>
+      <item>MOCKS : un fichier de fixtures reproduisant exactement GroupDetail, ProductDetail et les KPI, avec un flag `USE_MOCKS`. AGENT_FRONT ne doit JAMAIS être bloqué par l'avancement d'AGENT_BACK. C'est la condition du parallélisme.</item>
+      <item>Hook `useGroupPolling(groupId)` : React Query, refetchInterval 2000ms, arrêt quand l'écran perd le focus, détection du franchissement de palier (comparaison de current_tier entre deux réponses) qui déclenche la séquence d'animation.</item>
+      <item>Navigation : deep link `kashflow://g/{share_code}` et route web `/g/{share_code}` pointant vers le même écran groupe.</item>
+      <item>La route web `/g/{share_code}` est consultable SANS authentification. Un visiteur voit le produit, le prix actuel, la progression et le compte à rebours ; le bouton « Rejoindre » l'envoie vers l'inscription puis le ramène au groupe. C'est le chemin qu'empruntera le jury depuis WhatsApp : il est testé sur un vrai téléphone, sur un vrai lien, avant l'heure 40.</item>
+    </livrables_phase1>
+    <exigences>
+      <item>Aucune logique de prix côté client. Le composant affiche ce que l'API dit. Si tu écris une boucle sur les paliers dans le front, tu as violé D3.</item>
+      <item>Aucune valeur hexadécimale, aucune taille de police littérale. Tout passe par les tokens.</item>
+      <item>Le partage WhatsApp utilise expo-linking vers `whatsapp://send?text=` avec fallback sur le partage natif puis sur la copie du lien. Trois niveaux, parce que ça sera testé sur un téléphone inconnu devant un jury.</item>
+      <item>Cible web : vérifier les écrans commerçant et dashboard sur ≥1024px. Ne pas laisser react-native-web produire une bouillie de flexbox non centrée.</item>
+    </exigences>
+  </role>
+
+  <role id="BACK" nom="AGENT_BACK — API FastAPI">
+    <mission>
+      Livrer l'API, le moteur de paliers et les deux endpoints IA. Le backend est la seule source
+      de vérité de l'application.
+    </mission>
+    <possede>
+      /backend/**
+    </possede>
+    <ne_touche_jamais>
+      /app/**
+    </ne_touche_jamais>
+    <ordre_de_travail_impose>
+      <etape n="1">pricing.py — fonction pure de calcul de palier + calcul des économies. Écrite AVANT tout le reste, sans base de données, sans FastAPI.</etape>
+      <etape n="2">Modèles SQLModel conformes au contrat, script de création + script de seed avec le jeu de données de démo.</etape>
+      <etape n="3">Auth JWT + dépendances de rôles (`current_user`, `require_merchant`, `require_group_creator`).</etape>
+      <etape n="4">GET /groups/{id} — le payload GroupDetail COMPLET. C'est le premier endpoint livré, parce que c'est celui qui débloque le front et qui porte la démo.</etape>
+      <etape n="5">POST /groups/{id}/join et /leave, avec recalcul transactionnel du palier et propagation rétroactive du prix à toutes les orders du groupe.</etape>
+      <etape n="6">Catalogue, commandes, paiement mocké, dashboard commerçant, /stats/impact.</etape>
+      <etape n="7">Endpoints IA.</etape>
+    </ordre_de_travail_impose>
+    <livrables_phase1>
+      <item>OpenAPI publié et à jour dès l'étape 4. C'est le contrat vivant : toute divergence entre l'OpenAPI et la section &lt;contrat_partage&gt; est un incident, signalé immédiatement.</item>
+      <item>Un endpoint de démo `POST /demo/simulate-joins` (protégé par un token de démo, pas exposé publiquement) qui ajoute N participants fictifs avec une quantité donnée à un groupe. C'est l'outil qui déclenchera le WOW moment en direct devant le jury. À livrer en Phase 1, pas la veille du pitch.</item>
+      <item>Script de reset complet de la base en une commande, pour rejouer la démo autant de fois que nécessaire.</item>
+    </livrables_phase1>
+    <exigences>
+      <item>Le join est une transaction : création de l'order, recalcul du palier, mise à jour de TOUTES les orders actives, écriture des notifications. Tout ou rien.</item>
+      <item>Verrouillage de la ligne groupe pendant le recalcul (SELECT ... FOR UPDATE) : la démo simule des joins concurrents, une race condition qui casse le compteur en direct est le pire scénario possible.</item>
+      <item>Le stock est vérifié au join. Un groupe ne peut pas dépasser le stock du produit.</item>
+      <item>Réponses d'erreur uniformes : {detail, code}. Le front ne devine pas.</item>
+      <item>Clés et secrets dans .env, jamais dans le dépôt. La clé Anthropic ne quitte pas le serveur.</item>
+    </exigences>
+  </role>
+
+  <role id="DASH" nom="AGENT_DASH — Dashboard professionnel" statut="OPTIONNEL">
+    <activation>
+      Ce rôle n'est lancé QUE si l'équipe dispose d'une quatrième personne ou d'une session
+      supplémentaire disponible. Sinon, son périmètre est absorbé par AGENT_FRONT en Phase 2,
+      APRÈS que l'application acheteur soit fonctionnelle de bout en bout. Dans ce cas, le
+      dashboard d'impact est livré en premier et l'espace commerçant en second : le jury regarde
+      les KPI, pas le formulaire de création d'offre.
+    </activation>
+    <mission>
+      Construire l'application professionnelle Vite + React : espace commerçant et dashboard
+      d'impact, en consommant la même API et les mêmes tokens que l'application acheteur.
+    </mission>
+    <possede>
+      /dashboard/src/pages/**
+      /dashboard/src/lib/**
+      /dashboard/vite.config.ts, /dashboard/index.html
+    </possede>
+    <ne_touche_jamais>
+      /app/**, /shared/theme/**, /dashboard/src/ui/**, /backend/**
+    </ne_touche_jamais>
+    <livrables_phase1>
+      <item>Projet Vite démarrant, routing (react-router), layout à en-tête bleu marine, importation vérifiée de /shared/theme/tokens.ts.</item>
+      <item>Page Impact en priorité absolue, avec les fixtures mockées : les économies générées en display 44, puis groupes actifs, groupes réussis, participants, unités commandées, valeur totale. Une seule page, aucun graphique complexe. Si une visualisation est nécessaire, une barre de progression suffit.</item>
+      <item>Page Créer une offre : formulaire produit + tableau de paliers éditable + bouton « Proposer des paliers » (branché sur la fixture IA en Phase 1).</item>
+      <item>Client API partagé avec injection du JWT, réutilisant les types de /shared/api/types.ts sans les redéclarer.</item>
+    </livrables_phase1>
+    <exigences>
+      <item>La page Impact doit être lisible depuis le fond de la salle sur un vidéoprojecteur. Gros chiffres, contraste élevé, pas de gris clair sur blanc.</item>
+      <item>Aucun tableau de plus de 6 colonnes, aucune pagination. Le jeu de démo tient sur une page.</item>
+      <item>Zéro dépendance UI tierce. HTML, CSS et les tokens.</item>
+    </exigences>
+  </role>
+
+</roles>
+
+<!-- ============================================================ -->
+<!-- 9. PROTOCOLE DE COLLABORATION                                -->
+<!-- ============================================================ -->
+<collaboration>
+
+  <gate nom="PHASE 1A — Le contrat, avant tout code de feature" duree="2h max">
+    Les trois agents produisent D'ABORD, et uniquement :
+      AGENT_BACK  → modèles SQLModel + pricing.py + OpenAPI du seul endpoint GroupDetail
+      AGENT_UI    → tokens.ts + wireframe et spec de l'écran groupe
+      AGENT_FRONT → types TS du contrat + fixtures mockées + squelette de routes
+      AGENT_DASH  → (si activé) projet Vite démarrant + page Impact sur fixtures
+    Un humain relit et valide. LE CONTRAT EST ALORS GELÉ.
+    Après ce gel, toute modification du contrat passe par une entrée dans
+    /docs/handoff/contract-changes.md et une notification explicite aux trois sessions.
+    Un contrat qui bouge en silence à l'heure 30 coûte plus cher que la feature qu'il apportait.
+  </gate>
+
+  <propriete_des_fichiers>
+    Un fichier a un seul propriétaire, listé dans son bloc &lt;role&gt;. Aucun agent n'édite un
+    fichier qu'il ne possède pas, même pour une correction évidente d'une ligne. Il ouvre une
+    demande dans /docs/handoff/. C'est la seule règle qui empêche trois agents parallèles de se
+    piétiner sur un même dépôt.
+  </propriete_des_fichiers>
+
+  <git>
+    Branches : `back/*`, `front/*`, `ui/*`, `dash/*`. Merge vers `main` uniquement quand ça démarre.
+    Commits fréquents et petits, en français, conventionnels : `feat(back): join transactionnel`.
+    Recommandé : `git worktree` pour que les trois sessions Claude Code travaillent sur des
+    répertoires distincts sans conflit d'index.
+  </git>
+
+  <journal>
+    /docs/handoff/journal.md : chaque agent y écrit une ligne à chaque livrable terminé et à
+    chaque blocage. C'est le seul canal de synchronisation asynchrone entre les sessions.
+    Format : `[HH:MM] AGENT_X — fait / bloqué par / attend`.
+  </journal>
+
+  <arbitrage>
+    En cas de désaccord entre agents ou de doute sur le périmètre : ne pas trancher, ne pas
+    implémenter les deux versions. Écrire la question dans le journal et continuer sur autre
+    chose. L'humain arbitre en 30 secondes ; deux implémentations concurrentes coûtent 3 heures.
+  </arbitrage>
+
+</collaboration>
+
+<!-- ============================================================ -->
+<!-- 10. DÉFINITION DE TERMINÉ (Phase 1)                           -->
+<!-- ============================================================ -->
+<definition_of_done>
+  <item>`npx expo start` démarre l'app sur téléphone et sur navigateur, sans erreur rouge.</item>
+  <item>Toutes les routes existent et sont atteignables avec les fixtures mockées.</item>
+  <item>Le backend démarre, la base est seedée avec le groupe « Producteurs de Kovié » à 146 sacs.</item>
+  <item>`GET /groups/{id}` renvoie un GroupDetail conforme au contrat, au champ près.</item>
+  <item>pricing.py calcule correctement les 4 paliers de l'engrais à la main, vérifié sur 5 valeurs.</item>
+  <item>tokens.ts est utilisé partout ; un `grep` de `#` dans /app/features, /app/(routes) et /dashboard/src/pages ne renvoie rien.</item>
+  <item>La route web `/g/{share_code}` s'ouvre dans un navigateur mobile, sans compte, et affiche l'écran groupe.</item>
+  <item>Si AGENT_DASH est activé : `npm run dev` dans /dashboard affiche la page Impact avec les chiffres du jeu de démo.</item>
+  <item>/docs/design/screens.md couvre les 12 écrans avec wireframe, états et libellés définitifs.</item>
+  <item>Le journal de handoff est à jour et l'humain sait, en le lisant, où en est chaque rôle.</item>
+</definition_of_done>
+
+<!-- ============================================================ -->
+<!-- 11. INTERDITS TRANSVERSAUX                                   -->
+<!-- ============================================================ -->
+<interdits>
+  <item>Ne pas installer de bibliothèque UI tierce (NativeBase, Tamagui, gluestack). Les composants primitifs d'AGENT_UI suffisent et coûtent moins cher qu'une configuration de thème.</item>
+  <item>Ne pas ajouter de fonctionnalité absente de la section &lt;perimetre&gt;, même si elle « ne prend que 10 minutes ». Elle en prend quarante.</item>
+  <item>Ne pas écrire de test en Phase 1. Les tests sont la Phase 3 et ils porteront sur pricing.py et le parcours de démo, rien d'autre.</item>
+  <item>Ne pas refactoriser le code d'un autre agent.</item>
+  <item>Ne pas commenter du code pour l'expliquer ligne à ligne. Commenter uniquement les décisions non évidentes.</item>
+  <item>Ne pas produire de README marketing. Un README d'installation en 15 lignes, c'est tout.</item>
+</interdits>
+
+<!-- ============================================================ -->
+<!-- 12. RAPPEL FINAL                                             -->
+<!-- ============================================================ -->
+<rappel>
+  Le livrable du hackathon n'est pas une application complète. C'est une démonstration de
+  5 minutes qui fonctionne du premier coup, sur un réseau capricieux, devant des gens fatigués.
+  Chaque décision technique se juge à cette aune : est-ce que ça rend la démo plus solide,
+  ou est-ce que ça la met en danger ?
+
+  REGROUPER → DÉBLOQUER → ÉCONOMISER.
+</rappel>
+
+</prompt_conception>

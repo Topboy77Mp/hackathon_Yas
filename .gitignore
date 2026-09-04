@@ -1,29 +1,31 @@
-# Android / Gradle
-*.iml
-.gradle/
-/local.properties
-.idea/
-.DS_Store
-/build/
-**/build/
-/captures
-.externalNativeBuild
-.cxx
-*.apk
-*.aab
-*.keystore
-*.jks
+# Environnement
+.env
+.env.local
+*.local
 
-# Python / FastAPI
+# Node / Expo
+node_modules/
+.expo/
+.expo-shared/
+dist/
+web-build/
+*.log
+npm-debug.log*
+
+# Python
 __pycache__/
 *.py[cod]
 .venv/
 venv/
-env/
 *.db
 *.sqlite3
-.env
+
+# Outils
+.DS_Store
+.vscode/
+.idea/
+coverage/
 .pytest_cache/
 
-# General
-*.log
+# Claude Code
+.claude/settings.local.json

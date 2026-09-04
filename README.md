@@ -1,22 +1,18 @@
-# KashFlow
+# KashFlow — Jokkoo
 
-Plateforme de pouvoir d'achat communautaire et de commerce groupé — projet réalisé dans le cadre du **YAS Hackathon 48H** (UNIPOD, Université de Lomé).
+Plateforme d'achat groupé. Plus le volume monte, plus le prix unitaire baisse.
+YAS Hackathon 48H — 04/05 septembre 2026, UNIPOD, Université de Lomé.
 
-> Plus nous sommes nombreux, moins nous payons.
+## Démarrage
 
-## Statut
+    git clone <url> && cd kashflow
+    cp .env.example .env        # renseigner DATABASE_URL et ANTHROPIC_API_KEY
 
-🚧 En cours de développement (MVP hackathon).
+Backend :   cd backend && python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && uvicorn main:app --reload
+Acheteur :  npx expo start          (touche w pour la cible web)
+Dashboard : cd dashboard && npm install && npm run dev
 
-## Stack
+## Pour les agents Claude Code
 
-- **Mobile** : Android natif (Kotlin + Jetpack Compose)
-- **Backend** : FastAPI + SQLite
-- **Auth** : JWT
-
-## Structure du repo
-
-```
-backend/    # API FastAPI
-android/    # Application Android (Kotlin/Compose)
-```
+Lire `CLAUDE.md`, puis `docs/PROMPT-CONCEPTION.xml`.
+Message de lancement de chaque session : `docs/SESSION-PROMPTS.md`.
