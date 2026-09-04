@@ -56,6 +56,7 @@ export default function ProfilScreen() {
         <View style={styles.links}>
           <Button label="Mes groupes" variant="secondary" onPress={() => router.push('/mes-groupes')} />
           <Button label="Mes commandes" variant="secondary" onPress={() => router.push('/mes-commandes')} />
+          <Button label="Notifications" variant="secondary" onPress={() => router.push('/notifications')} />
         </View>
 
         <Divider style={styles.divider} />

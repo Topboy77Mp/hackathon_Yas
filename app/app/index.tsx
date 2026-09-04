@@ -11,16 +11,28 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, gradients, spacing, radii, shadow, hitSlop } from '@shared/theme/tokens';
 import { Text, Card, ProductCard, EmptyState } from '../components/ui';
-import { listProducts, getImpactStats } from '../lib/api/endpoints';
+import { listProducts, getImpactStats, listNotifications } from '../lib/api/endpoints';
+import { useAuthToken } from '../lib/hooks/useAuthToken';
 import { formatFcfa } from '../lib/format';
 
 export default function AccueilScreen() {
   const router = useRouter();
+  const { isAuthenticated } = useAuthToken();
   const [searchQuery, setSearchQuery] = useState('');
-  const { data: products, isLoading, refetch, isFetching } = useQuery({
+  const { data: products, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ['products'],
     queryFn: listProducts,
   });
+
+  // Badge in-app : le contrat exclut le push et accepte explicitement ce
+  // substitut. Sans jeton la requête n'est pas lancée.
+  const { data: notifications } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: listNotifications,
+    enabled: isAuthenticated,
+    refetchInterval: 30000,
+  });
+  const nonLues = notifications?.unread_count ?? 0;
   const { data: impact } = useQuery({ queryKey: ['impact-stats'], queryFn: getImpactStats });
 
   const filteredProducts = useMemo(() => {
@@ -42,14 +54,35 @@ export default function AccueilScreen() {
           <View style={styles.headerContainer}>
             <View style={styles.topRow}>
               <Text variant="title">KashFlow</Text>
-              <Pressable
-                onPress={() => router.push('/profil')}
-                accessibilityRole="button"
-                accessibilityLabel="Profil"
-                style={styles.profileTouchable}
-              >
-                <Ionicons name="person-circle-outline" size={28} color={colors.brand.ink} />
-              </Pressable>
+              <View style={styles.topActions}>
+                {isAuthenticated && (
+                  <Pressable
+                    onPress={() => router.push('/notifications')}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      nonLues > 0 ? `Notifications, ${nonLues} non lues` : 'Notifications'
+                    }
+                    style={styles.profileTouchable}
+                  >
+                    <Ionicons name="notifications-outline" size={26} color={colors.brand.ink} />
+                    {nonLues > 0 && (
+                      <View style={styles.badge}>
+                        <Text variant="caption" style={styles.badgeText} tabularNums>
+                          {nonLues > 9 ? '9+' : nonLues}
+                        </Text>
+                      </View>
+                    )}
+                  </Pressable>
+                )}
+                <Pressable
+                  onPress={() => router.push('/profil')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Profil"
+                  style={styles.profileTouchable}
+                >
+                  <Ionicons name="person-circle-outline" size={28} color={colors.brand.ink} />
+                </Pressable>
+              </View>
             </View>
 
             <Card variant="elevated" style={styles.bentoGreeting}>
@@ -87,7 +120,16 @@ export default function AccueilScreen() {
           </View>
         }
         ListEmptyComponent={
-          isLoading ? null : (
+          isLoading ? null : isError ? (
+            // Une panne réseau annonçait « Aucun produit trouvé » : le catalogue
+            // paraissait vide alors que l'API était simplement injoignable.
+            <EmptyState
+              title="Catalogue indisponible"
+              subtitle={error instanceof Error ? error.message : undefined}
+              actionLabel="Réessayer"
+              onAction={() => refetch()}
+            />
+          ) : (
             <EmptyState
               title="Aucun produit trouvé"
               subtitle={searchQuery ? 'Essayez une autre recherche.' : "Aucun produit n'est disponible pour l'instant."}
@@ -114,6 +156,20 @@ const styles = StyleSheet.create({
   list: { padding: spacing.xl, paddingBottom: spacing.xxxl },
   headerContainer: { gap: spacing.md, marginBottom: spacing.md },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  topActions: { flexDirection: 'row', alignItems: 'center' },
+  badge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    borderRadius: radii.pill,
+    backgroundColor: colors.alert.red,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: { color: colors.surface.white },
   profileTouchable: {
     width: hitSlop.minTouchTarget,
     height: hitSlop.minTouchTarget,
