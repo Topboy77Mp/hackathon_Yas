@@ -22,3 +22,12 @@ Format : `[HH:MM] AGENT_X — fait / bloqué par / attend`
 [11:54] AGENT_BACK — fait : Phase 1A fusionnée sur `main` et poussée. Les autres sessions doivent **repartir de `main`** : `CLAUDE.md` a changé et `backend/openapi.json` est disponible pour générer les types sans lancer le serveur
 [11:56] AGENT_BACK — fait : README complété (étape de seed manquante, création de la base, comptes de démo). Un clone qui suivait le README démarrait sur une base vide
 [11:56] AGENT_BACK — attend : `tokens.ts` + spec écran groupe (AGENT_UI), types TS + fixtures + squelette de routes (AGENT_FRONT). Backend en pause volontaire, aucun code de Phase 2 écrit
+[12:10] AGENT_BACK — reprise sur instruction de l'orchestrateur : les coéquipiers travaillent en local, le backend doit être prêt à accueillir leurs parties. Fin de la pause
+[12:40] AGENT_BACK — fait : étape 3, auth JWT complète (`/auth/register`, `/auth/login`, `/auth/me`) + dépendances `current_user`, `require_merchant`, `require_group_creator`
+[12:40] AGENT_BACK — fait : étape 5, `join` et `leave` transactionnels avec `SELECT … FOR UPDATE` sur la ligne groupe et propagation rétroactive du prix à toutes les commandes actives
+[12:40] AGENT_BACK — fait : étape 6, catalogue (`/products`), commandes, paiement mocké, `/merchant/dashboard`, `/stats/impact`
+[12:40] AGENT_BACK — fait : `POST /demo/simulate-joins` protégé par `X-Demo-Token`. Livrable de Phase 1 qui avait été oublié, désormais en place
+[12:40] AGENT_BACK — validé : 20 joins simultanés, compteur exact (186 sacs), un seul prix en base, zéro doublon de téléphone. Le verrou de ligne tient
+[12:40] AGENT_BACK — validé : franchissement de palier à 201 sacs, les 56 commandes basculent de 19 000 à 17 500 en base, y compris les 38 seedées
+[12:40] AGENT_BACK — reste à faire : étape 7 (endpoints IA avec fallback déterministe), clôture de groupe à échéance (D8), `POST /merchant/products` + paliers
+[12:40] AGENT_BACK — pour AGENT_FRONT et AGENT_DASH : 17 chemins publiés, `backend/openapi.json` à jour. Rien ne vous bloque côté API
