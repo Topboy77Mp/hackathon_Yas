@@ -236,7 +236,10 @@ export function GroupScreen({ queryKey, fetcher, isAuthenticated }: GroupScreenP
                   onPress={() =>
                     isAuthenticated
                       ? router.push(`/rejoindre/${group.id}`)
-                      : router.push({ pathname: '/(auth)/inscription', params: { redirectTo: `/g/${group.share_code}` } })
+                      : router.push({
+                          pathname: '/(auth)/inscription',
+                          params: { redirectTo: `/g/${group.share_code}`, groupName: group.name },
+                        })
                   }
                 />
               </View>

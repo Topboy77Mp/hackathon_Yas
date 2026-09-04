@@ -15,7 +15,7 @@ import { setToken } from '../../lib/api/auth-storage';
 
 export default function InscriptionScreen() {
   const router = useRouter();
-  const { redirectTo } = useLocalSearchParams<{ redirectTo?: string }>();
+  const { redirectTo, groupName } = useLocalSearchParams<{ redirectTo?: string; groupName?: string }>();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
@@ -39,7 +39,7 @@ export default function InscriptionScreen() {
             </View>
             <Text variant="title">Créer un compte</Text>
             <Text variant="body" tone="muted">
-              Rejoignez la communauté KashFlow
+              {groupName ? `Pour rejoindre « ${groupName} », créez d'abord votre compte.` : 'Rejoignez la communauté KashFlow'}
             </Text>
           </View>
 

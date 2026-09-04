@@ -20,7 +20,19 @@ export default function RejoindreScreen() {
     mutationFn: () => joinGroup(groupId, { quantity: Number(quantity) || 1 }),
     onSuccess: ({ order, group }) => {
       queryClient.setQueryData(['group', groupId], group);
-      router.replace(`/confirmation/${order.id}`);
+      router.replace({
+        pathname: '/confirmation/[orderId]',
+        params: {
+          orderId: order.id,
+          groupId: group.id,
+          shareCode: group.share_code,
+          productName: group.product.name,
+          unitLabel: group.product.unit_label,
+          quantity: String(order.quantity),
+          unitPrice: String(order.unit_price),
+          totalAmount: String(order.total_amount),
+        },
+      });
     },
   });
 
