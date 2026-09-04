@@ -57,3 +57,8 @@ Format : `[HH:MM] AGENT_X — fait / bloqué par / attend`
 [16:35] AGENT_BACK — décision tranchée : les identifiants d'API sont des entiers. `/shared/api/types.ts` doit s'aligner sur l'OpenAPI publié, pas l'inverse. Consigné dans contract-changes.md
 [16:35] AGENT_BACK — décision tranchée : `GET /stats/impact` reste public. C'est la page du jury, elle ne peut pas dépendre d'une session. Consigné dans contract-changes.md
 [16:35] AGENT_BACK — le feu vert de Phase 2 et les specs UI des écrans professionnels ne sont pas de mon ressort : orchestrateur pour le premier, AGENT_UI pour les seconds
+[17:05] AGENT_BACK — fait : IA-3 activée sur feu vert de l'orchestrateur. `POST /ai/discover-groups`. Présélection SQL, un appel modèle, seuil 0,6, 3 résultats max, repli SQL silencieux
+[17:05] AGENT_BACK — défaut trouvé en conditions réelles et corrigé : la présélection cherchait la requête entière comme une seule sous-chaîne. « engrais pour mon maïs » ne remontait rien alors que le groupe existait. Recherche mot à mot désormais, test ajouté
+[17:05] AGENT_BACK — garde-fous ajoutés : un identifiant inventé par le modèle est écarté, un groupe expiré n'est jamais proposé
+[17:05] AGENT_BACK — fait : `groups_successful` compte LOCKED ou COMPLETED. Le KPI du jury affichait « 0 % de réussite » en permanence
+[17:05] AGENT_BACK — 144 tests verts. Backend terminé : étapes 1 à 7, Phase 3, IA-1, IA-2, IA-3

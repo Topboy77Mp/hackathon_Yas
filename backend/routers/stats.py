@@ -55,7 +55,15 @@ def impact(session: Session = Depends(get_session)) -> ImpactStats:
     )
 
     groups_created = _count(session, Group)
-    groups_successful = _count(session, Group, Group.status == GroupStatus.COMPLETED)
+    # Un groupe verrouillé a atteint son objectif minimum : c'est une réussite.
+    # Seul CANCELLED est un échec. Compter uniquement COMPLETED afficherait
+    # « 0 groupe réussi » en permanence, puisque rien ne franchit LOCKED →
+    # COMPLETED dans le périmètre du hackathon.
+    groups_successful = _count(
+        session,
+        Group,
+        Group.status.in_([GroupStatus.LOCKED, GroupStatus.COMPLETED]),
+    )
 
     return ImpactStats(
         users=_count(session, User),

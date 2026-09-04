@@ -285,6 +285,23 @@ class ShareMessageOut(BaseModel):
     source: str
 
 
+class DiscoverIn(BaseModel):
+    query: str = Field(min_length=2, max_length=120)
+    product_id: int | None = None
+
+
+class GroupSuggestion(BaseModel):
+    score: float
+    reason: str
+    group: GroupCard
+
+
+class DiscoverOut(BaseModel):
+    query: str
+    suggestions: list[GroupSuggestion]
+    source: str
+
+
 class ImpactStats(BaseModel):
     users: int
     merchants: int

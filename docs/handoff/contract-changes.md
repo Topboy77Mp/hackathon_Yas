@@ -116,6 +116,55 @@ Notifié : non — à diffuser aux autres sessions par l'orchestrateur.
 
 ---
 
+## [17:05] IA-3 activée sur feu vert de l'orchestrateur — `POST /ai/discover-groups`
+
+Avant : IA-3 marquée `P2 — CONDITIONNELLE`, aucune table, aucune colonne, aucune
+route. Le contrat interdisait de la commencer sans accord explicite.
+Après : l'orchestrateur a donné le feu vert. Une route ajoutée.
+
+    POST /ai/discover-groups   {query, product_id?}
+                               → {query, suggestions[{score, reason, group}], source}
+
+Implémentation strictement conforme à `<implementation_minimale>` : aucun
+embedding, aucun pgvector, aucune base vectorielle. Présélection SQL grossière
+sur les groupes ouverts, un unique appel au modèle, seuil de pertinence 0,6,
+trois résultats au maximum. Repli sur les résultats SQL bruts, sans jamais
+signaler l'échec.
+
+Deux garde-fous ajoutés au-delà du contrat, parce qu'ils protègent la démo :
+un identifiant de groupe inventé par le modèle est écarté (il enverrait
+l'utilisateur vers un groupe inexistant), et un groupe expiré n'est jamais
+proposé.
+
+Impacte : AGENT_FRONT — interception à placer AVANT le formulaire de création
+de groupe, avec deux boutons : rejoindre le groupe suggéré, ou créer quand même.
+L'interception compte davantage que la finesse du rapprochement.
+
+Notifié : non — à diffuser par l'orchestrateur.
+
+---
+
+## [17:05] Correction — un groupe verrouillé compte comme réussi
+
+Avant : `groups_successful` ne comptait que les groupes `COMPLETED`.
+Après : compte les groupes `LOCKED` ou `COMPLETED`.
+
+Raison : rien ne fait franchir `LOCKED → COMPLETED` dans le périmètre du
+hackathon — aucune route de livraison n'existe et le contrat n'en prévoit pas.
+Le KPI affichait donc « 0 groupe réussi » et « 0 % de taux de réussite » en
+permanence, y compris après qu'un groupe a atteint son objectif. Sur la page
+destinée au jury, ce chiffre contredisait frontalement le récit du pitch.
+
+Un groupe verrouillé a atteint son objectif minimum : c'est une réussite.
+`CANCELLED` reste le seul échec. Aucune route ajoutée, aucun périmètre élargi.
+
+Impacte : AGENT_DASH — `groups_successful` et `success_rate` deviennent enfin
+non nuls.
+
+Notifié : non — à diffuser par l'orchestrateur.
+
+---
+
 ## [16:35] Décision — les identifiants d'API sont des entiers, pas des chaînes
 
 Question posée par AGENT_DASH : le backend renvoie des `number`, `/shared/api/types.ts`

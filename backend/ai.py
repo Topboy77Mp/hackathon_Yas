@@ -208,6 +208,94 @@ def suggest_tiers(
     return fallback_tiers(retail_price, stock), "repli"
 
 
+# ── IA-3 : regroupement des demandes ───────────────────────────────────────
+
+SEUIL_PERTINENCE = 0.6
+RESULTATS_MAX = 3
+
+
+@dataclass(frozen=True)
+class GroupMatch:
+    group_id: int
+    score: float
+    reason: str
+
+
+def _coerce_matches(raw: dict, autorises: set[int]) -> list[GroupMatch] | None:
+    """Ne garde que des identifiants réellement proposés au modèle.
+
+    Un modèle qui invente un identifiant de groupe enverrait l'utilisateur
+    vers un groupe inexistant : on filtre sur l'ensemble de candidats.
+    """
+    try:
+        items = raw["matches"]
+    except (KeyError, TypeError):
+        return None
+
+    retenus: list[GroupMatch] = []
+    for item in items:
+        try:
+            identifiant = int(item["group_id"])
+            score = float(item["score"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if identifiant not in autorises or not 0.0 <= score <= 1.0:
+            continue
+        if score < SEUIL_PERTINENCE:
+            continue
+        retenus.append(
+            GroupMatch(identifiant, round(score, 2), str(item.get("reason", ""))[:140])
+        )
+
+    retenus.sort(key=lambda m: m.score, reverse=True)
+    return retenus[:RESULTATS_MAX]
+
+
+def discover_groups(query: str, candidats: list[dict]) -> tuple[list[GroupMatch], str]:
+    """Rapproche une recherche libre des groupes ouverts existants.
+
+    Le risque que cette fonctionnalité adresse est la fragmentation de la
+    demande : trois groupes de 60 sacs ne débloquent aucun palier, un groupe de
+    180 en débloque deux. L'interception vaut plus que la finesse du matching.
+
+    Renvoie (correspondances, origine) où origine vaut "ia" ou "repli".
+    Le repli conserve l'ordre de la présélection SQL, sans jamais signaler
+    l'échec à l'utilisateur.
+    """
+    if not candidats:
+        return [], "repli"
+
+    repli = [
+        GroupMatch(c["id"], 0.0, "Groupe ouvert pour un produit proche.")
+        for c in candidats[:RESULTATS_MAX]
+    ]
+
+    lignes = "\n".join(
+        f'- id {c["id"]} · produit "{c["product_name"]}" · groupe "{c["group_name"]}" '
+        f'· {c["current_quantity"]}/{c["target_quantity"]} {c["unit_label"]}s'
+        for c in candidats
+    )
+    prompt = (
+        f"Un acheteur togolais cherche : \"{query}\".\n"
+        f"Voici les groupes d'achat ouverts :\n{lignes}\n\n"
+        f"Indique lesquels correspondent réellement à sa recherche, pour lui éviter "
+        f"de créer un doublon. Un score de 1 signifie que c'est exactement le même "
+        f"produit, 0 qu'il n'a rien à voir. N'invente aucun identifiant : "
+        f"n'utilise que ceux de la liste. Ignore les groupes non pertinents.\n"
+        f'Réponds uniquement en JSON : {{"matches":[{{"group_id":int,"score":0.0,'
+        f'"reason":"une phrase courte en français"}}]}}'
+    )
+
+    raw = _call_groq(prompt, max_tokens=400)
+    if raw is not None:
+        retenus = _coerce_matches(raw, {c["id"] for c in candidats})
+        if retenus is not None:
+            return retenus, "ia"
+        logger.warning("ia-3: sortie inexploitable, repli sur la présélection SQL")
+
+    return repli, "repli"
+
+
 # ── IA-2 : messages de partage ─────────────────────────────────────────────
 
 REGISTRES = {
