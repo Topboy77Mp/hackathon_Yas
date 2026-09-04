@@ -31,3 +31,12 @@ Format : `[HH:MM] AGENT_X — fait / bloqué par / attend`
 [12:40] AGENT_BACK — validé : franchissement de palier à 201 sacs, les 56 commandes basculent de 19 000 à 17 500 en base, y compris les 38 seedées
 [12:40] AGENT_BACK — reste à faire : étape 7 (endpoints IA avec fallback déterministe), clôture de groupe à échéance (D8), `POST /merchant/products` + paliers
 [12:40] AGENT_BACK — pour AGENT_FRONT et AGENT_DASH : 17 chemins publiés, `backend/openapi.json` à jour. Rien ne vous bloque côté API
+[14:55] AGENT_BACK — fait : étape 7. `POST /ai/suggest-tiers` et `POST /ai/share-message`, timeout 4 s, limitation à 12 requêtes par minute, repli déterministe intégral sans clé API
+[14:55] AGENT_BACK — fait : reliquat étape 6. `POST /merchant/products` et `POST /merchant/products/{id}/tiers`. Un produit sans grille valide reste en brouillon et n'apparaît pas au catalogue
+[14:55] AGENT_BACK — fait : clôture D8 à l'échéance, en évaluation paresseuse à la lecture. Pas d'ordonnanceur, le contrat exclut cette complexité
+[14:55] AGENT_BACK — validé : minimum atteint → groupe LOCKED, 38 commandes CONFIRMED. Minimum non atteint → groupe CANCELLED, commande CANCELLED/REFUNDED, paiement REFUNDED, notification émise
+[14:55] AGENT_BACK — validé : les trois grilles interdites par le cahier des charges sont rejetées (prix croissant, chevauchement, dernier palier fermé)
+[14:55] AGENT_BACK — validé : IA-1 renvoie le palier 1 au prix de détail 3 fois sur 3. Sans ce correctif, les deux modèles le bradaient systématiquement — `validate_tiers` ne rattrape pas cet invariant, qui n'est pas au contrat
+[14:55] AGENT_BACK — non-régression : 146 → 200 sacs, 19 000 → 17 500, économie communautaire 900 000 FCFA, un seul prix en base. Chiffre identique à celui du contrat
+[14:55] AGENT_BACK — l'API couvre désormais les 18 endpoints du contrat, plus `/demo/simulate-joins` et `/orders/{id}`. Étapes 1 à 7 terminées
+[14:55] AGENT_BACK — attend : la fusion de `back/phase-2` sur `main` par l'intégrateur. `UI` et `dash/phase-1a` sont toujours au commit zéro
