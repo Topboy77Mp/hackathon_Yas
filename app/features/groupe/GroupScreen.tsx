@@ -232,21 +232,30 @@ export function GroupScreen({ queryKey, fetcher, isAuthenticated }: GroupScreenP
           </View>
         </Card>
 
+        {/* Grille complète : `tiers[]` a été ajouté au payload précisément pour
+            que cet écran n'ait pas à faire un second appel. Le palier en vigueur
+            et le suivant restent mis en évidence. */}
         <Card variant="elevated" style={styles.cardSpacing}>
           <Text variant="label">Paliers</Text>
           <View style={styles.tierList}>
-            <TierRow
-              range={`${group.current_tier.min_quantity} ${unitLabelPlural} et plus`}
-              price={formatFcfa(group.current_tier.unit_price)}
-              state="current"
-            />
-            {group.next_tier && (
+            {group.tiers.map((tier) => (
               <TierRow
-                range={`${group.next_tier.min_quantity} ${unitLabelPlural} et plus`}
-                price={formatFcfa(group.next_tier.unit_price)}
-                state="next"
+                key={tier.min_quantity}
+                range={
+                  tier.max_quantity === null
+                    ? `${tier.min_quantity} ${unitLabelPlural} et plus`
+                    : `${tier.min_quantity}–${tier.max_quantity} ${unitLabelPlural}`
+                }
+                price={formatFcfa(tier.unit_price)}
+                state={
+                  tier.min_quantity === group.current_tier.min_quantity
+                    ? 'current'
+                    : tier.min_quantity === group.next_tier?.min_quantity
+                      ? 'next'
+                      : 'default'
+                }
               />
-            )}
+            ))}
           </View>
         </Card>
 
