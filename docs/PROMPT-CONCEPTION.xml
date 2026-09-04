@@ -832,7 +832,13 @@
 <!-- 11. INTERDITS TRANSVERSAUX                                   -->
 <!-- ============================================================ -->
 <interdits>
-  <item>Ne pas installer de bibliothèque UI tierce (NativeBase, Tamagui, gluestack). Les composants primitifs d'AGENT_UI suffisent et coûtent moins cher qu'une configuration de thème.</item>
+  <item>Ne pas installer de bibliothèque UI tierce (NativeBase, Tamagui, gluestack). Les composants primitifs d'AGENT_UI suffisent et coûtent moins cher qu'une configuration de thème.
+    EXCEPTION dégelée sur décision humaine explicite (Phase 2) : react-native-paper est
+    installée dans /app, avec un thème (app/lib/paperTheme.ts) qui vient exclusivement de
+    shared/theme/**, jamais des couleurs Material par défaut. Les primitifs Button, Field et
+    Card enveloppent maintenant les composants Paper correspondants ; ProgressBar reste
+    volontairement custom (la durée d'animation documentée dans motion.md n'est pas
+    contrôlable depuis l'extérieur du ProgressBar de Paper). /dashboard ne charge pas Paper.</item>
   <item>Ne pas ajouter de fonctionnalité absente de la section &lt;perimetre&gt;, même si elle « ne prend que 10 minutes ». Elle en prend quarante.</item>
   <item>Ne pas écrire de test en Phase 1. Les tests sont la Phase 3 et ils porteront sur pricing.py et le parcours de démo, rien d'autre.</item>
   <item>Ne pas refactoriser le code d'un autre agent.</item>

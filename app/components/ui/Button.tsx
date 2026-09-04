@@ -1,91 +1,77 @@
 /**
  * KashFlow — Button
- * primary : action principale (dégradé jaune → jaune profond, une seule par écran en général).
- * secondary : action alternative, contour, sans remplissage jaune.
- * ghost : action discrète (liens d'action, ex. « Voir ma commande »).
+ * Enveloppe react-native-paper (Button de Paper : gestion du loading, ripple, accessibilité).
+ * primary : dégradé jaune → jaune profond — Paper gère le contenu, le dégradé est un fond
+ * transparent posé dessous (Paper ne fait pas de dégradé nativement).
+ * secondary : contour Paper (mode "outlined"). ghost : texte seul (mode "text").
  */
-import { Pressable, ActivityIndicator, type PressableProps, StyleSheet } from 'react-native';
+import type { GestureResponderEvent } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Button as PaperButton } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, gradients, radii, spacing, hitSlop } from '@shared/theme/tokens';
-import { Text } from './Text';
+import { colors, gradients, radii, hitSlop } from '@shared/theme/tokens';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
 
-export interface ButtonProps extends Omit<PressableProps, 'style' | 'children'> {
+export interface ButtonProps {
   label: string;
   variant?: ButtonVariant;
   loading?: boolean;
   fullWidth?: boolean;
+  disabled?: boolean;
+  onPress?: (event: GestureResponderEvent) => void;
+  accessibilityLabel?: string;
 }
 
-export function Button({ label, variant = 'primary', loading = false, fullWidth = true, disabled, ...rest }: ButtonProps) {
+export function Button({ label, variant = 'primary', loading = false, fullWidth = true, disabled, onPress }: ButtonProps) {
   const isDisabled = disabled || loading;
-
-  const content = loading ? (
-    <ActivityIndicator color={variant === 'primary' ? colors.brand.ink : colors.text.muted} />
-  ) : (
-    <Text variant={variant === 'ghost' ? 'label' : 'body'} tone={variant === 'ghost' ? 'muted' : 'ink'}>
-      {label}
-    </Text>
-  );
 
   if (variant === 'primary') {
     return (
-      <Pressable
-        {...rest}
-        disabled={isDisabled}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: isDisabled, busy: loading }}
-        style={({ pressed }) => [fullWidth && styles.fullWidth, isDisabled && styles.disabled, pressed && styles.pressedScale]}
+      <LinearGradient
+        colors={gradients.primary}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.gradientWrap, fullWidth && styles.fullWidth, isDisabled && styles.disabled]}
       >
-        <LinearGradient
-          colors={gradients.primary}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.base}
+        <PaperButton
+          mode="contained"
+          onPress={onPress}
+          loading={loading}
+          disabled={isDisabled}
+          buttonColor="transparent"
+          textColor={colors.brand.ink}
+          style={styles.paperFillsGradient}
+          contentStyle={styles.content}
+          labelStyle={styles.label}
         >
-          {content}
-        </LinearGradient>
-      </Pressable>
+          {label}
+        </PaperButton>
+      </LinearGradient>
     );
   }
 
   return (
-    <Pressable
-      {...rest}
+    <PaperButton
+      mode={variant === 'secondary' ? 'outlined' : 'text'}
+      onPress={onPress}
+      loading={loading}
       disabled={isDisabled}
-      accessibilityRole="button"
-      accessibilityState={{ disabled: isDisabled, busy: loading }}
-      style={({ pressed }) => [
-        styles.base,
-        styles[variant],
-        fullWidth && styles.fullWidth,
-        pressed && !isDisabled && stylesPressed[variant],
-        isDisabled && styles.disabled,
-      ]}
+      textColor={variant === 'ghost' ? colors.text.muted : colors.brand.ink}
+      style={[fullWidth && styles.fullWidth]}
+      contentStyle={styles.content}
+      labelStyle={styles.label}
     >
-      {content}
-    </Pressable>
+      {label}
+    </PaperButton>
   );
 }
 
 const styles = StyleSheet.create({
-  base: {
-    minHeight: hitSlop.minTouchTarget,
-    borderRadius: radii.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.xl,
-  },
+  gradientWrap: { borderRadius: radii.pill, overflow: 'hidden' },
+  paperFillsGradient: { borderRadius: radii.pill, backgroundColor: 'transparent' },
   fullWidth: { alignSelf: 'stretch' },
-  secondary: { backgroundColor: colors.surface.white, borderWidth: 1, borderColor: colors.line },
-  ghost: { backgroundColor: 'transparent' },
+  content: { minHeight: hitSlop.minTouchTarget },
+  label: { fontSize: 16 },
   disabled: { opacity: 0.5 },
-  pressedScale: { opacity: 0.9 },
-});
-
-const stylesPressed = StyleSheet.create({
-  primary: {},
-  secondary: { backgroundColor: colors.surface.raised },
-  ghost: { backgroundColor: colors.surface.raised },
 });

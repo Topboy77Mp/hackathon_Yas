@@ -1,28 +1,26 @@
-import { TextInput, View, type TextInputProps, StyleSheet } from 'react-native';
-import { colors, radii, spacing } from '@shared/theme/tokens';
-import { fontFamilies } from '@shared/theme/typography';
-import { Text } from './Text';
+/**
+ * KashFlow — Field
+ * Enveloppe react-native-paper (TextInput mode="outlined" + HelperText). Label flottant :
+ * l'idiome Paper, plutôt que notre ancien label fixe au-dessus du champ.
+ */
+import type { TextInputProps as RNTextInputProps } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { TextInput as PaperTextInput, HelperText } from 'react-native-paper';
+import { spacing } from '@shared/theme/tokens';
 
-export interface FieldProps extends TextInputProps {
+export interface FieldProps extends Pick<RNTextInputProps, 'value' | 'onChangeText' | 'secureTextEntry' | 'keyboardType' | 'placeholder' | 'accessibilityLabel'> {
   label: string;
   error?: string;
 }
 
-export function Field({ label, error, style, ...rest }: FieldProps) {
+export function Field({ label, error, ...rest }: FieldProps) {
   return (
     <View style={styles.container}>
-      <Text variant="label" tone="muted">
-        {label}
-      </Text>
-      <TextInput
-        {...rest}
-        placeholderTextColor={colors.text.muted}
-        style={[styles.input, !!error && styles.inputError, style]}
-      />
+      <PaperTextInput mode="outlined" label={label} error={!!error} {...rest} />
       {error && (
-        <Text variant="caption" tone="alert">
+        <HelperText type="error" visible padding="none">
           {error}
-        </Text>
+        </HelperText>
       )}
     </View>
   );
@@ -30,15 +28,4 @@ export function Field({ label, error, style, ...rest }: FieldProps) {
 
 const styles = StyleSheet.create({
   container: { gap: spacing.xs },
-  input: {
-    minHeight: 44,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: radii.block,
-    paddingHorizontal: spacing.lg,
-    fontFamily: fontFamilies.body,
-    fontSize: 16,
-    color: colors.brand.ink,
-  },
-  inputError: { borderColor: colors.alert.red },
 });
