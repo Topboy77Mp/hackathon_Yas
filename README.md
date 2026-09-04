@@ -20,7 +20,25 @@ La base PostgreSQL doit exister au préalable :
                           -c "CREATE DATABASE kashflow OWNER kashflow;"
 
 API : http://localhost:8000 · doc interactive /docs · contrat figé backend/openapi.json
-Compte de démo : +22891000001 / demo1234 · groupe de démo /groups/code/KOVIE
+
+## Comptes de démonstration
+
+| Rôle       | Téléphone     | Mot de passe |
+|------------|---------------|--------------|
+| Acheteur   | +22891000001  | demo1234     |
+| Commerçant | +22890000001  | demo1234     |
+
+Groupe de démonstration : `/groups/code/KOVIE` — 146 sacs sur 200, 19 000 FCFA,
+il en manque 54 pour tomber à 17 500.
+
+### Faire monter le compteur pendant la démonstration
+
+    curl -X POST localhost:8000/demo/simulate-joins \
+         -H 'X-Demo-Token: jokkoo-demo' -H 'Content-Type: application/json' \
+         -d '{"group_id":1,"count":18,"quantity":3}'
+
+`python seed.py --reset` remet la démonstration à son état de départ, autant de
+fois que nécessaire.
 
 ## Pour les agents Claude Code
 
