@@ -1,164 +1,34 @@
 import { Link } from "react-router-dom";
+import AddRounded from "@mui/icons-material/AddRounded";
+import ArrowOutwardRounded from "@mui/icons-material/ArrowOutwardRounded";
+import GroupsOutlined from "@mui/icons-material/GroupsOutlined";
+import Inventory2Outlined from "@mui/icons-material/Inventory2Outlined";
+import PaymentsOutlined from "@mui/icons-material/PaymentsOutlined";
+import ShoppingCartOutlined from "@mui/icons-material/ShoppingCartOutlined";
+import { Box, Button, Card, CardContent, Chip, LinearProgress, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { getMerchantDashboard, getMerchantProducts } from "../lib/api/endpoints";
-import { entier, fcfa, libelleStatut, pourcentage, tonStatut, unites } from "../lib/format";
+import { entier, fcfa, libelleStatut, pourcentage, unites } from "../lib/format";
 import { useAsyncResource } from "../lib/useAsyncResource";
 import { ErrorState, LoadingState } from "./ResourceState";
 
-/**
- * Deux choses distinctes vivent sur cette page, et les confondre était le défaut
- * de la version précédente : les **offres** (produits et leur grille de paliers)
- * et les **groupes** (achats en cours sur ces offres). Un commerçant qui vient de
- * publier un produit n'a aucun groupe — il devait quand même voir son offre.
- */
+function Summary({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return <Card variant="outlined"><CardContent sx={{ display: "flex", alignItems: "center", gap: 1.5, p: "22px !important" }}><Box sx={{ display: "grid", width: 40, height: 40, placeItems: "center", color: "success.main" }}>{icon}</Box><Box><Typography color="text.secondary" variant="body2">{label}</Typography><Typography sx={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }} variant="h6">{value}</Typography></Box></CardContent></Card>;
+}
+
 export function OffersPage() {
-  const offres = useAsyncResource(getMerchantProducts, []);
-  const tableau = useAsyncResource(getMerchantDashboard, []);
+  const offers = useAsyncResource(getMerchantProducts, []);
+  const dashboard = useAsyncResource(getMerchantDashboard, []);
+  if (offers.isLoading || dashboard.isLoading) return <LoadingState title="Chargement de votre espace…" />;
+  if (offers.error || !offers.data) return <ErrorState title="Espace indisponible" description={offers.error?.message} retry={offers.refresh} />;
 
-  if (offres.isLoading || tableau.isLoading) {
-    return <LoadingState title="Chargement de votre espace…" />;
-  }
-  if (offres.error || !offres.data) {
-    return (
-      <ErrorState
-        title="Espace indisponible"
-        description={offres.error?.message}
-        retry={offres.refresh}
-      />
-    );
-  }
-
-  const produits = offres.data;
-  const bord = tableau.data;
-
-  return (
-    <section className="dashboard-page" aria-labelledby="offers-title">
-      <div className="page-heading">
-        <div>
-          <div className="eyebrow">Espace commerçant</div>
-          <h1 id="offers-title">{bord?.business_name ?? "Mes offres"}</h1>
-          <p className="page-intro">
-            Vos produits, leur grille de paliers et les groupes d’achat en cours.
-          </p>
-        </div>
-        <Link className="button button-primary" to="/offres/nouvelle">Créer une offre</Link>
-      </div>
-
-      {bord && (
-        <div className="summary-strip">
-          <div><span>Chiffre d’affaires engagé</span><strong>{fcfa(bord.revenue_simule)}</strong></div>
-          <div><span>Unités réservées</span><strong>{entier(bord.units)}</strong></div>
-          <div><span>Commandes</span><strong>{entier(bord.orders)}</strong></div>
-          <div><span>Groupes actifs</span><strong>{entier(bord.groups)}</strong></div>
-        </div>
-      )}
-
-      <h2 className="section-heading">Mes offres</h2>
-      <div className="offer-grid">
-        {produits.map((produit) => (
-          <article className="offer-card" key={produit.id}>
-            <div className="card-topline">
-              <span className={`status status-${tonStatut(produit.status)}`}>
-                {libelleStatut(produit.status)}
-              </span>
-              <span className="muted">
-                {unites(produit.stock, produit.unit_label)} en stock
-              </span>
-            </div>
-
-            <h3>{produit.name}</h3>
-            <p>
-              Prix de détail {fcfa(produit.individual_price)}
-              {produit.tiers.length > 0 && <> · meilleur prix {fcfa(produit.best_price)}</>}
-            </p>
-
-            {produit.tiers.length > 0 ? (
-              <ul className="tier-chips">
-                {produit.tiers.map((palier) => (
-                  <li key={palier.min_quantity}>
-                    <strong>{entier(palier.min_quantity)}+</strong> {fcfa(palier.unit_price)}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="warning-note">
-                Sans grille de paliers, cette offre reste un brouillon et n’apparaît pas au catalogue.
-              </p>
-            )}
-
-            <div className="offer-metric">
-              <strong>{unites(produit.reserved_units, produit.unit_label)} réservés</strong>
-              <span>
-                {produit.groups_count === 0
-                  ? "aucun groupe ouvert"
-                  : `${produit.groups_count} groupe${produit.groups_count > 1 ? "s" : ""} sur cette offre`}
-              </span>
-            </div>
-
-            <div className="card-actions">
-              <Link className="button button-secondary" to={`/offres/${produit.id}/paliers`}>
-                {produit.tiers.length > 0 ? "Modifier les paliers" : "Ajouter des paliers"}
-              </Link>
-            </div>
-          </article>
-        ))}
-
-        {produits.length === 0 && (
-          <article className="empty-offers">
-            <h3>Aucune offre publiée.</h3>
-            <p>Créez une offre avec sa grille de paliers pour lancer le premier achat groupé.</p>
-            <Link className="button button-primary" to="/offres/nouvelle">Créer une offre</Link>
-          </article>
-        )}
-      </div>
-
-      <h2 className="section-heading">Groupes en cours</h2>
-      {tableau.error && !bord && (
-        <p className="warning-note">
-          Les groupes n’ont pas pu être chargés. {tableau.error.message}
-        </p>
-      )}
-
-      <div className="group-rows">
-        {bord?.rows.map((ligne) => (
-          <Link className="group-row" key={ligne.group_id} to={`/groupes/${ligne.group_id}`}>
-            <div className="group-row-main">
-              <div className="card-topline">
-                <span className={`status status-${tonStatut(ligne.status)}`}>
-                  {libelleStatut(ligne.status)}
-                </span>
-                <span className="muted">{entier(ligne.participants_count)} participants</span>
-              </div>
-              <h3>{ligne.group_name}</h3>
-              <p>{ligne.product_name}</p>
-              <div
-                className="progress-track"
-                role="img"
-                aria-label={`${pourcentage(ligne.current_quantity / ligne.target_quantity)} % de l’objectif`}
-              >
-                <span
-                  style={{
-                    width: `${pourcentage(ligne.current_quantity / ligne.target_quantity)}%`,
-                  }}
-                />
-              </div>
-              <p className="muted">
-                {entier(ligne.current_quantity)} / {entier(ligne.target_quantity)} unités engagées
-              </p>
-            </div>
-            <div className="group-row-metric">
-              <span>Prix en vigueur</span>
-              <strong>{fcfa(ligne.current_unit_price)}</strong>
-              <span>{fcfa(ligne.total_amount)} engagés</span>
-            </div>
-          </Link>
-        ))}
-
-        {bord?.rows.length === 0 && (
-          <p className="muted">
-            Aucun groupe d’achat n’est encore ouvert sur vos offres.
-          </p>
-        )}
-      </div>
-    </section>
-  );
+  const products = offers.data;
+  const activity = dashboard.data;
+  return <Stack spacing={3} sx={{ py: 1 }}>
+    <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { sm: "flex-start" }, justifyContent: "space-between" }}><Box><Typography color="text.secondary" variant="body2">Espace commerçant</Typography><Typography variant="h4">Mes offres</Typography><Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">Vos produits, leurs paliers et les groupes d’achat qui les font progresser.</Typography></Box><Button color="secondary" component={Link} startIcon={<AddRounded />} to="/offres/nouvelle" variant="contained">Créer une offre</Button></Stack>
+    {activity && <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 2, "@media (max-width: 1000px)": { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }, "@media (max-width: 600px)": { gridTemplateColumns: "1fr" } }}><Summary icon={<GroupsOutlined />} label="Groupes en cours" value={entier(activity.groups)} /><Summary icon={<ShoppingCartOutlined />} label="Commandes reçues" value={entier(activity.orders)} /><Summary icon={<Inventory2Outlined />} label="Unités réservées" value={entier(activity.units)} /><Summary icon={<PaymentsOutlined />} label="Valeur engagée" value={fcfa(activity.revenue_simule)} /></Box>}
+    <Box><Typography variant="h5">Produits et paliers</Typography><Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">Une offre existe même sans groupe : vous pouvez préparer ses paliers avant sa première commande.</Typography></Box>
+    <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 2, "@media (max-width: 760px)": { gridTemplateColumns: "1fr" } }}>{products.map((product) => <Card key={product.id} variant="outlined"><CardContent sx={{ display: "flex", height: "100%", flexDirection: "column", p: "24px !important" }}><Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}><Chip label={libelleStatut(product.status)} size="small" variant="outlined" /><Typography color="text.secondary" variant="caption">{unites(product.stock, product.unit_label)} en stock</Typography></Stack><Typography sx={{ mt: 2, fontWeight: 700 }} variant="h5">{product.name}</Typography><Typography color="text.secondary" sx={{ mt: 0.75 }} variant="body2">Prix de détail {fcfa(product.individual_price)} · meilleur prix {fcfa(product.best_price)}</Typography><Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", mt: 2 }}>{product.tiers.map((tier) => <Chip key={tier.min_quantity} label={`${entier(tier.min_quantity)}+ · ${fcfa(tier.unit_price)}`} size="small" variant="outlined" />)}</Stack><Box sx={{ mt: "auto", pt: 2.5 }}><Typography sx={{ fontWeight: 700 }} variant="body2">{unites(product.reserved_units, product.unit_label)} réservés</Typography><Typography color="text.secondary" variant="caption">{product.groups_count === 0 ? "Aucun groupe ouvert" : `${product.groups_count} groupe${product.groups_count > 1 ? "s" : ""} sur cette offre`}</Typography><Button component={Link} endIcon={<ArrowOutwardRounded />} sx={{ mt: 1.25 }} to={`/offres/${product.id}/paliers`} variant="text">{product.tiers.length ? "Modifier les paliers" : "Ajouter des paliers"}</Button></Box></CardContent></Card>)}</Box>
+    {products.length === 0 && <Card variant="outlined"><CardContent sx={{ p: 4, textAlign: "center" }}><Typography variant="h5">Aucune offre publiée</Typography><Typography color="text.secondary" sx={{ mt: 1 }}>Créez une offre avec une grille de paliers pour lancer votre premier achat groupé.</Typography><Button component={Link} startIcon={<AddRounded />} sx={{ mt: 2 }} to="/offres/nouvelle" variant="contained">Créer une offre</Button></CardContent></Card>}
+    <Card variant="outlined"><CardContent sx={{ p: "28px !important" }}><Typography variant="h5">Groupes en cours</Typography><Typography color="text.secondary" sx={{ mt: 0.5, mb: 2 }} variant="body2">Les groupes actifs rattachés à vos offres.</Typography>{dashboard.error && !activity ? <Typography color="error" variant="body2">Les groupes n’ont pas pu être chargés : {dashboard.error.message}</Typography> : <TableContainer><Table aria-label="Groupes en cours" sx={{ minWidth: 700 }}><TableHead><TableRow><TableCell>Produit et groupe</TableCell><TableCell sx={{ minWidth: 220 }}>Progression</TableCell><TableCell align="right">Prix actuel</TableCell><TableCell align="right">Accès</TableCell></TableRow></TableHead><TableBody>{activity?.rows.map((row) => { const progress = pourcentage(row.current_quantity / row.target_quantity); return <TableRow hover key={row.group_id}><TableCell><Typography sx={{ fontWeight: 700 }}>{row.product_name}</Typography><Typography color="text.secondary" variant="caption">{row.group_name} · {entier(row.participants_count)} participants</Typography></TableCell><TableCell><Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}><LinearProgress sx={{ flexGrow: 1, height: 8, borderRadius: 99, bgcolor: "divider", "& .MuiLinearProgress-bar": { borderRadius: 99, bgcolor: "secondary.main" } }} value={progress} variant="determinate" /><Typography sx={{ minWidth: 36, fontWeight: 700 }} variant="body2">{progress} %</Typography></Stack><Typography color="text.secondary" sx={{ mt: 0.5 }} variant="caption">{entier(row.current_quantity)} / {entier(row.target_quantity)} unités</Typography></TableCell><TableCell align="right"><Typography sx={{ fontWeight: 700 }}>{fcfa(row.current_unit_price)}</Typography><Typography color="text.secondary" variant="caption">{fcfa(row.total_amount)} engagé</Typography></TableCell><TableCell align="right"><Button component={Link} to={`/groupes/${row.group_id}`} variant="text">Ouvrir</Button></TableCell></TableRow>; })}</TableBody></Table></TableContainer>}</CardContent></Card>
+  </Stack>;
 }

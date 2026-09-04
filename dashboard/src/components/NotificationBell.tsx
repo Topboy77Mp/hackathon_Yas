@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import NotificationsNoneRounded from "@mui/icons-material/NotificationsNoneRounded";
 import { getNotifications, markNotificationRead } from "../lib/api/endpoints";
 import { useAsyncResource } from "../lib/useAsyncResource";
 
@@ -64,7 +65,7 @@ export function NotificationBell() {
         onClick={() => setOuvert((v) => !v)}
         type="button"
       >
-        <span aria-hidden="true">🔔</span>
+        <NotificationsNoneRounded aria-hidden="true" fontSize="small" />
         {nonLues > 0 && <span className="bell-count">{nonLues}</span>}
       </button>
 
