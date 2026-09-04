@@ -164,7 +164,7 @@ def seed(session: Session) -> None:
             User(
                 first_name=PRENOMS[i % len(PRENOMS)],
                 last_name=NOMS[i % len(NOMS)],
-                phone=f"+2289{i + 1:07d}",
+                phone=f"+22891{i + 1:06d}",
                 password_hash=hash_demo,
                 role=UserRole.USER,
             )
