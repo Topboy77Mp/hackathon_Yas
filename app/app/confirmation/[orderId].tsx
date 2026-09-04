@@ -1,7 +1,8 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ScreenStub } from '../../features/shared/ScreenStub';
 
 export default function ConfirmationScreen() {
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
-  return <ScreenStub title="Confirmation" subtitle={`Commande ${orderId}`} />;
+  const router = useRouter();
+  return <ScreenStub title="Confirmation" subtitle={`Commande ${orderId}`} onBack={() => router.back()} />;
 }

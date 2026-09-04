@@ -34,6 +34,7 @@ import { USE_MOCKS } from '../config';
 import {
   groupDetailFixture,
   productCardsFixture,
+  productDetailsById,
   productDetailFixture,
   impactStatsFixture,
   demoUserFixture,
@@ -80,7 +81,7 @@ export const listProducts = (): Promise<ProductCard[]> =>
 
 export const getProduct = (id: string): Promise<ProductDetail> =>
   USE_MOCKS
-    ? mockDelay({ ...productDetailFixture, id })
+    ? mockDelay(productDetailsById[id] ?? { ...productDetailFixture, id })
     : apiRequest<ProductDetail>(`/products/${id}`, { auth: false });
 
 // ---------------------------------------------------------------------------

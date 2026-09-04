@@ -179,6 +179,59 @@ export const productDetailFixture: ProductDetail = {
   open_groups: [kovieGroupCard],
 };
 
+/** Semences de maïs — deuxième produit du catalogue, aucun groupe ouvert pour l'instant. */
+export const productDetailSemencesFixture: ProductDetail = {
+  id: 'prod_semences_mais',
+  merchant_id: 'merch_agro_zio',
+  name: 'Semences de maïs améliorées — sachet 5 kg',
+  description:
+    "Semences de maïs améliorées, sachet de 5 kg. Rendement supérieur en zone soudanienne.",
+  unit_label: 'sachet',
+  image_url: 'https://images.kashflow.demo/semences-mais.jpg',
+  stock: 400,
+  individual_price: 6500,
+  status: 'ACTIVE',
+  created_at: deadlineIn(-20 * 24 * HOURS),
+  merchant_name: 'Agro-Intrants Zio',
+  tiers: [
+    { id: 'sem_tier_1', product_id: 'prod_semences_mais', min_quantity: 1, max_quantity: 19, unit_price: 6500 },
+    { id: 'sem_tier_2', product_id: 'prod_semences_mais', min_quantity: 20, max_quantity: 49, unit_price: 6000 },
+    { id: 'sem_tier_3', product_id: 'prod_semences_mais', min_quantity: 50, max_quantity: 99, unit_price: 5500 },
+    { id: 'sem_tier_4', product_id: 'prod_semences_mais', min_quantity: 100, max_quantity: null, unit_price: 5000 },
+  ],
+  open_groups: [],
+};
+
+/** Kit scolaire — troisième produit du catalogue, aucun groupe ouvert pour l'instant. */
+export const productDetailKitScolaireFixture: ProductDetail = {
+  id: 'prod_kit_scolaire',
+  merchant_id: 'merch_agro_zio',
+  name: 'Kit scolaire complet',
+  description: 'Cahiers, stylos, ardoise et cartable. Kit complet pour une année scolaire.',
+  unit_label: 'kit',
+  image_url: 'https://images.kashflow.demo/kit-scolaire.jpg',
+  stock: 300,
+  individual_price: 12000,
+  status: 'ACTIVE',
+  created_at: deadlineIn(-15 * 24 * HOURS),
+  merchant_name: 'Agro-Intrants Zio',
+  tiers: [
+    { id: 'kit_tier_1', product_id: 'prod_kit_scolaire', min_quantity: 1, max_quantity: 19, unit_price: 12000 },
+    { id: 'kit_tier_2', product_id: 'prod_kit_scolaire', min_quantity: 20, max_quantity: 49, unit_price: 11000 },
+    { id: 'kit_tier_3', product_id: 'prod_kit_scolaire', min_quantity: 50, max_quantity: 99, unit_price: 10000 },
+    { id: 'kit_tier_4', product_id: 'prod_kit_scolaire', min_quantity: 100, max_quantity: null, unit_price: 9000 },
+  ],
+  open_groups: [],
+};
+
+/** Un ProductDetail par carte du catalogue, indexé par id — getProduct(id) ne doit
+ * jamais renvoyer le même produit quel que soit l'id demandé. */
+export const productDetailsById: Record<string, ProductDetail> = {
+  [productDetailFixture.id]: productDetailFixture,
+  [productDetailSemencesFixture.id]: productDetailSemencesFixture,
+  [productDetailKitScolaireFixture.id]: productDetailKitScolaireFixture,
+};
+
 // ---------------------------------------------------------------------------
 // Dashboard jury — KPI d'impact (page /dashboard, fixtures partagées pour AGENT_DASH)
 // ---------------------------------------------------------------------------

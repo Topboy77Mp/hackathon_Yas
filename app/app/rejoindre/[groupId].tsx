@@ -25,7 +25,7 @@ export default function RejoindreScreen() {
   });
 
   return (
-    <Sheet title="Combien de sacs voulez-vous commander ?">
+    <Sheet title="Combien de sacs voulez-vous commander ?" onClose={() => router.back()}>
       <Field
         label="Quantité"
         keyboardType="number-pad"

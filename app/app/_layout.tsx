@@ -37,7 +37,7 @@ export default function RootLayout() {
           contentStyle: { backgroundColor: colors.surface.white },
         }}
       >
-        <Stack.Screen name="rejoindre/[groupId]" options={{ presentation: 'modal', headerShown: true, title: 'Rejoindre' }} />
+        <Stack.Screen name="rejoindre/[groupId]" options={{ presentation: 'modal' }} />
       </Stack>
     </QueryClientProvider>
   );
