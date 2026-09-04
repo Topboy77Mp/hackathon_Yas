@@ -5,12 +5,13 @@ import { useAuthToken } from '../../lib/hooks/useAuthToken';
 
 export default function GroupeRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const groupId = Number(id);
   const { isAuthenticated } = useAuthToken();
 
   return (
     <GroupScreen
-      queryKey={['group', id]}
-      fetcher={() => getGroup(id)}
+      queryKey={['group', groupId]}
+      fetcher={() => getGroup(groupId)}
       isAuthenticated={isAuthenticated}
     />
   );

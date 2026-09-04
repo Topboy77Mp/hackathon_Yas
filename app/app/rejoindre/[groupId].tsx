@@ -12,19 +12,20 @@ import { joinGroup } from '../../lib/api/endpoints';
 
 export default function RejoindreScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
+  const groupIdNum = Number(groupId);
   const router = useRouter();
   const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState('1');
 
   const mutation = useMutation({
-    mutationFn: () => joinGroup(groupId, { quantity: Number(quantity) || 1 }),
+    mutationFn: () => joinGroup(groupIdNum, { quantity: Number(quantity) || 1 }),
     onSuccess: ({ order, group }) => {
-      queryClient.setQueryData(['group', groupId], group);
+      queryClient.setQueryData(['group', groupIdNum], group);
       router.replace({
         pathname: '/confirmation/[orderId]',
         params: {
-          orderId: order.id,
-          groupId: group.id,
+          orderId: String(order.id),
+          groupId: String(group.id),
           shareCode: group.share_code,
           productName: group.product.name,
           unitLabel: group.product.unit_label,

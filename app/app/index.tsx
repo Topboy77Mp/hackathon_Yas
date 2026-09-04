@@ -35,7 +35,7 @@ export default function AccueilScreen() {
       <FlatList
         contentContainerStyle={styles.list}
         data={filteredProducts}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => String(item.id)}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.brand.ink} />}
         ListHeaderComponent={
@@ -68,7 +68,7 @@ export default function AccueilScreen() {
                     Économisé par la communauté
                   </Text>
                   <Text variant="title" style={styles.bentoImpactValue} tabularNums>
-                    {formatFcfa(impact.total_savings)}
+                    {formatFcfa(impact.community_savings)}
                   </Text>
                 </View>
               </LinearGradient>
@@ -99,7 +99,7 @@ export default function AccueilScreen() {
             name={item.name}
             merchantName={item.merchant_name}
             individualPrice={item.individual_price}
-            bestOpenGroupPrice={item.best_open_group_price}
+            bestOpenGroupPrice={item.best_open_group_price ?? undefined}
             openGroupsCount={item.open_groups_count}
             onPress={() => router.push(`/produit/${item.id}`)}
           />

@@ -13,11 +13,12 @@ import { formatFcfa } from '../../lib/format';
 
 export default function FicheProduitScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const productId = Number(id);
   const router = useRouter();
   const { data: product, isLoading } = useQuery({
-    queryKey: ['product', id],
-    queryFn: () => getProduct(id),
-    enabled: !!id,
+    queryKey: ['product', productId],
+    queryFn: () => getProduct(productId),
+    enabled: Number.isFinite(productId),
   });
 
   if (isLoading || !product) {
@@ -47,7 +48,7 @@ export default function FicheProduitScreen() {
         <Text variant="heading">Paliers</Text>
         {product.tiers.map((tier) => (
           <TierRow
-            key={tier.id}
+            key={tier.min_quantity}
             range={`${tier.min_quantity}${tier.max_quantity ? `–${tier.max_quantity}` : '+'} ${product.unit_label}s`}
             price={formatFcfa(tier.unit_price)}
             state={tier.max_quantity === null ? 'next' : 'default'}

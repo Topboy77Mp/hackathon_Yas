@@ -1,167 +1,130 @@
 /**
- * KashFlow — Endpoints typés.
- * Un appel = une fonction. Les endpoints de lecture pour lesquels AGENT_FRONT dispose de
- * fixtures (GroupDetail, ProductDetail, KPI) basculent sur les mocks quand USE_MOCKS est actif,
- * pour ne jamais dépendre de l'avancement d'AGENT_BACK (cf. contrat_partage).
+ * KashFlow — Endpoints typés. Un appel = une fonction.
+ *
+ * Tout passe par l'API réelle : les fixtures ont été retirées avec le mode
+ * maquette. Aucun calcul de prix ici ni ailleurs dans l'application — le front
+ * affiche ce que l'API renvoie (D3).
  */
 import type {
   AuthResponse,
-  RegisterRequest,
-  LoginRequest,
-  User,
-  ProductCard,
-  ProductDetail,
-  GroupDetail,
-  GroupCard,
   CreateGroupRequest,
+  CreateProductRequest,
+  CreateTiersRequest,
+  DiscoverGroupsRequest,
+  DiscoverGroupsResponse,
+  GroupCard,
+  GroupDetail,
+  ImpactStats,
   JoinGroupRequest,
   JoinGroupResponse,
   LeaveGroupResponse,
-  PayOrderResponse,
-  Order,
+  LoginRequest,
   MerchantDashboard,
-  CreateProductRequest,
-  CreateTiersRequest,
-  PriceTier,
-  ImpactStats,
-  SuggestTiersRequest,
-  SuggestTiersResponse,
+  NotificationsResponse,
+  Order,
+  PayOrderResponse,
+  ProductCard,
+  ProductDetail,
+  RegisterRequest,
   ShareMessageRequest,
   ShareMessageResponse,
+  SuggestTiersRequest,
+  SuggestTiersResponse,
+  Tier,
+  User,
 } from '@shared/api/types';
 import { apiRequest } from './client';
-import { USE_MOCKS } from '../config';
-import {
-  groupDetailFixture,
-  productCardsFixture,
-  productDetailsById,
-  productDetailFixture,
-  impactStatsFixture,
-  demoUserFixture,
-  mockAuthToken,
-  buildJoinFixture,
-} from '../fixtures';
-
-const mockDelay = <T>(value: T, ms = 250): Promise<T> =>
-  new Promise((resolve) => setTimeout(() => resolve(value), ms));
-
-/**
- * État mémoire du join mocké : sans lui, le prochain tick de polling (2s) écraserait
- * l'état "rejoint" avec le fixture de base, puisque getGroup n'aurait aucun moyen de
- * savoir qu'un join a eu lieu. Réinitialisé au rechargement de la page (mémoire, pas
- * de persistance) — c'est un doublure de serveur pour le développement hors-ligne, pas
- * un vrai état applicatif.
- */
-let mockJoinedGroup: GroupDetail | null = null;
-
-/**
- * Même raison que mockJoinedGroup : sans mémoriser QUI s'est inscrit/connecté,
- * me() renverrait toujours le même utilisateur démo figé, y compris juste après
- * une inscription avec un autre nom — incohérence trouvée en testant le parcours
- * profil de bout en bout.
- */
-let mockCurrentUser: User = demoUserFixture;
 
 // ---------------------------------------------------------------------------
-// Auth — mockée intégralement : USE_MOCKS doit permettre de tester tout le parcours
-// connecté (inscription → navigation → rejoindre) sans backend.
+// Authentification
 // ---------------------------------------------------------------------------
 
-export const register = (payload: RegisterRequest): Promise<AuthResponse> => {
-  if (USE_MOCKS) {
-    mockCurrentUser = { ...demoUserFixture, first_name: payload.first_name, last_name: payload.last_name, phone: payload.phone };
-    return mockDelay({ token: mockAuthToken, user: mockCurrentUser });
-  }
-  return apiRequest<AuthResponse>('/auth/register', { method: 'POST', body: payload, auth: false });
-};
+export const register = (payload: RegisterRequest) =>
+  apiRequest<AuthResponse>('/auth/register', { method: 'POST', body: payload, auth: false });
 
-export const login = (payload: LoginRequest): Promise<AuthResponse> => {
-  if (USE_MOCKS) {
-    mockCurrentUser = demoUserFixture;
-    return mockDelay({ token: mockAuthToken, user: mockCurrentUser });
-  }
-  return apiRequest<AuthResponse>('/auth/login', { method: 'POST', body: payload, auth: false });
-};
+export const login = (payload: LoginRequest) =>
+  apiRequest<AuthResponse>('/auth/login', { method: 'POST', body: payload, auth: false });
 
-export const me = (): Promise<User> =>
-  USE_MOCKS ? mockDelay(mockCurrentUser) : apiRequest<User>('/auth/me');
+export const me = () => apiRequest<User>('/auth/me');
 
 // ---------------------------------------------------------------------------
-// Catalogue
+// Catalogue — public, aucun jeton requis
 // ---------------------------------------------------------------------------
 
-export const listProducts = (): Promise<ProductCard[]> =>
-  USE_MOCKS ? mockDelay(productCardsFixture) : apiRequest<ProductCard[]>('/products', { auth: false });
+export const listProducts = () =>
+  apiRequest<ProductCard[]>('/products', { auth: false });
 
-export const getProduct = (id: string): Promise<ProductDetail> =>
-  USE_MOCKS
-    ? mockDelay(productDetailsById[id] ?? { ...productDetailFixture, id })
-    : apiRequest<ProductDetail>(`/products/${id}`, { auth: false });
+export const getProduct = (id: number) =>
+  apiRequest<ProductDetail>(`/products/${id}`, { auth: false });
 
 // ---------------------------------------------------------------------------
 // Groupes — cf. D6, endpoint de polling
 // ---------------------------------------------------------------------------
 
-export const listGroups = (productId: string): Promise<GroupCard[]> =>
-  apiRequest<GroupCard[]>(`/groups?product_id=${productId}`, { auth: false });
+export const listGroups = (productId?: number) =>
+  apiRequest<GroupCard[]>(
+    productId === undefined ? '/groups' : `/groups?product_id=${productId}`,
+    { auth: false },
+  );
 
 export const createGroup = (payload: CreateGroupRequest) =>
   apiRequest<GroupDetail>('/groups', { method: 'POST', body: payload });
 
-export const getGroup = (id: string): Promise<GroupDetail> =>
-  USE_MOCKS
-    ? mockDelay({ ...(mockJoinedGroup ?? groupDetailFixture), id })
-    : apiRequest<GroupDetail>(`/groups/${id}`, { auth: false });
+/**
+ * Le jeton est envoyé quand il existe : c'est lui qui remplit `my_membership`.
+ * L'endpoint reste lisible sans compte — un lien partagé doit s'ouvrir sans
+ * inscription.
+ */
+export const getGroup = (id: number) => apiRequest<GroupDetail>(`/groups/${id}`);
 
-export const getGroupByShareCode = (shareCode: string): Promise<GroupDetail> =>
-  USE_MOCKS
-    ? mockDelay({ ...(mockJoinedGroup ?? groupDetailFixture), share_code: shareCode })
-    : apiRequest<GroupDetail>(`/groups/code/${shareCode}`, { auth: false });
+export const getGroupByShareCode = (shareCode: string) =>
+  apiRequest<GroupDetail>(`/groups/code/${encodeURIComponent(shareCode)}`);
 
-export const joinGroup = (groupId: string, payload: JoinGroupRequest): Promise<JoinGroupResponse> => {
-  if (USE_MOCKS) {
-    const { order, group } = buildJoinFixture(payload.quantity);
-    mockJoinedGroup = { ...group, id: groupId };
-    return mockDelay({ order, group: mockJoinedGroup });
-  }
-  return apiRequest<JoinGroupResponse>(`/groups/${groupId}/join`, { method: 'POST', body: payload });
-};
+export const joinGroup = (groupId: number, payload: JoinGroupRequest) =>
+  apiRequest<JoinGroupResponse>(`/groups/${groupId}/join`, { method: 'POST', body: payload });
 
-export const leaveGroup = (groupId: string): Promise<LeaveGroupResponse> => {
-  if (USE_MOCKS) {
-    mockJoinedGroup = null;
-    return mockDelay({ group: { ...groupDetailFixture, id: groupId } });
-  }
-  return apiRequest<LeaveGroupResponse>(`/groups/${groupId}/leave`, { method: 'POST' });
-};
+export const leaveGroup = (groupId: number) =>
+  apiRequest<LeaveGroupResponse>(`/groups/${groupId}/leave`, { method: 'POST' });
 
 // ---------------------------------------------------------------------------
 // Commandes et paiement (mock côté backend, cf. <perimetre>)
 // ---------------------------------------------------------------------------
 
-export const payOrder = (orderId: string) =>
-  apiRequest<PayOrderResponse>(`/orders/${orderId}/pay`, { method: 'POST' });
-
 export const listOrders = () => apiRequest<Order[]>('/orders');
 
+export const getOrder = (orderId: number) => apiRequest<Order>(`/orders/${orderId}`);
+
+export const payOrder = (orderId: number) =>
+  apiRequest<PayOrderResponse>(`/orders/${orderId}/pay`, { method: 'POST' });
+
 // ---------------------------------------------------------------------------
-// Espace commerçant
+// Notifications
+// ---------------------------------------------------------------------------
+
+export const listNotifications = () => apiRequest<NotificationsResponse>('/notifications');
+
+export const markNotificationRead = (id: number) =>
+  apiRequest<unknown>(`/notifications/${id}/read`, { method: 'POST' });
+
+// ---------------------------------------------------------------------------
+// Espace commerçant — présent pour complétude du contrat ; l'espace pro vit
+// dans /dashboard, l'app acheteur ne l'utilise pas.
 // ---------------------------------------------------------------------------
 
 export const createProduct = (payload: CreateProductRequest) =>
   apiRequest<ProductDetail>('/merchant/products', { method: 'POST', body: payload });
 
-export const createTiers = (productId: string, payload: CreateTiersRequest) =>
-  apiRequest<PriceTier[]>(`/merchant/products/${productId}/tiers`, { method: 'POST', body: payload });
+export const createTiers = (productId: number, payload: CreateTiersRequest) =>
+  apiRequest<Tier[]>(`/merchant/products/${productId}/tiers`, { method: 'POST', body: payload });
 
 export const getMerchantDashboard = () => apiRequest<MerchantDashboard>('/merchant/dashboard');
 
 // ---------------------------------------------------------------------------
-// Dashboard jury
+// KPI d'impact — public
 // ---------------------------------------------------------------------------
 
-export const getImpactStats = (): Promise<ImpactStats> =>
-  USE_MOCKS ? mockDelay(impactStatsFixture) : apiRequest<ImpactStats>('/stats/impact', { auth: false });
+export const getImpactStats = () =>
+  apiRequest<ImpactStats>('/stats/impact', { auth: false });
 
 // ---------------------------------------------------------------------------
 // IA
@@ -172,3 +135,6 @@ export const suggestTiers = (payload: SuggestTiersRequest) =>
 
 export const generateShareMessage = (payload: ShareMessageRequest) =>
   apiRequest<ShareMessageResponse>('/ai/share-message', { method: 'POST', body: payload });
+
+export const discoverGroups = (payload: DiscoverGroupsRequest) =>
+  apiRequest<DiscoverGroupsResponse>('/ai/discover-groups', { method: 'POST', body: payload });
