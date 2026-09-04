@@ -319,6 +319,61 @@
     hover animé, aucun effet de carte. C'est là qu'on dépense toute l'audace visuelle du projet.
   </moment_unique>
 
+  <!-- ============================================================ -->
+  <!-- MISE À JOUR — état d'implémentation (AGENT_UI, en cours de Phase 2) -->
+  <!-- Ajouts qui précisent le contrat ci-dessus sans en changer une valeur. -->
+  <!-- Toute contradiction avec le reste de ce bloc est un bug à signaler,  -->
+  <!-- pas une réinterprétation.                                            -->
+  <!-- ============================================================ -->
+  <etat_implementation>
+
+    <helper nom="alpha(hex, opacity)" fichier="shared/theme/tokens.ts">
+      Dérive une variante rgba() d'un token existant plutôt que de coder une couleur en dur.
+      N'introduit AUCUNE nouvelle couleur : `alpha(colors.alert.red, 0.08)` reste "le rouge",
+      juste atténué pour un fond de pastille ou de bandeau d'erreur. Utilisé par le ton
+      `Badge` « urgent » (texte rouge sur fond rouge à 10 %, jamais de rouge plein — le
+      contraste texte-sur-rouge saturé échoue en petite taille) et par les bandeaux d'erreur
+      de connexion/inscription.
+    </helper>
+
+    <composants_ajoutes fichier="app/components/ui/**">
+      Au-delà de la liste de départ du rôle UI (Button, Text, Card, Divider, Badge,
+      ProgressBar, PriceDisplay, CounterDisplay, Field, Sheet, EmptyState), construits au fil
+      des besoins réels de l'écran groupe et du parcours complet :
+      Avatar (initiales sur pastille — en réserve, pas encore utilisé : GroupDetail n'expose
+      que participants_count, pas de liste de participants, donc pas d'avatar tant que ce
+      n'est pas dans le contrat de données) ·
+      TierRow (une ligne de palier, états current/next/default — réutilisée à l'identique sur
+      l'écran groupe ET la fiche produit, un seul rendu de palier dans toute l'app) ·
+      AppBar (retour + titre + sous-titre + emplacement libre à droite) ·
+      ProductCard (carte de catalogue : bloc icône 56×56 + PriceDisplay taille heading, cf.
+      décision ci-dessous) ·
+      nativeFont.ts (résolution family+weight → nom de police exact chargé par
+      expo-google-fonts sur le web — `fontFamily:'Archivo', fontWeight:'700'` ne matche aucun
+      @font-face et retombe silencieusement sur une police serif système ; bug trouvé deux
+      fois par capture d'écran, jamais par le typecheck).
+    </composants_ajoutes>
+
+    <decision_arbitree date="Phase 2" sujet="Demande de reskin « Premium &amp; Energetic »">
+      Une proposition de refonte (ombres portées sur toutes les cartes, rayons 24px+, vert et
+      jaune adoucis, graisses ExtraBold, fond d'écran gris) a été comparée à ce contrat et
+      refusée telle quelle : elle contredit directement &lt;profondeur&gt; (aucune ombre hors
+      barre d'action), &lt;rayons&gt; (deux rayons, pas cinq), la palette figée au hex près, les
+      poids de police réellement chargés (Archivo 600/700, Inter 400/500 — "ExtraBold"
+      n'existe dans aucun fichier chargé, même bug que nativeFont.ts) et &lt;principe_directeur&gt;
+      (fond blanc, pas gris). L'exemple de carte fourni avec la demande affichait aussi des
+      chiffres inventés (progression, pourcentage de remise, ancien prix barré) absents du
+      type ProductCard.
+      Ce qui a été retenu, dans le cadre du contrat : ProductCard gagne un bloc icône (56×56,
+      radius 12, fond blanc + filet 1px — pas de nouvelle couleur) et son prix passe en
+      PriceDisplay taille heading au lieu d'un simple label, pour le même traitement
+      typographique que le prix de l'écran groupe. Le mécanisme de profondeur reste celui du
+      contrat : `Card` en fond `surface.raised` sur écran blanc, sans ombre ajoutée.
+      Cette décision n'est pas à rouvrir sans qu'un humain dégèle explicitement ce bloc.
+    </decision_arbitree>
+
+  </etat_implementation>
+
 </design_tokens>
 
 <!-- ============================================================ -->
