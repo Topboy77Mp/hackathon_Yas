@@ -39,6 +39,7 @@ from services import (
     group_quantity,
     guard_group_open,
     notify_tier_unlocked,
+    settle_expired_groups,
     settle_group_if_due,
 )
 
@@ -80,6 +81,7 @@ def _lock_group(group_id: int, session: Session) -> Group:
 def list_groups(
     product_id: int | None = None, session: Session = Depends(get_session)
 ) -> list[GroupCard]:
+    settle_expired_groups(session)
     query = select(Group).where(Group.status == GroupStatus.OPEN)
     if product_id is not None:
         query = query.where(Group.product_id == product_id)

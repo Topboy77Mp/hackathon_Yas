@@ -201,6 +201,23 @@ def settle_group_if_due(group: Group, session: Session) -> bool:
     return True
 
 
+def settle_expired_groups(session: Session) -> int:
+    """Clôture tous les groupes ouverts dont l'échéance est passée.
+
+    À appeler avant toute LISTE de groupes ou tout comptage : sans cela, un
+    groupe expiré continue d'être annoncé ouvert dans le catalogue et compté
+    comme actif dans les KPI, jusqu'à ce que quelqu'un ouvre sa fiche.
+    Le jeu de données du hackathon tient sur quelques lignes : le balayage
+    est négligeable.
+    """
+    expires = session.exec(
+        select(Group).where(
+            Group.status == GroupStatus.OPEN, Group.deadline <= utcnow()
+        )
+    ).all()
+    return sum(1 for groupe in expires if settle_group_if_due(groupe, session))
+
+
 def build_group_detail(
     group: Group, session: Session, viewer: User | None
 ) -> GroupDetail:

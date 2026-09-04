@@ -131,6 +131,65 @@ def demo_fixture(session: Session) -> dict:
     }
 
 
+@pytest.fixture(autouse=True)
+def limiteur_propre():
+    """Vide le compteur du limiteur de débit avant chaque test.
+
+    L'état vit dans un dictionnaire de module, indexé par utilisateur, et ne se
+    purge qu'avec le temps. En production c'est le comportement voulu ; dans la
+    suite, un test consommait les jetons du suivant.
+    """
+    from routers.ai_routes import _hits
+
+    _hits.clear()
+    yield
+    _hits.clear()
+
+
+@pytest.fixture(name="sans_ia")
+def sans_ia_fixture(monkeypatch):
+    """Force le repli déterministe : pas d'appel réseau, résultat reproductible.
+
+    Le contrat exige que tout fonctionne sans clé API. Cette fixture teste
+    précisément ce mode, et rend la suite indépendante du réseau.
+    """
+    import ai
+
+    monkeypatch.setattr(ai, "GROQ_API_KEY", "")
+    return ai
+
+
+@pytest.fixture(name="ia_en_panne")
+def ia_en_panne_fixture(monkeypatch):
+    """Simule un service IA qui répond n'importe quoi.
+
+    Le repli doit absorber le cas sans qu'aucune exception ne remonte.
+    """
+    import ai
+
+    monkeypatch.setattr(ai, "GROQ_API_KEY", "clé-factice")
+
+    def _explose(*_args, **_kwargs):
+        raise RuntimeError("service indisponible")
+
+    monkeypatch.setattr(ai.httpx, "post", _explose)
+    return ai
+
+
+def expirer(session, groupe_id: int) -> None:
+    """Repousse l'échéance d'un groupe dans le passé, en UTC.
+
+    Attention : `NOW()` de PostgreSQL est en heure locale alors que
+    l'application écrit en UTC. Passer par Python évite ce décalage.
+    """
+    from models import Group
+
+    groupe = session.get(Group, groupe_id)
+    groupe.deadline = utcnow() - timedelta(hours=1)
+    session.add(groupe)
+    session.commit()
+
+
 def jeton(client: TestClient, phone: str) -> str:
     reponse = client.post("/auth/login", json={"phone": phone, "password": MOT_DE_PASSE})
     assert reponse.status_code == 200, reponse.text

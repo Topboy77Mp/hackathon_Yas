@@ -23,7 +23,7 @@ from models import (
     User,
 )
 from schemas import ImpactStats, MerchantDashboard, MerchantGroupRow
-from services import group_quantity, participants_count
+from services import group_quantity, participants_count, settle_expired_groups
 
 router = APIRouter(tags=["statistiques"])
 
@@ -37,6 +37,7 @@ def _count(session: Session, model, *where) -> int:
 
 @router.get("/stats/impact", response_model=ImpactStats)
 def impact(session: Session = Depends(get_session)) -> ImpactStats:
+    settle_expired_groups(session)
     orders = session.exec(
         select(Order).where(Order.order_status != OrderStatus.CANCELLED)
     ).all()

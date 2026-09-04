@@ -9,12 +9,13 @@ import pricing
 from db import get_session
 from models import Group, GroupStatus, Merchant, Product, ProductStatus
 from schemas import ErrorOut, ProductCard, ProductDetail, TierOut
-from services import build_group_card, product_tiers
+from services import build_group_card, product_tiers, settle_expired_groups
 
 router = APIRouter(tags=["catalogue"])
 
 
 def _open_groups(product_id: int, session: Session) -> list[Group]:
+    settle_expired_groups(session)
     return list(
         session.exec(
             select(Group).where(

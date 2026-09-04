@@ -47,3 +47,9 @@ Format : `[HH:MM] AGENT_X — fait / bloqué par / attend`
 [15:50] AGENT_BACK — limite assumée : SQLite ignore `SELECT ... FOR UPDATE`, le verrou de ligne n'est donc pas couvert par la suite. Il reste validé à la main sur PostgreSQL avec 20 joins simultanés
 [15:50] AGENT_BACK — piège rencontré : la fixture hachait 38 mots de passe bcrypt par test, la suite dépassait plusieurs minutes. Une seule empreinte réutilisée ramène à 10,8 s
 [15:50] AGENT_BACK — étapes 1 à 7 terminées, Phase 3 terminée. Plus rien de critique côté backend
+[16:20] AGENT_BACK — fait : couverture élargie sur autorisation de l'orchestrateur. 125 tests, 27 s. Ajout de `test_api_catalogue_groupes.py`, `test_api_commercant_ia.py`, `test_securite_et_erreurs.py`
+[16:20] AGENT_BACK — la couverture élargie a trouvé 2 vrais défauts, corrigés :
+[16:20] AGENT_BACK —   (1) un groupe expiré restait annoncé OPEN dans `GET /groups`, dans les groupes ouverts d'une fiche produit et dans `groups_active` de `/stats/impact`. La clôture n'était branchée que sur les lectures de détail. Ajout de `settle_expired_groups()` sur les trois chemins de liste
+[16:20] AGENT_BACK —   (2) le limiteur de débit IA fuyait entre tests : état de module jamais purgé. Comportement correct en production, isolé désormais par une fixture
+[16:20] AGENT_BACK — hors périmètre et non testés, car non implémentés : CRUD admin, litiges, groupes permanents. Ils sont dans `<exclus interdiction="stricte">` — je ne les ai pas construits pour pouvoir les tester
+[16:20] AGENT_BACK — base de démonstration vérifiée intacte après la suite : OPEN · 146/200 sacs · 19 000 F
