@@ -1,20 +1,16 @@
+/**
+ * Connexion — téléphone + mot de passe (cf. <perimetre> P0). Écran non détaillé par
+ * AGENT_UI en Phase 1A : version fonctionnelle minimale.
+ */
 import { useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  TouchableWithoutFeedback,
-  Keyboard
-} from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useRouter, useLocalSearchParams, Link, type Href } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
-import { colors, spacing } from '@shared/theme/tokens';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, spacing, radii, alpha } from '@shared/theme/tokens';
 import { Text, Field, Button } from '../../components/ui';
 import { login } from '../../lib/api/endpoints';
 import { setToken } from '../../lib/api/auth-storage';
-import { Ionicons } from '@expo/vector-icons';
 
 export default function ConnexionScreen() {
   const router = useRouter();
@@ -31,50 +27,22 @@ export default function ConnexionScreen() {
   });
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1 }}
-    >
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Header Section */}
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
-            <View style={styles.logoPlaceholder}>
-              <Ionicons name="flash" size={32} color={colors.brand.ink} />
+            <View style={styles.logo}>
+              <Ionicons name="flash" size={28} color={colors.brand.ink} />
             </View>
-            <Text variant="title" style={styles.title}>Connexion</Text>
+            <Text variant="title">Connexion</Text>
             <Text variant="body" tone="muted">
               Veuillez entrer vos identifiants pour continuer
             </Text>
           </View>
 
-          {/* Form Section */}
           <View style={styles.form}>
-            <Field
-              label="Numéro de téléphone"
-              placeholder="06 00 00 00 00"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={setPhone}
-            />
-
-            <View style={styles.passwordContainer}>
-              <Field
-                label="Mot de passe"
-                placeholder="••••••••"
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-              />
-              <Link href="/(auth)/inscription" style={styles.forgotPassword}>
-                <Text variant="caption" tone="muted">
-                  Mot de passe oublié ?
-                </Text>
-              </Link>
-            </View>
+            <Field label="Numéro de téléphone" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
+            <Field label="Mot de passe" secureTextEntry value={password} onChangeText={setPassword} />
 
             {mutation.isError && (
               <View style={styles.errorBox}>
@@ -85,20 +53,19 @@ export default function ConnexionScreen() {
             )}
 
             <Button
-              label={mutation.isPending ? 'Connexion en cours...' : 'Se connecter'}
+              label={mutation.isPending ? 'Connexion en cours…' : 'Se connecter'}
               loading={mutation.isPending}
               onPress={() => mutation.mutate()}
             />
           </View>
 
-          {/* Footer Section */}
           <View style={styles.footer}>
             <Link href="/(auth)/inscription">
-              <View style={{ flexDirection: 'row', gap: 4 }}>
-                <Text variant="label" tone="muted">Pas encore de compte ?</Text>
-                <Text variant="label" style={{ color: colors.brand.ink, fontWeight: 'bold' }}>
-                  S'inscrire
+              <View style={styles.footerRow}>
+                <Text variant="label" tone="muted">
+                  Pas encore de compte ?
                 </Text>
+                <Text variant="label">S'inscrire</Text>
               </View>
             </Link>
           </View>
@@ -109,6 +76,7 @@ export default function ConnexionScreen() {
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
     backgroundColor: colors.surface.white,
@@ -116,44 +84,24 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xxxl,
     paddingBottom: spacing.xl,
   },
-  header: {
-    marginBottom: spacing.xxl,
-    alignItems: 'flex-start',
-  },
-  logoPlaceholder: {
-    width: 60,
-    height: 60,
+  header: { marginBottom: spacing.xxl, alignItems: 'flex-start', gap: spacing.xs },
+  logo: {
+    width: 56,
+    height: 56,
     backgroundColor: colors.brand.yellow,
-    borderRadius: 16,
+    borderRadius: radii.block,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: '800',
-    marginBottom: spacing.xs,
-  },
-  form: {
-    gap: spacing.lg,
-  },
-  passwordContainer: {
-    position: 'relative',
-  },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginTop: 4,
-  },
+  form: { gap: spacing.lg },
   errorBox: {
-    backgroundColor: '#FFF0F0',
-    padding: spacing.md,
-    borderRadius: 8,
+    backgroundColor: alpha(colors.alert.red, 0.08),
     borderWidth: 1,
-    borderColor: '#FFC1C1',
+    borderColor: alpha(colors.alert.red, 0.3),
+    borderRadius: radii.block,
+    padding: spacing.md,
   },
-  footer: {
-    marginTop: 'auto',
-    paddingTop: spacing.xl,
-    alignItems: 'center',
-  },
+  footer: { marginTop: 'auto', paddingTop: spacing.xl, alignItems: 'center' },
+  footerRow: { flexDirection: 'row', gap: spacing.xs },
 });

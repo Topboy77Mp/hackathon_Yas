@@ -1,39 +1,75 @@
 /**
  * Accueil — catalogue. Écran non spécifié en détail par AGENT_UI en Phase 1A
  * (seul l'écran groupe l'est) : liste minimale, avec les composants primitifs.
+ * Aucune donnée inventée : pas de KPI ni de palier affiché ici qui ne vienne
+ * pas du payload (ProductCard n'a ni catégorie, ni palier, ni pourcentage —
+ * ces informations vivent dans ProductDetail, affichées sur la fiche produit).
  */
-import { FlatList, Pressable, View, StyleSheet } from 'react-native';
+import { useMemo, useState } from 'react';
+import { FlatList, Pressable, View, StyleSheet, TextInput, RefreshControl } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { colors, spacing } from '@shared/theme/tokens';
+import { colors, spacing, radii } from '@shared/theme/tokens';
 import { Text, Card, EmptyState } from '../components/ui';
 import { listProducts } from '../lib/api/endpoints';
 import { formatFcfa } from '../lib/format';
 
 export default function AccueilScreen() {
   const router = useRouter();
-  const { data: products, isLoading } = useQuery({ queryKey: ['products'], queryFn: listProducts });
+  const [searchQuery, setSearchQuery] = useState('');
+  const { data: products, isLoading, refetch, isFetching } = useQuery({
+    queryKey: ['products'],
+    queryFn: listProducts,
+  });
+
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return products;
+    return products.filter((p) => p.name.toLowerCase().includes(query));
+  }, [products, searchQuery]);
 
   return (
     <View style={styles.screen}>
-      <Text variant="title">KashFlow</Text>
-      <Text variant="body" tone="muted">
-        Regroupez-vous. Débloquez le meilleur prix.
-      </Text>
-
       <FlatList
         contentContainerStyle={styles.list}
-        data={products ?? []}
+        data={filteredProducts}
         keyExtractor={(item) => item.id}
-        ListEmptyComponent={isLoading ? null : <EmptyState title="Aucun produit disponible" />}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.brand.ink} />}
+        ListHeaderComponent={
+          <View style={styles.headerContainer}>
+            <Text variant="title">KashFlow</Text>
+            <Text variant="body" tone="muted">
+              Regroupez-vous. Débloquez le meilleur prix.
+            </Text>
+
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Chercher un produit"
+              placeholderTextColor={colors.text.muted}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              accessibilityLabel="Chercher un produit"
+            />
+          </View>
+        }
+        ListEmptyComponent={
+          isLoading ? null : (
+            <EmptyState
+              title="Aucun produit trouvé"
+              subtitle={searchQuery ? 'Essayez une autre recherche.' : "Aucun produit n'est disponible pour l'instant."}
+            />
+          )
+        }
         renderItem={({ item }) => (
           <Pressable onPress={() => router.push(`/produit/${item.id}`)}>
-            <Card>
+            <Card style={styles.productCard}>
               <Text variant="body">{item.name}</Text>
               <Text variant="caption" tone="muted">
                 {item.merchant_name}
               </Text>
-              <Text variant="label" style={styles.cardPrice}>
+              <Text variant="label" tabularNums style={styles.productPrice}>
                 À partir de {formatFcfa(item.individual_price)}
               </Text>
             </Card>
@@ -45,7 +81,20 @@ export default function AccueilScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.surface.white, padding: spacing.xl },
-  list: { gap: spacing.md, marginTop: spacing.xl, paddingBottom: spacing.xxxl },
-  cardPrice: { marginTop: spacing.sm },
+  screen: { flex: 1, backgroundColor: colors.surface.white },
+  list: { padding: spacing.xl, paddingBottom: spacing.xxxl },
+  headerContainer: { gap: spacing.sm, marginBottom: spacing.xl },
+  searchInput: {
+    marginTop: spacing.sm,
+    minHeight: 44,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radii.block,
+    paddingHorizontal: spacing.lg,
+    fontSize: 16,
+    color: colors.brand.ink,
+    backgroundColor: colors.surface.white,
+  },
+  productCard: { marginTop: spacing.md, gap: spacing.xs },
+  productPrice: { marginTop: spacing.xs },
 });
