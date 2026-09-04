@@ -39,7 +39,7 @@ function statusLabel(status: string): string {
 
 function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return <Card variant="outlined"><CardContent sx={{ display: "flex", alignItems: "center", gap: 2, p: "22px !important" }}>
-    <Box sx={{ display: "grid", width: 48, height: 48, placeItems: "center", borderRadius: "50%", bgcolor: "success.light", color: "success.main" }}>{icon}</Box>
+    <Box sx={{ display: "grid", width: 40, height: 40, placeItems: "center", color: "success.main" }}>{icon}</Box>
     <Box><Typography color="text.secondary" variant="body2">{label}</Typography><Typography sx={{ fontWeight: 700 }} variant="h6">{value}</Typography></Box>
   </CardContent></Card>;
 }
@@ -48,7 +48,7 @@ function OfferGroups({ dashboard }: { dashboard: MerchantDashboardView }) {
   if (dashboard.rows.length === 0) {
     return <Card variant="outlined"><CardContent sx={{ display: "grid", minHeight: 280, placeItems: "center", textAlign: "center", p: 4 }}>
       <Stack spacing={1.5} sx={{ alignItems: "center", maxWidth: 420 }}>
-        <Box sx={{ display: "grid", width: 56, height: 56, placeItems: "center", borderRadius: "50%", bgcolor: "success.light", color: "success.main" }}><Inventory2Outlined /></Box>
+        <Box sx={{ display: "grid", width: 40, height: 40, placeItems: "center", color: "success.main" }}><Inventory2Outlined /></Box>
         <Typography variant="h5">Aucun groupe en cours</Typography>
         <Typography color="text.secondary">Créez une offre avec ses paliers pour lancer votre premier achat groupé.</Typography>
         <Button component={Link} startIcon={<AddRounded />} to="/offres/nouvelle" variant="contained">Créer une offre</Button>
