@@ -24,3 +24,12 @@ GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 GROQ_TIMEOUT_SECONDS = 4.0
 
 DEMO_TOKEN = os.getenv("DEMO_TOKEN", "jokkoo-demo")
+
+# Base des liens de partage. Le lien doit s'ouvrir dans un navigateur sans
+# compte : c'est le chemin qu'empruntera le jury depuis WhatsApp.
+APP_PUBLIC_URL = os.getenv("APP_PUBLIC_URL", "https://kashflow.tg").rstrip("/")
+
+# Limitation simple des endpoints IA, en mémoire du processus.
+# Pas de Redis : le contrat l'exclut explicitement.
+AI_RATE_LIMIT = int(os.getenv("AI_RATE_LIMIT", "12"))
+AI_RATE_WINDOW_SECONDS = 60
