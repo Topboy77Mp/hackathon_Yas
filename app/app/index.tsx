@@ -1,18 +1,18 @@
 /**
- * Accueil — catalogue. Écran non spécifié en détail par AGENT_UI en Phase 1A
- * (seul l'écran groupe l'est) : liste minimale, avec les composants primitifs.
- * Aucune donnée inventée : pas de KPI ni de palier affiché ici qui ne vienne
- * pas du payload (ProductCard n'a ni catégorie, ni palier, ni pourcentage —
- * ces informations vivent dans ProductDetail, affichées sur la fiche produit).
+ * Accueil — catalogue, en-tête « bento ». Aucune donnée inventée : le bloc impact vient
+ * du même endpoint /stats/impact que le tableau de bord jury (ImpactStats), pas un
+ * chiffre écrit en dur dans l'écran.
  */
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, View, StyleSheet, TextInput, RefreshControl } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, radii, hitSlop } from '@shared/theme/tokens';
-import { Text, ProductCard, EmptyState } from '../components/ui';
-import { listProducts } from '../lib/api/endpoints';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, gradients, spacing, radii, shadow, hitSlop } from '@shared/theme/tokens';
+import { Text, Card, ProductCard, EmptyState } from '../components/ui';
+import { listProducts, getImpactStats } from '../lib/api/endpoints';
+import { formatFcfa } from '../lib/format';
 
 export default function AccueilScreen() {
   const router = useRouter();
@@ -21,6 +21,7 @@ export default function AccueilScreen() {
     queryKey: ['products'],
     queryFn: listProducts,
   });
+  const { data: impact } = useQuery({ queryKey: ['impact-stats'], queryFn: getImpactStats });
 
   const filteredProducts = useMemo(() => {
     if (!products) return [];
@@ -50,18 +51,39 @@ export default function AccueilScreen() {
                 <Ionicons name="person-circle-outline" size={28} color={colors.brand.ink} />
               </Pressable>
             </View>
-            <Text variant="body" tone="muted">
-              Regroupez-vous. Débloquez le meilleur prix.
-            </Text>
 
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Chercher un produit"
-              placeholderTextColor={colors.text.muted}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              accessibilityLabel="Chercher un produit"
-            />
+            <Card variant="elevated" style={styles.bentoGreeting}>
+              <Text variant="body" tone="muted">
+                Regroupez-vous. Débloquez le meilleur prix.
+              </Text>
+            </Card>
+
+            {impact && (
+              <LinearGradient colors={gradients.success} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.bentoImpact}>
+                <View style={styles.bentoImpactIcon}>
+                  <Ionicons name="people" size={20} color={colors.surface.white} />
+                </View>
+                <View>
+                  <Text variant="caption" style={styles.bentoImpactLabel}>
+                    Économisé par la communauté
+                  </Text>
+                  <Text variant="title" style={styles.bentoImpactValue} tabularNums>
+                    {formatFcfa(impact.total_savings)}
+                  </Text>
+                </View>
+              </LinearGradient>
+            )}
+
+            <View style={styles.searchWrapper}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Chercher un produit"
+                placeholderTextColor={colors.text.muted}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                accessibilityLabel="Chercher un produit"
+              />
+            </View>
           </View>
         }
         ListEmptyComponent={
@@ -77,6 +99,8 @@ export default function AccueilScreen() {
             name={item.name}
             merchantName={item.merchant_name}
             individualPrice={item.individual_price}
+            bestOpenGroupPrice={item.best_open_group_price}
+            openGroupsCount={item.open_groups_count}
             onPress={() => router.push(`/produit/${item.id}`)}
           />
         )}
@@ -86,9 +110,9 @@ export default function AccueilScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.surface.white },
+  screen: { flex: 1, backgroundColor: colors.surface.page },
   list: { padding: spacing.xl, paddingBottom: spacing.xxxl },
-  headerContainer: { gap: spacing.sm, marginBottom: spacing.xl },
+  headerContainer: { gap: spacing.md, marginBottom: spacing.md },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   profileTouchable: {
     width: hitSlop.minTouchTarget,
@@ -97,12 +121,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: -spacing.sm,
   },
+  bentoGreeting: { backgroundColor: colors.surface.white },
+  bentoImpact: {
+    borderRadius: radii.card,
+    padding: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    ...shadow.soft,
+  },
+  bentoImpactIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radii.pill,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bentoImpactLabel: { color: 'rgba(255,255,255,0.85)' },
+  bentoImpactValue: { color: colors.surface.white },
+  searchWrapper: { borderRadius: radii.card, ...shadow.soft },
   searchInput: {
-    marginTop: spacing.sm,
-    minHeight: 44,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: radii.block,
+    minHeight: 48,
+    borderRadius: radii.card,
     paddingHorizontal: spacing.lg,
     fontSize: 16,
     color: colors.brand.ink,

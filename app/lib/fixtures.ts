@@ -132,6 +132,8 @@ export const productCardsFixture: ProductCard[] = [
     individual_price: 22000,
     merchant_name: 'Agro-Intrants Zio',
     status: 'ACTIVE',
+    best_open_group_price: groupDetailFixture.current_unit_price,
+    open_groups_count: 1,
   },
   {
     id: 'prod_semences_mais',

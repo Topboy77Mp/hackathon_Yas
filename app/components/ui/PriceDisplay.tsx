@@ -1,16 +1,20 @@
 /**
  * KashFlow — PriceDisplay
  * Le plus gros élément de l'écran groupe (D'après <principe_directeur>). Chiffres
- * tabulaires obligatoires. `highlightChange` déclenche la moitié « prix » de la séquence
- * de déblocage de palier décrite dans docs/design/motion.md : c'est l'écran qui décide
- * quand la mettre à vrai (comparaison de current_tier entre deux polls) et pendant
- * combien de temps la garder (± 4 s, durée du bandeau de déblocage).
+ * tabulaires obligatoires, toujours en graisse ExtraBold (contrat v2 — contraste de prix
+ * maximal, réservé aux prix, jamais aux titres).
+ *
+ * Deux façons de montrer un ancien prix barré, pour deux besoins différents :
+ * — `highlightChange` : la séquence ANIMÉE de déblocage de palier sur l'écran groupe
+ *   (docs/design/motion.md), déclenchée une fois par l'écran quand current_tier change.
+ * — `savingsAchieved` : affichage STATIQUE « prix normal barré à côté du prix de groupe »
+ *   sur une carte catalogue qui a déjà un groupe ouvert moins cher — pas d'animation,
+ *   juste la comparaison. Le vert est permanent : quelque chose a déjà été gagné.
  */
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
-import { colors } from '@shared/theme/tokens';
+import { colors, motion } from '@shared/theme/tokens';
 import { typeScale, fontFamilies, fontWeights } from '@shared/theme/typography';
-import { motion } from '@shared/theme/tokens';
 import { Text } from './Text';
 import { resolveNativeFontFamily } from './nativeFont';
 
@@ -23,14 +27,27 @@ export interface PriceDisplayProps {
   previousValue?: number;
   unitLabel?: string;
   highlightChange?: boolean;
+  savingsAchieved?: boolean;
   size?: 'display' | 'heading';
 }
 
-export function PriceDisplay({ value, previousValue, unitLabel, highlightChange = false, size = 'display' }: PriceDisplayProps) {
-  const colorAnim = useRef(new Animated.Value(0)).current; // 0 = ink, 1 = unlock.green
-  const oldPriceAnim = useRef(new Animated.Value(0)).current; // 0 = caché, 1 = visible
+export function PriceDisplay({
+  value,
+  previousValue,
+  unitLabel,
+  highlightChange = false,
+  savingsAchieved = false,
+  size = 'display',
+}: PriceDisplayProps) {
+  const colorAnim = useRef(new Animated.Value(savingsAchieved ? 1 : 0)).current; // 0 = ink, 1 = unlock.green
+  const oldPriceAnim = useRef(new Animated.Value(savingsAchieved ? 1 : 0)).current; // 0 = caché, 1 = visible
 
   useEffect(() => {
+    if (savingsAchieved && !highlightChange) {
+      colorAnim.setValue(1);
+      oldPriceAnim.setValue(1);
+      return;
+    }
     if (!highlightChange) {
       colorAnim.setValue(0);
       oldPriceAnim.setValue(0);
@@ -43,13 +60,14 @@ export function PriceDisplay({ value, previousValue, unitLabel, highlightChange 
       ]).start();
     }, motion.priceSwapDelayMs);
     return () => clearTimeout(timer);
-  }, [highlightChange, colorAnim, oldPriceAnim]);
+  }, [highlightChange, savingsAchieved, colorAnim, oldPriceAnim]);
 
   const scale = typeScale[size];
+  const showOldPrice = previousValue !== undefined && previousValue !== value;
 
   return (
     <View>
-      {previousValue !== undefined && previousValue !== value && (
+      {showOldPrice && (
         <Animated.Text
           style={[
             styles.oldPrice,
@@ -60,14 +78,14 @@ export function PriceDisplay({ value, previousValue, unitLabel, highlightChange 
             },
           ]}
         >
-          {formatFcfa(previousValue)}
+          {formatFcfa(previousValue as number)}
         </Animated.Text>
       )}
       <Animated.Text
         style={[
           styles.price,
           {
-            fontFamily: resolveNativeFontFamily(scale.fontFamily, scale.weight),
+            fontFamily: resolveNativeFontFamily(fontFamilies.numbers, fontWeights.numbersExtraBold),
             fontSize: scale.size,
             lineHeight: scale.lineHeight,
             color: colorAnim.interpolate({ inputRange: [0, 1], outputRange: [colors.brand.ink, colors.unlock.green] }),

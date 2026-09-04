@@ -34,7 +34,7 @@ export default function FicheProduitScreen() {
         {product.description}
       </Text>
 
-      <Card variant="raised" style={styles.priceCard}>
+      <Card variant="elevated" style={styles.priceCard}>
         <Text variant="caption" tone="muted">
           Prix de détail individuel
         </Text>
@@ -62,7 +62,7 @@ export default function FicheProduitScreen() {
         ) : (
           product.open_groups.map((group) => (
             <Pressable key={group.id} onPress={() => router.push(`/g/${group.share_code}`)}>
-              <Card style={styles.groupCard}>
+              <Card variant="elevated" style={styles.groupCard}>
                 <Text variant="body">{group.name}</Text>
                 <Text variant="body" tone="muted" tabularNums>
                   {group.current_quantity} / {group.target_quantity} · {formatFcfa(group.current_unit_price)}
@@ -77,7 +77,7 @@ export default function FicheProduitScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.surface.white },
+  screen: { flex: 1, backgroundColor: colors.surface.page },
   content: { padding: spacing.xl, gap: spacing.xs, paddingBottom: spacing.xxxl },
   priceCard: { marginTop: spacing.md, gap: spacing.xs },
   section: { marginTop: spacing.xl, gap: spacing.xs },

@@ -74,7 +74,7 @@ export default function ProfilScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.surface.white },
+  screen: { flex: 1, backgroundColor: colors.surface.page },
   content: { padding: spacing.xl, gap: spacing.lg },
   identity: { gap: spacing.xs },
   divider: { marginVertical: spacing.xs },

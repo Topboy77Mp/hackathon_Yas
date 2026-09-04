@@ -1,11 +1,12 @@
 /**
  * KashFlow — Button
- * primary : action principale (jaune, une seule par écran en général).
+ * primary : action principale (dégradé jaune → jaune profond, une seule par écran en général).
  * secondary : action alternative, contour, sans remplissage jaune.
  * ghost : action discrète (liens d'action, ex. « Voir ma commande »).
  */
 import { Pressable, ActivityIndicator, type PressableProps, StyleSheet } from 'react-native';
-import { colors, radii, spacing, hitSlop } from '@shared/theme/tokens';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, gradients, radii, spacing, hitSlop } from '@shared/theme/tokens';
 import { Text } from './Text';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
@@ -19,6 +20,35 @@ export interface ButtonProps extends Omit<PressableProps, 'style' | 'children'> 
 
 export function Button({ label, variant = 'primary', loading = false, fullWidth = true, disabled, ...rest }: ButtonProps) {
   const isDisabled = disabled || loading;
+
+  const content = loading ? (
+    <ActivityIndicator color={variant === 'primary' ? colors.brand.ink : colors.text.muted} />
+  ) : (
+    <Text variant={variant === 'ghost' ? 'label' : 'body'} tone={variant === 'ghost' ? 'muted' : 'ink'}>
+      {label}
+    </Text>
+  );
+
+  if (variant === 'primary') {
+    return (
+      <Pressable
+        {...rest}
+        disabled={isDisabled}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: isDisabled, busy: loading }}
+        style={({ pressed }) => [fullWidth && styles.fullWidth, isDisabled && styles.disabled, pressed && styles.pressedScale]}
+      >
+        <LinearGradient
+          colors={gradients.primary}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.base}
+        >
+          {content}
+        </LinearGradient>
+      </Pressable>
+    );
+  }
 
   return (
     <Pressable
@@ -34,13 +64,7 @@ export function Button({ label, variant = 'primary', loading = false, fullWidth 
         isDisabled && styles.disabled,
       ]}
     >
-      {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? colors.brand.ink : colors.text.muted} />
-      ) : (
-        <Text variant="body" tone={variant === 'primary' ? 'ink' : variant === 'ghost' ? 'muted' : 'ink'} style={styles.label}>
-          {label}
-        </Text>
-      )}
+      {content}
     </Pressable>
   );
 }
@@ -54,15 +78,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   fullWidth: { alignSelf: 'stretch' },
-  label: { fontWeight: '500' },
-  primary: { backgroundColor: colors.brand.yellow },
   secondary: { backgroundColor: colors.surface.white, borderWidth: 1, borderColor: colors.line },
   ghost: { backgroundColor: 'transparent' },
   disabled: { opacity: 0.5 },
+  pressedScale: { opacity: 0.9 },
 });
 
 const stylesPressed = StyleSheet.create({
-  primary: { backgroundColor: colors.brand.yellowDeep },
+  primary: {},
   secondary: { backgroundColor: colors.surface.raised },
   ghost: { backgroundColor: colors.surface.raised },
 });

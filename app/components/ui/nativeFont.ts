@@ -11,6 +11,7 @@ import { fontFamilies, fontWeights } from '@shared/theme/typography';
 
 export function resolveNativeFontFamily(family: string, weight: string): string {
   if (family === fontFamilies.numbers) {
+    if (weight === fontWeights.numbersExtraBold) return 'Archivo_800ExtraBold';
     return weight === fontWeights.numbersBold ? 'Archivo_700Bold' : 'Archivo_600SemiBold';
   }
   return weight === fontWeights.bodyMedium ? 'Inter_500Medium' : 'Inter_400Regular';

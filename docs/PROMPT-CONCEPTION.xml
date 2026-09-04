@@ -235,29 +235,39 @@
 <!-- ============================================================ -->
 <design_tokens>
 
-  <origine>
+  <origine version="2 — dégelée">
     Palette dérivée du badge officiel du YAS Hackathon (jaune YAS dominant, dégradé vert-lime,
     blocs vert profond, bleu marine institutionnel, rouge de la date) et de l'identité YAS
     (jaune vif + contraste sombre). Les valeurs hexadécimales ci-dessous sont une extraction
     photographique du badge, normalisée et rééquilibrée pour l'écran : elles ne prétendent pas
     être la charte officielle YAS au pantone près, mais elles sont cohérentes avec elle et
     reconnaissables par le jury.
+    Version 2 : palette et profondeur dégelées sur décision humaine explicite (direction
+    « Premium &amp; Energetic »), remplaçant la version 1 ci-dessous archivée dans
+    &lt;etat_implementation&gt;. Le vert et le jaune sont plus vibrants, les cartes de contenu
+    portent une ombre douce, le fond d'écran se distingue du blanc des cartes.
   </origine>
 
   <palette>
-    <token name="brand.yellow"      hex="#FFD400" role="Action primaire. Boutons principaux, barre de progression, accent unique." />
-    <token name="brand.yellow.deep" hex="#F5B800" role="État pressé / bordure du jaune sur fond clair." />
+    <token name="brand.yellow"      hex="#FFB020" role="Action primaire. Ambre chaud — boutons principaux (dégradé), barre de progression, accent unique." />
+    <token name="brand.yellow.deep" hex="#E8960A" role="État pressé / second point du dégradé primaire." />
     <token name="brand.ink"         hex="#111418" role="Texte principal, texte SUR le jaune. Le jaune n'est jamais associé à du blanc." />
-    <token name="unlock.green"      hex="#177A43" role="RÉSERVÉ au succès : palier débloqué, économie réalisée, commande confirmée." />
-    <token name="unlock.green.soft" hex="#E7F4EC" role="Fond des blocs de succès." />
+    <token name="unlock.green"      hex="#0EA968" role="Émeraude vibrant. RÉSERVÉ au succès : palier débloqué, économie réalisée, prix de groupe déjà acquis." />
+    <token name="unlock.green.soft" hex="#E3F8EE" role="Fond des blocs de succès." />
     <token name="accent.lime"       hex="#A9CB3B" role="Second segment du dégradé de progression. Usage strictement décoratif et rare." />
     <token name="accent.navy"       hex="#16357A" role="Institutionnel : en-têtes commerçant et dashboard KPI. Jamais sur l'app acheteur." />
     <token name="alert.red"         hex="#E03B2C" role="RÉSERVÉ à l'urgence temporelle : compte à rebours, deadline &lt; 6h, erreurs." />
-    <token name="surface.white"     hex="#FFFFFF" role="Fond par défaut de tous les écrans." />
-    <token name="surface.raised"    hex="#F7F7F4" role="Fond des blocs secondaires. Très légèrement chaud, pas gris-bleu." />
-    <token name="line"              hex="#E4E4DE" role="Filets de séparation, 1px. Remplace les ombres." />
+    <token name="surface.white"     hex="#FFFFFF" role="Fond des cartes et des champs. Plus le fond par défaut de l'écran (cf. surface.page)." />
+    <token name="surface.page"      hex="#F2F4F7" role="Fond d'écran. Légèrement teinté pour faire ressortir les cartes blanches en relief." />
+    <token name="surface.raised"    hex="#F7F7F4" role="Fond des petits blocs internes à une carte (ex. bloc icône). Distinct de surface.page." />
+    <token name="line"              hex="#E4E4DE" role="Filets de séparation, 1px, à l'intérieur d'une carte." />
     <token name="text.muted"        hex="#6C6F73" role="Labels, métadonnées, texte secondaire." />
   </palette>
+
+  <degrades>
+    <token name="gradients.primary" role="Bouton primaire : brand.yellow → brand.yellow.deep, diagonal." />
+    <token name="gradients.success" role="Bloc d'impact / succès marquant : unlock.green → une nuance plus profonde de la même teinte." />
+  </degrades>
 
   <regle_couleur nom="La couleur encode un état, jamais une décoration">
     Le jaune signifie « tu peux agir ici ». Le vert signifie « quelque chose a été gagné ».
@@ -271,7 +281,11 @@
     <famille role="chiffres et titres" nom="Archivo" source="@expo-google-fonts/archivo">
       Chiffres tabulaires obligatoires (`fontVariant: ['tabular-nums']`). Le compteur et le prix
       s'animent : sans chasse fixe, les chiffres sautent latéralement et l'effet est ruiné.
-      Poids utilisés : 600 et 700 uniquement.
+      Poids utilisés : 600 et 700 pour les titres, 800 (ExtraBold) RÉSERVÉ aux prix
+      (PriceDisplay) — jamais pour un titre ou un label. Chaque poids doit être chargé
+      explicitement (`Archivo_800ExtraBold`, etc.) : écrire `fontWeight` sans charger le
+      fichier correspondant retombe silencieusement sur une police système, cf.
+      &lt;etat_implementation&gt;.
     </famille>
     <famille role="texte courant" nom="Inter" source="@expo-google-fonts/inter">
       Poids 400 et 500. Rien d'autre.
@@ -288,12 +302,16 @@
   <layout>
     <espacement>Échelle de 4 : 4, 8, 12, 16, 24, 32, 48. Gouttière écran 20px en mobile, 32px en web.</espacement>
     <rayons>
-      Rayon 12 pour les blocs de contenu, rayon 999 pour les boutons et pastilles.
-      DEUX rayons dans toute l'application, pas cinq.
+      Rayon 12 pour les petits blocs internes (ligne de palier, bloc icône, pastille non
+      circulaire). Rayon 24 pour les cartes de contenu (Card, ProductCard, blocs bento).
+      Rayon 999 pour les boutons et pastilles. TROIS rayons dans toute l'application, pas cinq.
     </rayons>
     <profondeur>
-      Aucune ombre portée. La hiérarchie se fait par le fond (`surface.raised`) et les filets 1px.
-      Une seule exception : la barre d'action fixe en bas de l'écran groupe.
+      Les cartes de contenu portent une ombre douce, unique niveau d'élévation (`shadow.card`
+      dans tokens.ts) : c'est ce qui les détache du fond d'écran teinté (`surface.page`), pas
+      un jeu d'ombres à plusieurs crans. Les petits éléments internes à une carte (ligne de
+      palier, filet) restent sans ombre, hiérarchisés par le fond et les filets 1px comme
+      avant. Exception inchangée : la barre d'action fixe en bas de l'écran groupe.
     </profondeur>
     <responsive>
       App acheteur (/app) : &lt;600 colonne unique, ≥600 contenu centré à 560px maximum.
@@ -305,11 +323,13 @@
   </layout>
 
   <principe_directeur>
-    Épuré signifie : fond blanc, beaucoup de vide, une seule chose importante par écran.
+    Épuré signifie : beaucoup de vide, une seule chose importante par écran, pas nécessairement
+    un fond blanc partout (v2 : fond d'écran `surface.page`, cartes blanches en relief).
     Sur l'écran groupe, la chose importante est le prix actuel en display 44 et la barre de
-    progression. Le reste du contenu descend sous la ligne de flottaison et se lit calmement.
-    Tout élément qui n'aide pas l'utilisateur à comprendre « combien on est, combien ça coûte,
-    combien il manque » est supprimé.
+    progression, maintenant portés par la carte la plus visible de l'écran. Le reste du contenu
+    descend sous la ligne de flottaison et se lit calmement. Tout élément qui n'aide pas
+    l'utilisateur à comprendre « combien on est, combien ça coûte, combien il manque » est
+    supprimé — la densité visuelle a augmenté, pas le nombre d'informations réellement affichées.
   </principe_directeur>
 
   <moment_unique>
@@ -354,22 +374,32 @@
       fois par capture d'écran, jamais par le typecheck).
     </composants_ajoutes>
 
-    <decision_arbitree date="Phase 2" sujet="Demande de reskin « Premium &amp; Energetic »">
-      Une proposition de refonte (ombres portées sur toutes les cartes, rayons 24px+, vert et
-      jaune adoucis, graisses ExtraBold, fond d'écran gris) a été comparée à ce contrat et
-      refusée telle quelle : elle contredit directement &lt;profondeur&gt; (aucune ombre hors
-      barre d'action), &lt;rayons&gt; (deux rayons, pas cinq), la palette figée au hex près, les
-      poids de police réellement chargés (Archivo 600/700, Inter 400/500 — "ExtraBold"
-      n'existe dans aucun fichier chargé, même bug que nativeFont.ts) et &lt;principe_directeur&gt;
-      (fond blanc, pas gris). L'exemple de carte fourni avec la demande affichait aussi des
-      chiffres inventés (progression, pourcentage de remise, ancien prix barré) absents du
-      type ProductCard.
-      Ce qui a été retenu, dans le cadre du contrat : ProductCard gagne un bloc icône (56×56,
-      radius 12, fond blanc + filet 1px — pas de nouvelle couleur) et son prix passe en
-      PriceDisplay taille heading au lieu d'un simple label, pour le même traitement
-      typographique que le prix de l'écran groupe. Le mécanisme de profondeur reste celui du
-      contrat : `Card` en fond `surface.raised` sur écran blanc, sans ombre ajoutée.
-      Cette décision n'est pas à rouvrir sans qu'un humain dégèle explicitement ce bloc.
+    <decision_arbitree date="Phase 2, étape 1" sujet="Demande de reskin « Premium &amp; Energetic » — refus initial">
+      Une première proposition de refonte (ombres portées sur toutes les cartes, rayons 24px+,
+      vert et jaune adoucis, graisses ExtraBold, fond d'écran gris) a été comparée au contrat
+      version 1 et refusée telle quelle : elle contredisait &lt;profondeur&gt;, &lt;rayons&gt;, la
+      palette figée et les poids de police réellement chargés. Retenu à la place : ProductCard
+      gagne un bloc icône et son prix passe en PriceDisplay taille heading, sans toucher au
+      reste du contrat. L'exemple de carte fourni avec la demande affichait aussi des chiffres
+      inventés (progression, pourcentage de remise, ancien prix barré) absents du type
+      ProductCard — ce point reste valable dans la version 2 ci-dessous.
+    </decision_arbitree>
+
+    <decision_arbitree date="Phase 2, étape 2" sujet="Demande de reskin « Premium &amp; Energetic » — dégel explicite">
+      Décision humaine explicite ultérieure : dégeler le contrat et appliquer la demande.
+      La palette, les rayons et la profondeur ci-dessus sont la version 2 qui en résulte —
+      ce ne sont plus des valeurs à comparer à une ancienne version, ce sont LE contrat actuel.
+      Implémenté dans les mêmes conditions de sécurité que le refus initial : ExtraBold
+      réellement chargé (`Archivo_800ExtraBold`, `nativeFont.ts` étendu) plutôt qu'écrit en dur,
+      `expo-linear-gradient` installé pour les dégradés (pas une bibliothèque de composants,
+      un utilitaire bas niveau), et surtout AUCUNE donnée inventée reprise de l'exemple fourni :
+      `ProductCard` gagne un champ `best_open_group_price` optionnel, rempli uniquement quand un
+      vrai groupe existe pour ce produit (un seul des trois produits du jeu de démo), sinon le
+      catalogue n'affiche que le prix individuel. Les avatars de preuve sociale sur l'écran
+      groupe sont des silhouettes anonymes (Ionicons `person`) dont le nombre suit
+      `participants_count` réel — jamais d'initiales ni de noms inventés, `GroupDetail` n'expose
+      aucune identité de participant. Le bloc impact de l'accueil vient de `/stats/impact`
+      (même endpoint que le tableau de bord jury), pas d'un chiffre écrit dans l'écran.
     </decision_arbitree>
 
   </etat_implementation>

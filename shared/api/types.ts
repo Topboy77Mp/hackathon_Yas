@@ -203,6 +203,13 @@ export interface ProductCard {
   individual_price: number;
   merchant_name: string;
   status: ProductStatus;
+  /**
+   * Prix actuel du groupe ouvert le moins cher pour ce produit, s'il y en a un.
+   * `undefined` quand aucun groupe n'est ouvert — le catalogue ne doit alors afficher
+   * QUE individual_price, jamais une remise ou une progression inventée.
+   */
+  best_open_group_price?: number;
+  open_groups_count?: number;
 }
 
 export interface GroupCard {

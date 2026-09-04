@@ -29,6 +29,6 @@ export function ScreenStub({ title, subtitle, onBack }: { title: string; subtitl
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.surface.white },
+  screen: { flex: 1, backgroundColor: colors.surface.page },
   content: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl, gap: spacing.sm },
 });

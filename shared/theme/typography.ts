@@ -13,6 +13,8 @@ export const fontFamilies = {
 export const fontWeights = {
   numbersSemiBold: '600',
   numbersBold: '700',
+  /** Réservé aux prix (PriceDisplay) — contraste de graisse maximal, jamais pour un titre. */
+  numbersExtraBold: '800',
   bodyRegular: '400',
   bodyMedium: '500',
 } as const;

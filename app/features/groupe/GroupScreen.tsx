@@ -1,12 +1,14 @@
 /**
  * KashFlow — Écran groupe.
- * Aligné sur la maquette v2 : en-tête de groupe, prix dominant, progression,
- * grille de paliers, participants, point de retrait, barre d'action fixe.
- * Aucun calcul de prix : tout vient tel quel du payload GroupDetail (D3).
+ * Contrat v2 : fond d'écran teinté (surface.page), cartes « objet » en relief (radius 24 +
+ * ombre douce), preuve sociale (avatars anonymes empilés — GroupDetail ne donne qu'un
+ * participants_count, jamais de nom : aucune identité inventée, juste des silhouettes
+ * génériques). Aucun calcul de prix : tout vient tel quel du payload GroupDetail (D3).
  */
 import { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import type { QueryKey } from '@tanstack/react-query';
 import type { GroupDetail } from '@shared/api/types';
 import { colors, spacing, radii } from '@shared/theme/tokens';
@@ -34,6 +36,30 @@ interface GroupScreenProps {
 }
 
 const UNLOCK_BANNER_DURATION_MS = 4000;
+const NEARLY_FULL_THRESHOLD = 0.9;
+const AVATAR_STACK_MAX = 4;
+
+/** Silhouettes anonymes empilées — jamais d'initiales : pas de nom dans le contrat. */
+function ParticipantsStack({ count }: { count: number }) {
+  const shown = Math.min(AVATAR_STACK_MAX, count);
+  const overflow = count - shown;
+  return (
+    <View style={styles.avatarStack}>
+      {Array.from({ length: shown }).map((_, i) => (
+        <View key={i} style={[styles.avatarCircle, i > 0 && styles.avatarOverlap]}>
+          <Ionicons name="person" size={16} color={colors.text.muted} />
+        </View>
+      ))}
+      {overflow > 0 && (
+        <View style={[styles.avatarCircle, styles.avatarOverlap, styles.avatarOverflow]}>
+          <Text variant="label" style={styles.avatarOverflowText}>
+            +{overflow}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
 
 export function GroupScreen({ queryKey, fetcher, isAuthenticated }: GroupScreenProps) {
   const router = useRouter();
@@ -95,6 +121,7 @@ export function GroupScreen({ queryKey, fetcher, isAuthenticated }: GroupScreenP
   const urgent = isDeadlineUrgent(group.seconds_remaining);
   const isTerminal = group.status === 'LOCKED' || group.status === 'COMPLETED';
   const joined = group.my_membership?.joined ?? false;
+  const nearlyFull = group.progress_ratio >= NEARLY_FULL_THRESHOLD && group.progress_ratio < 1;
 
   return (
     <View style={styles.screen}>
@@ -111,15 +138,14 @@ export function GroupScreen({ queryKey, fetcher, isAuthenticated }: GroupScreenP
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-
         {isTerminal && (
-          <Card variant="raised">
+          <Card variant="elevated" style={styles.cardSpacing}>
             <Text variant="label">{group.status === 'COMPLETED' ? 'Groupe complet' : 'Groupe verrouillé'}</Text>
           </Card>
         )}
 
-        {/* La seule chose importante de l'écran */}
-        <View style={styles.priceBlock}>
+        {/* La carte la plus importante de l'écran */}
+        <Card variant="elevated" style={styles.heroCard}>
           <Text variant="label" tone="muted">
             prix actuel pour tout le groupe
           </Text>
@@ -131,64 +157,68 @@ export function GroupScreen({ queryKey, fetcher, isAuthenticated }: GroupScreenP
           <Text variant="label" tone="muted">
             par {unitLabel}, au lieu de {formatFcfa(group.product.individual_price)}
           </Text>
-        </View>
 
-        <View style={styles.progressBlock}>
-          <ProgressBar value={group.progress_ratio} />
-          <View style={styles.progressLabels}>
-            <View style={styles.inlineRow}>
-              <CounterDisplay value={group.current_quantity} variant="label" />
-              <Text variant="label" tabularNums>
-                / {group.target_quantity} {unitLabelPlural}
-              </Text>
+          <View style={styles.progressBlock}>
+            <ProgressBar value={group.progress_ratio} />
+            <View style={styles.progressLabels}>
+              <View style={styles.inlineRow}>
+                <CounterDisplay value={group.current_quantity} variant="label" />
+                <Text variant="label" tabularNums>
+                  / {group.target_quantity} {unitLabelPlural}
+                </Text>
+              </View>
+              {group.quantity_to_next_tier !== null ? (
+                <Text variant="label" tone="muted">
+                  il manque {group.quantity_to_next_tier} {unitLabelPlural}
+                </Text>
+              ) : (
+                <Text variant="label" tone="success">
+                  objectif atteint
+                </Text>
+              )}
             </View>
-            {group.quantity_to_next_tier !== null ? (
-              <Text variant="label" tone="muted">
-                il manque {group.quantity_to_next_tier} {unitLabelPlural}
-              </Text>
-            ) : (
+            {nearlyFull && (
+              <Badge label="Presque rempli !" tone="brand" />
+            )}
+            {showUnlockBanner && (
               <Text variant="label" tone="success">
-                objectif atteint
+                Palier débloqué. Tout le groupe passe à {formatFcfa(group.current_unit_price)}.
               </Text>
             )}
           </View>
-          {showUnlockBanner && (
-            <Text variant="label" tone="success">
-              Palier débloqué. Tout le groupe passe à {formatFcfa(group.current_unit_price)}.
-            </Text>
-          )}
-        </View>
 
-        <Divider style={styles.divider} />
+          <Divider style={styles.divider} />
 
-        <View style={styles.section}>
+          <View style={styles.participantsRow}>
+            <ParticipantsStack count={group.participants_count} />
+            <View style={styles.participantsInfo}>
+              <Text variant="label">{group.participants_count} participants</Text>
+              <Text variant="caption" tone="muted">
+                économie du groupe : {formatFcfa(group.group_total_saving)}
+              </Text>
+            </View>
+          </View>
+        </Card>
+
+        <Card variant="elevated" style={styles.cardSpacing}>
           <Text variant="label">Paliers</Text>
-          <TierRow
-            range={`${group.current_tier.min_quantity} ${unitLabelPlural} et plus`}
-            price={formatFcfa(group.current_tier.unit_price)}
-            state="current"
-          />
-          {group.next_tier && (
+          <View style={styles.tierList}>
             <TierRow
-              range={`${group.next_tier.min_quantity} ${unitLabelPlural} et plus`}
-              price={formatFcfa(group.next_tier.unit_price)}
-              state="next"
+              range={`${group.current_tier.min_quantity} ${unitLabelPlural} et plus`}
+              price={formatFcfa(group.current_tier.unit_price)}
+              state="current"
             />
-          )}
-        </View>
+            {group.next_tier && (
+              <TierRow
+                range={`${group.next_tier.min_quantity} ${unitLabelPlural} et plus`}
+                price={formatFcfa(group.next_tier.unit_price)}
+                state="next"
+              />
+            )}
+          </View>
+        </Card>
 
-        <Divider style={styles.divider} />
-
-        <View style={styles.section}>
-          <Text variant="label">
-            {group.participants_count} participants
-          </Text>
-          <Text variant="caption" tone="muted">
-            économie du groupe : {formatFcfa(group.group_total_saving)}
-          </Text>
-        </View>
-
-        <Card variant="raised" style={styles.section}>
+        <Card variant="elevated" style={styles.cardSpacing}>
           <Text variant="label">Retrait</Text>
           <Text variant="label" tone="muted">
             {group.product.merchant_name}. À partir de la clôture du groupe.
@@ -196,15 +226,12 @@ export function GroupScreen({ queryKey, fetcher, isAuthenticated }: GroupScreenP
         </Card>
 
         {joined && group.my_membership && (
-          <>
-            <Divider style={styles.divider} />
-            <View style={styles.section}>
-              <Text variant="heading">Ma participation</Text>
-              <Text variant="body">
-                {group.my_membership.quantity} {unitLabelPlural} commandés · {formatFcfa(group.my_membership.total_amount)}
-              </Text>
-            </View>
-          </>
+          <Card variant="elevated" style={styles.cardSpacing}>
+            <Text variant="heading">Ma participation</Text>
+            <Text variant="body">
+              {group.my_membership.quantity} {unitLabelPlural} commandés · {formatFcfa(group.my_membership.total_amount)}
+            </Text>
+          </Card>
         )}
       </ScrollView>
 
@@ -252,15 +279,32 @@ export function GroupScreen({ queryKey, fetcher, isAuthenticated }: GroupScreenP
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.surface.white },
-  scrollContent: { padding: spacing.xl, paddingBottom: spacing.xxxl, gap: spacing.xs },
+  screen: { flex: 1, backgroundColor: colors.surface.page },
+  scrollContent: { padding: spacing.xl, paddingBottom: spacing.xxxl, gap: spacing.lg },
   skeleton: { backgroundColor: colors.surface.raised, borderRadius: radii.block },
-  priceBlock: { gap: spacing.sm, marginTop: spacing.sm },
-  progressBlock: { marginTop: spacing.xl, gap: spacing.md },
-  progressLabels: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
+  heroCard: { backgroundColor: colors.surface.white, gap: spacing.sm },
+  cardSpacing: { backgroundColor: colors.surface.white, gap: spacing.sm },
+  progressBlock: { marginTop: spacing.md, gap: spacing.sm, alignItems: 'flex-start' },
+  progressLabels: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm, width: '100%' },
   inlineRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  divider: { marginVertical: spacing.xl },
-  section: { gap: spacing.sm },
+  divider: { marginVertical: spacing.xs },
+  tierList: { gap: spacing.xs },
+  participantsRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  participantsInfo: { gap: 2 },
+  avatarStack: { flexDirection: 'row', alignItems: 'center' },
+  avatarCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: radii.pill,
+    backgroundColor: colors.surface.raised,
+    borderWidth: 2,
+    borderColor: colors.surface.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarOverlap: { marginLeft: -10 },
+  avatarOverflow: { backgroundColor: colors.brand.ink },
+  avatarOverflowText: { color: colors.surface.white },
   actionBar: {
     flexDirection: 'row',
     alignItems: 'center',
