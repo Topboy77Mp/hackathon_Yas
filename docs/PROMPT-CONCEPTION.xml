@@ -249,8 +249,8 @@
   </origine>
 
   <palette>
-    <token name="brand.yellow"      hex="#FFB020" role="Action primaire. Ambre chaud — boutons principaux (dégradé), barre de progression, accent unique." />
-    <token name="brand.yellow.deep" hex="#E8960A" role="État pressé / second point du dégradé primaire." />
+    <token name="brand.yellow"      hex="#FFC700" role="Action primaire. Jaune doré chaud — boutons principaux (dégradé), barre de progression, accent unique. #FFB020 essayé d'abord : lu comme orange (teinte ~39°), pas comme jaune." />
+    <token name="brand.yellow.deep" hex="#E0A600" role="État pressé / second point du dégradé primaire." />
     <token name="brand.ink"         hex="#111418" role="Texte principal, texte SUR le jaune. Le jaune n'est jamais associé à du blanc." />
     <token name="unlock.green"      hex="#0EA968" role="Émeraude vibrant. RÉSERVÉ au succès : palier débloqué, économie réalisée, prix de groupe déjà acquis." />
     <token name="unlock.green.soft" hex="#E3F8EE" role="Fond des blocs de succès." />
@@ -312,6 +312,11 @@
       un jeu d'ombres à plusieurs crans. Les petits éléments internes à une carte (ligne de
       palier, filet) restent sans ombre, hiérarchisés par le fond et les filets 1px comme
       avant. Exception inchangée : la barre d'action fixe en bas de l'écran groupe.
+      `shadow.card`/`shadow.soft` portent DEUX jeux de propriétés, pas redondants :
+      `shadowColor`/`shadowOffset`/`shadowOpacity`/`shadowRadius`/`elevation` pour iOS et
+      Android (React Native natif ignore `boxShadow`), et `boxShadow` (chaîne CSS) pour le
+      web — react-native-web récent déprécie `shadow*` et le rend presque invisible sur un
+      fond aussi clair que `surface.page`.
     </profondeur>
     <responsive>
       App acheteur (/app) : &lt;600 colonne unique, ≥600 contenu centré à 560px maximum.

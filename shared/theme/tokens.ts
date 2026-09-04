@@ -12,8 +12,10 @@
 
 export const colors = {
   brand: {
-    yellow: '#FFB020',
-    yellowDeep: '#E8960A',
+    /** #FFB020 lu au premier coup d'œil comme orange (teinte ~39°, l'orange commence
+     *  vers 20-40°). #FFC700 reste chaud et riche mais reste net­tement jaune (~47°). */
+    yellow: '#FFC700',
+    yellowDeep: '#E0A600',
     ink: '#111418',
   },
   unlock: {
@@ -82,21 +84,29 @@ export const radii = {
 /**
  * Ombres douces — réintroduites sur demande explicite (contrat dégelé). Un seul niveau
  * d'élévation, pas une échelle à cinq crans : la carte, et rien de plus appuyé.
+ *
+ * Deux jeux de propriétés côte à côte, pas redondants : `shadow*`/`elevation` pour iOS et
+ * Android (React Native natif ne comprend pas `boxShadow`), `boxShadow` pour le web — sur
+ * react-native-web récent, `shadow*` fonctionne encore mais avertit en console qu'il est
+ * déprécié, et surtout rend une ombre presque invisible sur un fond aussi clair que
+ * `surface.page` ; `boxShadow` donne un rendu net et volontaire.
  */
 export const shadow = {
   card: {
     shadowColor: '#0B1220',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
+    shadowOpacity: 0.14,
+    shadowRadius: 20,
+    elevation: 6,
+    boxShadow: '0px 8px 20px rgba(11, 18, 32, 0.14)',
   },
   soft: {
     shadowColor: '#0B1220',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
+    boxShadow: '0px 3px 10px rgba(11, 18, 32, 0.1)',
   },
 } as const;
 
