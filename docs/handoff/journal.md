@@ -115,3 +115,10 @@ Format : `[HH:MM] AGENT_X — fait / bloqué par / attend`
 [19:20] AGENT_BACK — vérifié dans Chromium contre le backend : 13 contrôles sur les livrables P0 + 16 sur le parcours acheteur, zéro erreur console. Base réinitialisée après chaque essai
 [19:20] AGENT_BACK — reste au contrat, hors application acheteur : l'espace commerçant (IA-1, création de produit) vit dans /dashboard et y est complet
 [19:20] AGENT_BACK — attend : arbitrage sur `GroupDetail.tiers[]`, puis phase UI/UX et compilation APK
+[19:50] AGENT_BACK — fait : `GroupDetail.tiers[]` ajouté sur arbitrage de l'orchestrateur. L'écran groupe affiche les quatre paliers sans second appel ; `current_tier` et `next_tier` gardent leur forme gelée. 165 tests verts
+[19:50] AGENT_BACK — le garde-fou de conformité du payload (20 champs) a fait échouer deux tests au moment de l'ajout, exactement comme prévu. Mis à jour à 21, pas contourné
+[19:50] AGENT_BACK — fait : résolution de l'adresse de l'API pour un appareil. Sur téléphone, `localhost` désigne le téléphone : un APK compilé avec cette valeur ne joint jamais l'API et affiche « connexion impossible » partout, sans cause visible
+[19:50] AGENT_BACK — l'adresse est désormais déduite de l'hôte Metro en développement natif, forcée par `EXPO_PUBLIC_API_BASE_URL` sinon — obligatoire pour un APK autonome. Le client HTTP nomme explicitement l'erreur de configuration au lieu d'une panne réseau
+[19:50] AGENT_BACK — README : procédure de test sur téléphone, uvicorn sur `0.0.0.0` compris (par défaut il n'écoute que sur 127.0.0.1, injoignable depuis un appareil)
+[19:50] AGENT_BACK — API vérifiée joignable depuis le réseau local sur l'IP de la machine
+[19:50] AGENT_BACK — attend : phase UI/UX, puis compilation de l'APK

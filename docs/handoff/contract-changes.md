@@ -406,3 +406,31 @@ Impacte : AGENT_UI, AGENT_FRONT.
 Notifié : non — à diffuser aux autres sessions par l'orchestrateur.
 
 ---
+
+## [19:50] `GroupDetail.tiers[]` — tranché, ajouté
+
+Reprend et clôt le point 1 de l'entrée [18:40], laissé à l'arbitrage humain.
+**Décision prise par l'orchestrateur : ajouter le champ.**
+
+`GroupDetail` porte désormais `tiers: ProductTierOut[]`, la grille complète du
+produit avec les bornes hautes.
+
+La contradiction était dans le contrat lui-même : `<payload_critique>` fige une
+liste de 20 champs sans `tiers[]`, et le paragraphe qui l'introduit exige que le
+payload soit « auto-suffisant : l'écran groupe se dessine intégralement à partir
+de lui, sans second appel ». L'écran ne pouvait montrer que 2 paliers sur 4.
+L'ajout tranche dans le sens du principe.
+
+Ce qui **ne change pas** : `current_tier` et `next_tier` gardent leur forme gelée
+à deux champs (`min_quantity`, `unit_price`). Un test le vérifie explicitement.
+
+Le garde-fou de conformité passe de 20 à 21 champs — c'est lui qui a signalé le
+changement au moment de l'appliquer, ce pour quoi il avait été écrit.
+
+Impacte : AGENT_UI et AGENT_FRONT (la grille complète est disponible, plus besoin
+de second appel), AGENT_DASH (aucun — le dashboard lit déjà `/products/{id}`,
+qu'il peut désormais économiser s'il le souhaite).
+
+Notifié : non — à diffuser aux autres sessions par l'orchestrateur.
+
+---
