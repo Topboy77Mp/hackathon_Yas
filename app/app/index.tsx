@@ -6,10 +6,11 @@
  * ces informations vivent dans ProductDetail, affichées sur la fiche produit).
  */
 import { useMemo, useState } from 'react';
-import { FlatList, View, StyleSheet, TextInput, RefreshControl } from 'react-native';
+import { FlatList, Pressable, View, StyleSheet, TextInput, RefreshControl } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { colors, spacing, radii } from '@shared/theme/tokens';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, spacing, radii, hitSlop } from '@shared/theme/tokens';
 import { Text, ProductCard, EmptyState } from '../components/ui';
 import { listProducts } from '../lib/api/endpoints';
 
@@ -38,7 +39,17 @@ export default function AccueilScreen() {
         refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.brand.ink} />}
         ListHeaderComponent={
           <View style={styles.headerContainer}>
-            <Text variant="title">KashFlow</Text>
+            <View style={styles.topRow}>
+              <Text variant="title">KashFlow</Text>
+              <Pressable
+                onPress={() => router.push('/profil')}
+                accessibilityRole="button"
+                accessibilityLabel="Profil"
+                style={styles.profileTouchable}
+              >
+                <Ionicons name="person-circle-outline" size={28} color={colors.brand.ink} />
+              </Pressable>
+            </View>
             <Text variant="body" tone="muted">
               Regroupez-vous. Débloquez le meilleur prix.
             </Text>
@@ -78,6 +89,14 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.surface.white },
   list: { padding: spacing.xl, paddingBottom: spacing.xxxl },
   headerContainer: { gap: spacing.sm, marginBottom: spacing.xl },
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  profileTouchable: {
+    width: hitSlop.minTouchTarget,
+    height: hitSlop.minTouchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: -spacing.sm,
+  },
   searchInput: {
     marginTop: spacing.sm,
     minHeight: 44,

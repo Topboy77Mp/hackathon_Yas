@@ -54,23 +54,37 @@ const mockDelay = <T>(value: T, ms = 250): Promise<T> =>
  */
 let mockJoinedGroup: GroupDetail | null = null;
 
+/**
+ * Même raison que mockJoinedGroup : sans mémoriser QUI s'est inscrit/connecté,
+ * me() renverrait toujours le même utilisateur démo figé, y compris juste après
+ * une inscription avec un autre nom — incohérence trouvée en testant le parcours
+ * profil de bout en bout.
+ */
+let mockCurrentUser: User = demoUserFixture;
+
 // ---------------------------------------------------------------------------
 // Auth — mockée intégralement : USE_MOCKS doit permettre de tester tout le parcours
 // connecté (inscription → navigation → rejoindre) sans backend.
 // ---------------------------------------------------------------------------
 
-export const register = (payload: RegisterRequest): Promise<AuthResponse> =>
-  USE_MOCKS
-    ? mockDelay({ token: mockAuthToken, user: { ...demoUserFixture, first_name: payload.first_name, last_name: payload.last_name, phone: payload.phone } })
-    : apiRequest<AuthResponse>('/auth/register', { method: 'POST', body: payload, auth: false });
+export const register = (payload: RegisterRequest): Promise<AuthResponse> => {
+  if (USE_MOCKS) {
+    mockCurrentUser = { ...demoUserFixture, first_name: payload.first_name, last_name: payload.last_name, phone: payload.phone };
+    return mockDelay({ token: mockAuthToken, user: mockCurrentUser });
+  }
+  return apiRequest<AuthResponse>('/auth/register', { method: 'POST', body: payload, auth: false });
+};
 
-export const login = (payload: LoginRequest): Promise<AuthResponse> =>
-  USE_MOCKS
-    ? mockDelay({ token: mockAuthToken, user: demoUserFixture })
-    : apiRequest<AuthResponse>('/auth/login', { method: 'POST', body: payload, auth: false });
+export const login = (payload: LoginRequest): Promise<AuthResponse> => {
+  if (USE_MOCKS) {
+    mockCurrentUser = demoUserFixture;
+    return mockDelay({ token: mockAuthToken, user: mockCurrentUser });
+  }
+  return apiRequest<AuthResponse>('/auth/login', { method: 'POST', body: payload, auth: false });
+};
 
 export const me = (): Promise<User> =>
-  USE_MOCKS ? mockDelay(demoUserFixture) : apiRequest<User>('/auth/me');
+  USE_MOCKS ? mockDelay(mockCurrentUser) : apiRequest<User>('/auth/me');
 
 // ---------------------------------------------------------------------------
 // Catalogue
