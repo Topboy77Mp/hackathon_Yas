@@ -62,3 +62,6 @@ Format : `[HH:MM] AGENT_X — fait / bloqué par / attend`
 [17:05] AGENT_BACK — garde-fous ajoutés : un identifiant inventé par le modèle est écarté, un groupe expiré n'est jamais proposé
 [17:05] AGENT_BACK — fait : `groups_successful` compte LOCKED ou COMPLETED. Le KPI du jury affichait « 0 % de réussite » en permanence
 [17:05] AGENT_BACK — 144 tests verts. Backend terminé : étapes 1 à 7, Phase 3, IA-1, IA-2, IA-3
+[17:40] AGENT_BACK — fait : `GET /merchant/products`, le seul endpoint qui manquait vraiment. Sans lui « Mes offres » ne pouvait afficher que des groupes, et un brouillon devenait invisible à son auteur. 9 tests, changement de contrat consigné
+[17:40] AGENT_BACK — 153 tests verts. 24 chemins, 46 schémas publiés dans `openapi.json`, désormais indenté pour être lisible en diff
+[17:40] AGENT_BACK — pour AGENT_FRONT : `/shared/api/types.ts` diverge de l'OpenAPI sur 7 points (identifiants string, ImpactStats, SuggestTiers, ShareMessage, MerchantDashboard, deadline, GroupCard). Détail dans contract-changes.md

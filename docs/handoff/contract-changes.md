@@ -269,3 +269,68 @@ n'est créée pour la justifier — le contrat interdit d'ajouter une fonctionna
 hors périmètre.
 
 ---
+
+## [17:40] Ajout `GET /merchant/products` — liste des offres du commerçant
+
+**Ajout**, aucune rupture. Le contrat prévoit `POST /merchant/products` et
+`POST /merchant/products/{id}/tiers`, mais aucun moyen de **lire** ses propres
+offres. Conséquence concrète : un produit créé sans grille de paliers reste en
+brouillon, n'apparaît pas dans `GET /products` (catalogue public) et devenait
+donc invisible à celui-là même qui venait de le saisir — impossible de lui
+ajouter une grille ensuite.
+
+`GET /merchant/dashboard` ne comble pas ce trou : il renvoie des **groupes**, pas
+des produits. Un commerçant sans groupe ouvert voyait un espace vide.
+
+Réponse : `{ products: MerchantProductRow[] }` avec, par produit, `id`, `name`,
+`unit_label`, `image_url`, `stock`, `individual_price`, `best_price`, `status`,
+`tiers`, `groups_count`, `reserved_units`. Brouillons compris, cloisonné au
+commerçant authentifié (403 pour un acheteur, 401 sans jeton).
+
+Couvert par `backend/tests/test_api_merchant_products.py` (9 tests).
+
+Impacte : AGENT_DASH uniquement. AGENT_FRONT n'est pas concerné.
+
+Notifié : non — à diffuser aux autres sessions par l'orchestrateur.
+
+---
+
+## [17:40] `/shared/api/types.ts` diverge de l'OpenAPI publié — demande à AGENT_FRONT
+
+Ce n'est pas un changement de contrat : c'est un **écart constaté** entre le
+fichier de types partagé et l'API réellement publiée. Le fichier a été écrit
+avant la sortie de `backend/openapi.json` et n'a pas été réaligné depuis.
+
+Écarts qui cassent un consommateur :
+
+1. **Identifiants `string` partout** (`User.id`, `Group.id`, `Product.id`…) alors
+   que l'API renvoie des entiers. Déjà tranché le [16:35] : l'OpenAPI fait foi.
+2. **`ImpactStats`** : le fichier annonce `total_savings`, `active_groups_count`,
+   `completed_groups_count`, `participants_count`, `total_value`. L'API renvoie
+   `community_savings`, `groups_active`, `groups_successful`, `users`,
+   `total_order_value`, plus `merchants`, `products`, `groups_created`,
+   `success_rate`, `orders`.
+3. **`SuggestTiersRequest`** : `individual_price` et `target_margin` n'existent
+   pas ; l'API attend `retail_price`, `stock`, `floor_price`.
+4. **`ShareMessageRequest` / `ShareMessageResponse`** : l'API prend `{group_id}`
+   et renvoie `{share_url, variants: [{registre, texte}], source}`, pas
+   `{variants: [{text}]}` ni les paramètres de langue et de registre. IA-2 a été
+   réduite au français sur décision de l'orchestrateur ([11:44]).
+5. **`MerchantDashboard`** : l'API renvoie `business_name`, `orders`, `groups`,
+   `units`, `revenue_simule`, `pending_orders`, `rows[]` — pas `orders: Order[]`.
+6. **`CreateGroupRequest.deadline`** : l'API attend `deadline_hours` (entier).
+7. **`GroupCard`** ne porte pas `deadline` côté API, seulement `seconds_remaining`.
+
+Mesure prise côté dashboard, sans toucher au fichier d'AGENT_FRONT : les types
+d'API du dashboard vivent dans `dashboard/src/lib/api/types.ts`, alignés sur
+`backend/openapi.json`. `@shared/theme/*` reste la source unique des tokens et
+n'est pas dupliqué.
+
+Demande à AGENT_FRONT : réaligner `/shared/api/types.ts` sur l'OpenAPI. Tant que
+ce n'est pas fait, l'application mobile risque les mêmes erreurs silencieuses.
+
+Impacte : AGENT_FRONT (propriétaire du fichier), AGENT_DASH (contourné).
+
+Notifié : non — à diffuser aux autres sessions par l'orchestrateur.
+
+---
