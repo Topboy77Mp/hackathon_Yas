@@ -6,8 +6,9 @@
  * génériques). Aucun calcul de prix : tout vient tel quel du payload GroupDetail (D3).
  */
 import { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import type { QueryKey } from '@tanstack/react-query';
 import type { GroupDetail } from '@shared/api/types';
@@ -26,6 +27,7 @@ import {
   EmptyState,
 } from '../../components/ui';
 import { useGroupPolling } from '../../lib/hooks/useGroupPolling';
+import { leaveGroup } from '../../lib/api/endpoints';
 import { formatFcfa, formatCountdown, isDeadlineUrgent, pluralizeUnit } from '../../lib/format';
 
 interface GroupScreenProps {
@@ -66,7 +68,37 @@ export function GroupScreen({ queryKey, fetcher, isAuthenticated }: GroupScreenP
   const { data: group, isLoading, isError, refetch, tierJustUnlocked, acknowledgeTierUnlock } =
     useGroupPolling(queryKey, fetcher);
 
+  const queryClient = useQueryClient();
   const [showUnlockBanner, setShowUnlockBanner] = useState(false);
+  const [erreurSortie, setErreurSortie] = useState<string | null>(null);
+
+  // « Quitter » est P0 au contrat et n'existait nulle part : une commande passée
+  // était définitive côté interface, alors que l'API sait l'annuler et
+  // repositionner le prix du groupe pour tout le monde.
+  const sortie = useMutation({
+    mutationFn: (id: number) => leaveGroup(id),
+    onSuccess: ({ group: apres }) => {
+      queryClient.setQueryData(queryKey, apres);
+      void queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+    onError: (raison) =>
+      setErreurSortie(raison instanceof Error ? raison.message : 'Impossible de quitter le groupe.'),
+  });
+
+  function demanderSortie(id: number) {
+    setErreurSortie(null);
+    const message = 'Votre commande sera annulée. Le prix du groupe peut remonter pour les autres participants.';
+    // `Alert` n'existe pas sur react-native-web : sans ce garde-fou, le bouton
+    // ne faisait rien du tout dans le navigateur.
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Quitter ce groupe ?\n\n${message}`)) sortie.mutate(id);
+      return;
+    }
+    Alert.alert('Quitter ce groupe ?', message, [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Quitter', style: 'destructive', onPress: () => sortie.mutate(id) },
+    ]);
+  }
   const previousUnitPriceRef = useRef<number | undefined>(undefined);
   const previousUnitPrice = previousUnitPriceRef.current;
 
@@ -231,6 +263,18 @@ export function GroupScreen({ queryKey, fetcher, isAuthenticated }: GroupScreenP
             <Text variant="body">
               {group.my_membership.quantity} {unitLabelPlural} commandés · {formatFcfa(group.my_membership.total_amount)}
             </Text>
+            {erreurSortie && (
+              <Text variant="label" tone="alert">
+                {erreurSortie}
+              </Text>
+            )}
+            <Button
+              label={sortie.isPending ? 'Annulation…' : 'Quitter le groupe'}
+              variant="ghost"
+              fullWidth={false}
+              loading={sortie.isPending}
+              onPress={() => demanderSortie(group.id)}
+            />
           </Card>
         )}
       </ScrollView>
