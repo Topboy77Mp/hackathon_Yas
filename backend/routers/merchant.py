@@ -21,6 +21,7 @@ from schemas import (
     ErrorOut,
     MerchantProductRow,
     MerchantProductsOut,
+    ProductTierOut,
     ProductCreateIn,
     ProductDetail,
     TierOut,
@@ -54,7 +55,14 @@ def _detail(product: Product, merchant: Merchant, session: Session) -> ProductDe
         individual_price=product.individual_price,
         merchant_name=merchant.business_name,
         merchant_location=merchant.location,
-        tiers=[TierOut(min_quantity=t.min_quantity, unit_price=t.unit_price) for t in tiers],
+        tiers=[
+            ProductTierOut(
+                min_quantity=t.min_quantity,
+                max_quantity=t.max_quantity,
+                unit_price=t.unit_price,
+            )
+            for t in tiers
+        ],
         open_groups=[],
     )
 

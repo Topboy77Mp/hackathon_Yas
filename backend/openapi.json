@@ -2210,6 +2210,17 @@
           "open_groups_count": {
             "type": "integer",
             "title": "Open Groups Count"
+          },
+          "best_open_group_price": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Open Group Price"
           }
         },
         "type": "object",
@@ -2355,7 +2366,7 @@
           },
           "tiers": {
             "items": {
-              "$ref": "#/components/schemas/TierOut"
+              "$ref": "#/components/schemas/ProductTierOut"
             },
             "type": "array",
             "title": "Tiers"
@@ -2392,6 +2403,36 @@
           "CLOSED"
         ],
         "title": "ProductStatus"
+      },
+      "ProductTierOut": {
+        "properties": {
+          "min_quantity": {
+            "type": "integer",
+            "title": "Min Quantity"
+          },
+          "unit_price": {
+            "type": "integer",
+            "title": "Unit Price"
+          },
+          "max_quantity": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Quantity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "min_quantity",
+          "unit_price"
+        ],
+        "title": "ProductTierOut",
+        "description": "Palier vu depuis la fiche produit, avec sa borne haute.\n\n`TierOut` reste volontairement à deux champs : c'est la forme gelée de\n`current_tier` et `next_tier` dans GroupDetail. La fiche produit, elle, doit\nafficher des intervalles (« 1–49 »), ce qui demande `max_quantity`."
       },
       "RegisterIn": {
         "properties": {

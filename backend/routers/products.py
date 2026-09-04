@@ -8,8 +8,13 @@ from sqlmodel import Session, select
 import pricing
 from db import get_session
 from models import Group, GroupStatus, Merchant, Product, ProductStatus
-from schemas import ErrorOut, ProductCard, ProductDetail, TierOut
-from services import build_group_card, product_tiers, settle_expired_groups
+from schemas import ErrorOut, ProductCard, ProductDetail, ProductTierOut
+from services import (
+    build_group_card,
+    group_quantity,
+    product_tiers,
+    settle_expired_groups,
+)
 
 router = APIRouter(tags=["catalogue"])
 
@@ -38,6 +43,21 @@ def list_products(session: Session = Depends(get_session)) -> list[ProductCard]:
         merchant = session.get(Merchant, product.merchant_id)
         # « best_price » = le meilleur prix atteignable, ce qui donne envie de cliquer.
         best_price = min([t.unit_price for t in tiers], default=product.individual_price)
+
+        # Le prix réellement en vigueur dans le groupe ouvert le moins cher. Sans
+        # lui, le catalogue ne peut annoncer qu'une promesse : la carte produit
+        # afficherait une remise que personne n'a débloquée.
+        open_groups = _open_groups(product.id, session)
+        open_prices = [
+            pricing.compute(
+                tiers,
+                group_quantity(group.id, session),
+                product.individual_price,
+                group.target_quantity,
+            ).current_unit_price
+            for group in open_groups
+        ]
+
         cards.append(
             ProductCard(
                 id=product.id,
@@ -47,7 +67,8 @@ def list_products(session: Session = Depends(get_session)) -> list[ProductCard]:
                 individual_price=product.individual_price,
                 best_price=best_price,
                 merchant_name=merchant.business_name if merchant else "",
-                open_groups_count=len(_open_groups(product.id, session)),
+                open_groups_count=len(open_groups),
+                best_open_group_price=min(open_prices) if open_prices else None,
             )
         )
     return cards
@@ -81,6 +102,13 @@ def get_product(
         individual_price=product.individual_price,
         merchant_name=merchant.business_name if merchant else "",
         merchant_location=merchant.location if merchant else None,
-        tiers=[TierOut(min_quantity=t.min_quantity, unit_price=t.unit_price) for t in tiers],
+        tiers=[
+            ProductTierOut(
+                min_quantity=t.min_quantity,
+                max_quantity=t.max_quantity,
+                unit_price=t.unit_price,
+            )
+            for t in tiers
+        ],
         open_groups=[build_group_card(g, session) for g in _open_groups(product.id, session)],
     )

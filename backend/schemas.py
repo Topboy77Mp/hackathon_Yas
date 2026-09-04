@@ -106,9 +106,26 @@ class ProductCard(BaseModel):
     unit_label: str
     image_url: str | None
     individual_price: int
+    #: Meilleur prix atteignable si le dernier palier est débloqué. Une promesse.
     best_price: int
     merchant_name: str
     open_groups_count: int
+    #: Prix réellement en vigueur dans le groupe ouvert le moins cher, ou `None`
+    #: s'il n'y en a aucun. `best_price` est une promesse, celui-ci est un fait :
+    #: le catalogue ne doit pas afficher une remise que personne n'a encore
+    #: débloquée.
+    best_open_group_price: int | None = None
+
+
+class ProductTierOut(TierOut):
+    """Palier vu depuis la fiche produit, avec sa borne haute.
+
+    `TierOut` reste volontairement à deux champs : c'est la forme gelée de
+    `current_tier` et `next_tier` dans GroupDetail. La fiche produit, elle, doit
+    afficher des intervalles (« 1–49 »), ce qui demande `max_quantity`.
+    """
+
+    max_quantity: int | None = None
 
 
 class GroupCard(BaseModel):
@@ -134,7 +151,7 @@ class ProductDetail(BaseModel):
     individual_price: int
     merchant_name: str
     merchant_location: str | None
-    tiers: list[TierOut]
+    tiers: list[ProductTierOut]
     open_groups: list[GroupCard]
 
 
