@@ -47,7 +47,9 @@ export default function ConnexionScreen() {
             {mutation.isError && (
               <View style={styles.errorBox}>
                 <Text variant="label" tone="alert">
-                  Identifiants incorrects. Veuillez réessayer.
+                  {mutation.error instanceof Error
+                    ? mutation.error.message
+                    : "Identifiants incorrects. Veuillez réessayer."}
                 </Text>
               </View>
             )}

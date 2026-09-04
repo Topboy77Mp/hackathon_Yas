@@ -4,12 +4,14 @@
  * Tout passe par l'API réelle : les fixtures ont été retirées avec le mode
  * maquette. Aucun calcul de prix ici ni ailleurs dans l'application — le front
  * affiche ce que l'API renvoie (D3).
+ *
+ * La surface commerçant (création de produit, grille de paliers, IA-1, tableau
+ * de bord) n'est volontairement pas ici : elle appartient à /dashboard. La
+ * dupliquer dans l'app acheteur laissait quatre fonctions que rien n'appelait.
  */
 import type {
   AuthResponse,
   CreateGroupRequest,
-  CreateProductRequest,
-  CreateTiersRequest,
   DiscoverGroupsRequest,
   DiscoverGroupsResponse,
   GroupCard,
@@ -19,7 +21,6 @@ import type {
   JoinGroupResponse,
   LeaveGroupResponse,
   LoginRequest,
-  MerchantDashboard,
   NotificationsResponse,
   Order,
   PayOrderResponse,
@@ -28,9 +29,6 @@ import type {
   RegisterRequest,
   ShareMessageRequest,
   ShareMessageResponse,
-  SuggestTiersRequest,
-  SuggestTiersResponse,
-  Tier,
   User,
 } from '@shared/api/types';
 import { apiRequest } from './client';
@@ -107,19 +105,6 @@ export const markNotificationRead = (id: number) =>
   apiRequest<unknown>(`/notifications/${id}/read`, { method: 'POST' });
 
 // ---------------------------------------------------------------------------
-// Espace commerçant — présent pour complétude du contrat ; l'espace pro vit
-// dans /dashboard, l'app acheteur ne l'utilise pas.
-// ---------------------------------------------------------------------------
-
-export const createProduct = (payload: CreateProductRequest) =>
-  apiRequest<ProductDetail>('/merchant/products', { method: 'POST', body: payload });
-
-export const createTiers = (productId: number, payload: CreateTiersRequest) =>
-  apiRequest<Tier[]>(`/merchant/products/${productId}/tiers`, { method: 'POST', body: payload });
-
-export const getMerchantDashboard = () => apiRequest<MerchantDashboard>('/merchant/dashboard');
-
-// ---------------------------------------------------------------------------
 // KPI d'impact — public
 // ---------------------------------------------------------------------------
 
@@ -129,9 +114,6 @@ export const getImpactStats = () =>
 // ---------------------------------------------------------------------------
 // IA
 // ---------------------------------------------------------------------------
-
-export const suggestTiers = (payload: SuggestTiersRequest) =>
-  apiRequest<SuggestTiersResponse>('/ai/suggest-tiers', { method: 'POST', body: payload });
 
 export const generateShareMessage = (payload: ShareMessageRequest) =>
   apiRequest<ShareMessageResponse>('/ai/share-message', { method: 'POST', body: payload });

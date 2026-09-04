@@ -52,7 +52,9 @@ export default function InscriptionScreen() {
             {mutation.isError && (
               <View style={styles.errorBox}>
                 <Text variant="label" tone="alert">
-                  L'inscription a échoué. Vérifiez vos informations.
+                  {mutation.error instanceof Error
+                    ? mutation.error.message
+                    : "L'inscription a échoué. Vérifiez vos informations."}
                 </Text>
               </View>
             )}
