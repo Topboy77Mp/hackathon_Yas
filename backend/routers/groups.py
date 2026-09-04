@@ -39,6 +39,7 @@ from services import (
     group_quantity,
     guard_group_open,
     notify_tier_unlocked,
+    settle_group_if_due,
 )
 
 router = APIRouter(tags=["groupes"])
@@ -98,6 +99,7 @@ def get_group(
             status_code=404,
             detail={"detail": "Groupe introuvable.", "code": "GROUP_NOT_FOUND"},
         )
+    settle_group_if_due(group, session)
     return build_group_detail(group, session, viewer)
 
 
@@ -116,6 +118,7 @@ def get_group_by_code(
             status_code=404,
             detail={"detail": "Groupe introuvable.", "code": "GROUP_NOT_FOUND"},
         )
+    settle_group_if_due(group, session)
     return build_group_detail(group, session, viewer)
 
 

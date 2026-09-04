@@ -18,6 +18,8 @@ from models import (
     Notification,
     Order,
     OrderStatus,
+    Payment,
+    PaymentStatus,
     PriceTier,
     Product,
     User,
@@ -140,6 +142,63 @@ def notify_tier_unlocked(
                 ),
             )
         )
+
+
+def settle_group_if_due(group: Group, session: Session) -> bool:
+    """Applique la règle D8 lorsque la date limite est passée.
+
+    Objectif minimum atteint : le groupe passe LOCKED et les commandes sont
+    confirmées. Sinon : groupe CANCELLED, commandes CANCELLED, paiements
+    REFUNDED (simulé). Narratif du pitch : autorisation au join, débit à la
+    clôture.
+
+    Évaluation paresseuse, déclenchée à la lecture : pas d'ordonnanceur, pas de
+    tâche de fond. Idempotent — deux appels concurrents aboutissent au même
+    état terminal.
+    """
+    if group.status != GroupStatus.OPEN or seconds_remaining(group) > 0:
+        return False
+
+    orders = active_orders(group.id, session)
+    reached = sum(o.quantity for o in orders) >= group.min_quantity
+
+    if reached:
+        group.status = GroupStatus.LOCKED
+        for order in orders:
+            order.order_status = OrderStatus.CONFIRMED
+            session.add(order)
+    else:
+        group.status = GroupStatus.CANCELLED
+        for order in orders:
+            order.order_status = OrderStatus.CANCELLED
+            order.payment_status = PaymentStatus.REFUNDED
+            session.add(order)
+            for payment in session.exec(
+                select(Payment).where(Payment.order_id == order.id)
+            ).all():
+                payment.status = PaymentStatus.REFUNDED
+                session.add(payment)
+
+        for member in session.exec(
+            select(GroupMember).where(GroupMember.group_id == group.id)
+        ).all():
+            session.add(
+                Notification(
+                    user_id=member.user_id,
+                    type="GROUP_CANCELLED",
+                    title="Groupe annulé",
+                    message=(
+                        f"{group.name} n'a pas atteint son objectif minimum de "
+                        f"{group.min_quantity} unités avant la date limite. "
+                        f"Votre commande est annulée et remboursée."
+                    ),
+                )
+            )
+
+    session.add(group)
+    session.commit()
+    session.refresh(group)
+    return True
 
 
 def build_group_detail(

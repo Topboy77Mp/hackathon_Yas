@@ -10,7 +10,16 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from routers import auth_routes, demo, groups, orders, products, stats
+from routers import (
+    ai_routes,
+    auth_routes,
+    demo,
+    groups,
+    merchant,
+    orders,
+    products,
+    stats,
+)
 
 app = FastAPI(
     title="KashFlow API",
@@ -52,5 +61,7 @@ app.include_router(auth_routes.router)
 app.include_router(products.router)
 app.include_router(groups.router)
 app.include_router(orders.router)
+app.include_router(merchant.router)
 app.include_router(stats.router)
+app.include_router(ai_routes.router)
 app.include_router(demo.router)

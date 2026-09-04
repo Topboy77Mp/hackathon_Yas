@@ -215,6 +215,62 @@ class MerchantDashboard(BaseModel):
     rows: list[MerchantGroupRow]
 
 
+class TierIn(BaseModel):
+    min_quantity: int = Field(ge=1)
+    max_quantity: int | None = None
+    unit_price: int = Field(ge=1)
+
+
+class ProductCreateIn(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    description: str | None = None
+    unit_label: str = Field(default="unité", max_length=20)
+    image_url: str | None = None
+    stock: int = Field(ge=1)
+    individual_price: int = Field(ge=1)
+    tiers: list[TierIn] | None = None
+
+
+class TiersIn(BaseModel):
+    tiers: list[TierIn] = Field(min_length=1)
+
+
+# ── Assistants IA ──────────────────────────────────────────────────────────
+
+class SuggestTiersIn(BaseModel):
+    product_name: str = Field(min_length=1, max_length=120)
+    retail_price: int = Field(ge=1)
+    stock: int = Field(ge=1)
+    floor_price: int | None = Field(default=None, ge=1)
+
+
+class TierSuggestion(BaseModel):
+    min_quantity: int
+    max_quantity: int | None
+    unit_price: int
+    justification: str
+
+
+class SuggestTiersOut(BaseModel):
+    tiers: list[TierSuggestion]
+    source: str  # "ia" ou "repli" — jamais affiché tel quel à l'utilisateur
+
+
+class ShareMessageIn(BaseModel):
+    group_id: int
+
+
+class ShareVariant(BaseModel):
+    registre: str
+    texte: str
+
+
+class ShareMessageOut(BaseModel):
+    share_url: str
+    variants: list[ShareVariant]
+    source: str
+
+
 class ImpactStats(BaseModel):
     users: int
     merchants: int
