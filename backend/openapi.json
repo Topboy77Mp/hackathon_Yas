@@ -1480,6 +1480,13 @@
             "type": "number",
             "title": "Progress Ratio"
           },
+          "tiers": {
+            "items": {
+              "$ref": "#/components/schemas/ProductTierOut"
+            },
+            "type": "array",
+            "title": "Tiers"
+          },
           "unit_saving": {
             "type": "integer",
             "title": "Unit Saving"

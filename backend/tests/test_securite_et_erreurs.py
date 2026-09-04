@@ -213,4 +213,5 @@ class TestSante:
     def test_openapi_publie(self, client):
         schema = client.get("/openapi.json").json()
         assert "GroupDetail" in schema["components"]["schemas"]
-        assert len(schema["components"]["schemas"]["GroupDetail"]["properties"]) == 20
+        # 20 champs du contrat + `tiers[]`, ajouté après arbitrage humain.
+        assert len(schema["components"]["schemas"]["GroupDetail"]["properties"]) == 21

@@ -31,6 +31,7 @@ from schemas import (
     GroupProductOut,
     MembershipOut,
     OrderOut,
+    ProductTierOut,
     TierOut,
 )
 
@@ -233,8 +234,9 @@ def build_group_detail(
     orders = active_orders(group.id, session)
     current_quantity = sum(o.quantity for o in orders)
 
+    tiers = pricing.sort_tiers(product_tiers(product.id, session))
     snap = pricing.compute(
-        product_tiers(product.id, session),
+        tiers,
         current_quantity,
         product.individual_price,
         group.target_quantity,
@@ -285,6 +287,16 @@ def build_group_detail(
         ),
         quantity_to_next_tier=snap.quantity_to_next_tier,
         progress_ratio=snap.progress_ratio,
+        # Grille complète : l'écran groupe affiche les quatre paliers sans
+        # second appel, ce qu'exige le principe d'auto-suffisance du payload.
+        tiers=[
+            ProductTierOut(
+                min_quantity=t.min_quantity,
+                max_quantity=t.max_quantity,
+                unit_price=t.unit_price,
+            )
+            for t in tiers
+        ],
         unit_saving=snap.unit_saving,
         potential_unit_saving=snap.potential_unit_saving,
         group_total_saving=snap.group_total_saving,

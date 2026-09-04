@@ -51,7 +51,13 @@ class TestEtatDeDepart:
         assert groupe["group_total_saving"] == 438_000
 
     def test_payload_complet_et_conforme(self, client, demo):
-        """Le payload doit être auto-suffisant : l'écran groupe se dessine sans second appel."""
+        """Le payload doit être auto-suffisant : l'écran groupe se dessine sans second appel.
+
+        Les 20 champs du contrat, plus `tiers[]` ajouté après arbitrage humain —
+        sans lui l'écran ne pouvait afficher que 2 paliers sur 4, ce qui
+        contredisait le principe d'auto-suffisance énoncé par le contrat
+        lui-même. Ce test est le garde-fou contre toute dérive ultérieure.
+        """
         groupe = client.get(f"/groups/{demo['groupe_id']}").json()
         attendus = {
             "id", "name", "share_code", "status", "deadline", "seconds_remaining",
@@ -59,8 +65,24 @@ class TestEtatDeDepart:
             "min_quantity", "current_unit_price", "current_tier", "next_tier",
             "quantity_to_next_tier", "progress_ratio", "unit_saving",
             "potential_unit_saving", "group_total_saving", "my_membership",
+            "tiers",
         }
         assert set(groupe) == attendus
+
+    def test_la_grille_complete_evite_un_second_appel(self, client, demo):
+        """Les 4 paliers du jeu de démonstration, bornes comprises."""
+        groupe = client.get(f"/groups/{demo['groupe_id']}").json()
+        assert [(t["min_quantity"], t["max_quantity"], t["unit_price"]) for t in groupe["tiers"]] == [
+            (1, 49, 22000), (50, 99, 20500), (100, 199, 19000), (200, None, 17500),
+        ]
+
+    def test_les_paliers_courant_et_suivant_gardent_leur_forme_gelee(self, client, demo):
+        """Ajouter `tiers[]` ne doit rien changer aux deux objets gelés."""
+        groupe = client.get(f"/groups/{demo['groupe_id']}").json()
+        assert set(groupe["current_tier"]) == {"min_quantity", "unit_price"}
+        assert set(groupe["next_tier"]) == {"min_quantity", "unit_price"}
+        assert groupe["current_tier"]["unit_price"] == 19000
+        assert groupe["next_tier"]["unit_price"] == 17500
 
     def test_lien_partage_consultable_sans_compte(self, client, demo):
         """Le chemin qu'empruntera le jury depuis WhatsApp."""

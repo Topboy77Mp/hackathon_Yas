@@ -18,6 +18,17 @@ class TierOut(BaseModel):
     unit_price: int
 
 
+class ProductTierOut(TierOut):
+    """Palier vu depuis la fiche produit, avec sa borne haute.
+
+    `TierOut` reste volontairement à deux champs : c'est la forme gelée de
+    `current_tier` et `next_tier` dans GroupDetail. La fiche produit, elle, doit
+    afficher des intervalles (« 1–49 »), ce qui demande `max_quantity`.
+    """
+
+    max_quantity: int | None = None
+
+
 class GroupProductOut(BaseModel):
     id: int
     name: str
@@ -54,6 +65,14 @@ class GroupDetail(BaseModel):
     next_tier: TierOut | None
     quantity_to_next_tier: int | None
     progress_ratio: float
+
+    #: Grille complète du produit, ajoutée après arbitrage humain. Le contrat
+    #: fige une liste de champs sans `tiers[]` tout en exigeant, dans le même
+    #: paragraphe, que le payload soit auto-suffisant — « l'écran groupe se
+    #: dessine intégralement à partir de lui, sans second appel ». Les deux ne
+    #: pouvaient pas être vrais : l'écran n'affichait que 2 paliers sur 4.
+    #: `current_tier` et `next_tier` gardent leur forme gelée à deux champs.
+    tiers: list[ProductTierOut] = Field(default_factory=list)
 
     unit_saving: int
     potential_unit_saving: int
@@ -115,17 +134,6 @@ class ProductCard(BaseModel):
     #: le catalogue ne doit pas afficher une remise que personne n'a encore
     #: débloquée.
     best_open_group_price: int | None = None
-
-
-class ProductTierOut(TierOut):
-    """Palier vu depuis la fiche produit, avec sa borne haute.
-
-    `TierOut` reste volontairement à deux champs : c'est la forme gelée de
-    `current_tier` et `next_tier` dans GroupDetail. La fiche produit, elle, doit
-    afficher des intervalles (« 1–49 »), ce qui demande `max_quantity`.
-    """
-
-    max_quantity: int | None = None
 
 
 class GroupCard(BaseModel):
