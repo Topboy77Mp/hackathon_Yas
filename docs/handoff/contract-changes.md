@@ -53,4 +53,35 @@ relire par un locuteur avant le pitch.
 
 Notifié : non — à diffuser aux autres sessions par l'orchestrateur.
 
+**Entrée corrigée par celle du 11:44 ci-dessous.**
+
+---
+
+## [11:44] IA-2 réduite au français + modèle Groq revu
+
+Avant : IA-2 génère 3 variantes en français, éwé et mina. Modèle `openai/gpt-oss-120b`.
+Après : IA-2 génère des variantes en français uniquement. Modèle `qwen/qwen3.8-27b`.
+
+Raison : l'orchestrateur a retiré l'éwé et le mina du périmètre obligatoire. Cela
+annule le seul argument qui justifiait `gpt-oss-120b` dans l'entrée de 11:36.
+
+Correction d'une erreur d'analyse de l'entrée précédente : il y était écrit que
+`qwen` gardait le palier 1 au prix de détail là où `gpt-oss` le bradait. Vérification
+sur 3 tirages par modèle avec un prompt plus court : **les deux bradent le palier 1 à
+20 900**. C'était de la variance de prompt, pas une différence de modèle. Les deux
+respectent les invariants 3 fois sur 3 et produisent des grilles identiques
+(20 900 / 19 800 / 18 700 / 16 500).
+
+Seul écart réel restant : la latence. `qwen/qwen3.8-27b` tourne à 1,1–1,6 s contre
+1,9–2,5 s, soit davantage de marge sous le timeout de 4 s. C'est le critère retenu.
+
+À retenir pour l'implémentation d'IA-1 : le prompt devra imposer explicitement que le
+premier palier vaut le prix de détail, sinon les deux modèles le bradent. À défaut,
+`validate_tiers` ne le rattrapera pas — cet invariant n'est pas dans le contrat.
+
+Impacte : AGENT_DASH (le formulaire de partage n'a plus de sélecteur de langue).
+Aucun payload d'API modifié.
+
+Notifié : non — à diffuser aux autres sessions par l'orchestrateur.
+
 ---
