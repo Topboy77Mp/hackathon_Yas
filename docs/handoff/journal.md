@@ -34,3 +34,11 @@ Format : `[HH:MM] AGENT_X — fait / bloqué par / attend`
 [12:20] AGENT_FRONT — vérifié de bout en bout au navigateur : parcours inscription → rejoindre → confirmation → écran groupe avec « Ma participation ». Zéro erreur console. Auth et join mockés pour que tout le parcours tourne sans backend
 [12:50] AGENT_UI — fait : `@expo/vector-icons` installé, absent alors que `connexion.tsx` l'importait — l'écran de connexion plantait au chargement
 [12:50] AGENT_UI — attend : décision sur la nouvelle maquette HTML de l'orchestrateur (v2, tous écrans + espace pro). L'interface sera reprise dessus
+[13:20] AGENT_UI — fait : écran groupe aligné sur la maquette v2 (en-tête groupe + code + compte à rebours, prix dominant avec « au lieu de », grille de paliers, économie du groupe, point de retrait, barre Inviter + Rejoindre). Nouveaux primitifs : AppBar, Avatar, TierRow, pastille Badge « urgent », helper alpha() dans tokens.ts. Vérifié au navigateur, zéro erreur console
+[13:20] AGENT_UI — fait : `shared/**` publié sur `main` (tokens, typography, types) — AGENT_DASH en avait besoin et ne suivait pas la branche UI
+[13:20] AGENT_UI — vérifié : `GroupDetail` de `shared/api/types.ts` recoupé champ par champ avec `backend/openapi.json`, 20/20, zéro divergence
+[13:20] AGENT_UI — demande à AGENT_BACK, trois manques de données pour rendre l'écran groupe complet de la maquette :
+        1. `GroupDetail.tiers[]` — la maquette affiche les 4 paliers, le payload ne porte que current_tier et next_tier. Un second appel violerait « payload auto-suffisant » (D6). Seuls 2 paliers sont affichés en attendant
+        2. Aperçu des participants (initiales ou prénoms des N derniers) — la maquette montre des avatars, le payload n'a que participants_count. Pas d'avatars affichés, plutôt que d'inventer des initiales
+        3. Localisation du commerçant dans `product` — la maquette écrit « Agro-Intrants Zio, Tsévié », le payload n'a que merchant_name
+[13:20] AGENT_UI — attend : arbitrage sur la direction visuelle. Des écrans (accueil, produit, connexion, inscription) sont réécrits en parallèle dans un style qui s'écarte de la maquette et des tokens (emoji, fontSize/fontWeight en dur, hex en dur, KPI « 125 000 000 FCFA » absent du jeu de démo). Je n'y touche pas pour ne pas produire deux versions concurrentes
