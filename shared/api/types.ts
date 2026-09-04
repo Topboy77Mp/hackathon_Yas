@@ -157,7 +157,8 @@ export interface GroupMembership {
 /**
  * Payload critique du contrat. Auto-suffisant : l'écran groupe se dessine
  * intégralement à partir de lui, sans second appel et sans calcul local (D3, D6).
- * Ses 20 champs sont gelés — ne rien y ajouter sans dégel explicite.
+ * Ses champs sont gelés — ne rien y ajouter sans dégel explicite. `tiers[]` est
+ * le seul ajout autorisé à ce jour (cf. docs/handoff/contract-changes.md).
  */
 export interface GroupDetail {
   id: number;
@@ -178,6 +179,13 @@ export interface GroupDetail {
   quantity_to_next_tier: number | null;
   /** 0..1 */
   progress_ratio: number;
+  /**
+   * Grille complète du produit, ajoutée après arbitrage humain. Le contrat
+   * figeait 20 champs sans `tiers[]` tout en exigeant que le payload soit
+   * auto-suffisant : l'écran groupe n'affichait alors que 2 paliers sur 4.
+   * `current_tier` et `next_tier` gardent leur forme gelée à deux champs.
+   */
+  tiers: ProductTier[];
   unit_saving: number;
   potential_unit_saving: number;
   group_total_saving: number;
