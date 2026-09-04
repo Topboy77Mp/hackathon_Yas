@@ -9,6 +9,8 @@ export interface MerchantGroupView {
   id: string;
   name: string;
   productName: string;
+  unitLabel: string;
+  imageUrl: string;
   currentQuantity: number;
   targetQuantity: number;
   participants: number;
@@ -65,6 +67,8 @@ function toGroupView(group: GroupDetail): MerchantGroupView {
     id: group.id,
     name: group.name,
     productName: group.product.name,
+    unitLabel: group.product.unit_label,
+    imageUrl: group.product.image_url,
     currentQuantity: group.current_quantity,
     targetQuantity: group.target_quantity,
     participants: group.participants_count,
@@ -78,6 +82,8 @@ function toGroupView(group: GroupDetail): MerchantGroupView {
 
 const groupFixture: MerchantGroupView = {
   ...activeGroupFixture,
+  unitLabel: "sac",
+  imageUrl: "",
   quantityToNextTier: 54,
   progressRatio: 0.73,
   deadlineLabel: activeGroupFixture.deadline,

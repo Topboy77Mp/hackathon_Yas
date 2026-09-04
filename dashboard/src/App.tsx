@@ -54,13 +54,13 @@ function Sidebar() {
           boxSizing: "border-box",
           border: 0,
           color: "common.white",
-          background: `linear-gradient(155deg, ${colors.brand.ink}, ${colors.accent.navy})`,
+          backgroundColor: colors.accent.navy,
         },
       }}
       variant="permanent"
     >
       <Box sx={{ display: "flex", height: "100%", flexDirection: "column", px: 2.25, py: 4 }}>
-        <Typography component={NavLink} to="/" sx={{ color: "common.white", fontSize: 36, fontWeight: 700, letterSpacing: "-0.055em", lineHeight: 1, textDecoration: "none" }}>
+        <Typography component={NavLink} to="/" variant="h4" sx={{ color: "common.white", fontWeight: 700, letterSpacing: "-0.055em", lineHeight: 1, textDecoration: "none" }}>
           Kash<Box component="span" sx={{ color: "secondary.main" }}>Flow</Box>
         </Typography>
         <List sx={{ display: "grid", gap: 0.75, mt: 5 }}>
@@ -68,7 +68,7 @@ function Sidebar() {
             component={NavLink}
             key={item.label}
             to={item.path}
-            sx={{ borderRadius: 1, color: "common.white", minHeight: 56, "&.active": { bgcolor: "primary.main", color: "common.white" }, "&:hover": { opacity: 1 }, "&.active:hover": { bgcolor: "primary.main" } }}
+            sx={{ borderRadius: 1, color: "common.white", minHeight: 56, "&.active": { bgcolor: "primary.main", color: "common.white" }, "&:hover": { bgcolor: "action.hover" }, "&.active:hover": { bgcolor: "primary.main" } }}
           >
             <ListItemIcon sx={{ color: "inherit", minWidth: 46 }}>{item.icon}</ListItemIcon>
             <ListItemText primary={<Typography sx={{ fontWeight: 500 }}>{item.label}</Typography>} />
