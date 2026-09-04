@@ -50,6 +50,16 @@ export function ProgressBar({ value, height = 12 }: ProgressBarProps) {
 }
 
 const styles = StyleSheet.create({
-  track: { backgroundColor: colors.surface.raised, overflow: 'hidden' },
+  // `width` et `alignSelf` sont indispensables, pas décoratifs : dans un parent
+  // qui aligne ses enfants en `flex-start` — c'est le cas du bloc de progression
+  // de l'écran groupe — une vue sans largeur propre s'effondre à zéro et la
+  // barre disparaît purement et simplement. Une barre de progression occupe
+  // toujours la largeur qu'on lui donne.
+  track: {
+    width: '100%',
+    alignSelf: 'stretch',
+    backgroundColor: colors.surface.raised,
+    overflow: 'hidden',
+  },
   fill: { backgroundColor: colors.brand.yellow },
 });
