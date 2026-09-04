@@ -6,13 +6,12 @@
  * ces informations vivent dans ProductDetail, affichées sur la fiche produit).
  */
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, View, StyleSheet, TextInput, RefreshControl } from 'react-native';
+import { FlatList, View, StyleSheet, TextInput, RefreshControl } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { colors, spacing, radii } from '@shared/theme/tokens';
-import { Text, Card, EmptyState } from '../components/ui';
+import { Text, ProductCard, EmptyState } from '../components/ui';
 import { listProducts } from '../lib/api/endpoints';
-import { formatFcfa } from '../lib/format';
 
 export default function AccueilScreen() {
   const router = useRouter();
@@ -63,17 +62,12 @@ export default function AccueilScreen() {
           )
         }
         renderItem={({ item }) => (
-          <Pressable onPress={() => router.push(`/produit/${item.id}`)}>
-            <Card style={styles.productCard}>
-              <Text variant="body">{item.name}</Text>
-              <Text variant="caption" tone="muted">
-                {item.merchant_name}
-              </Text>
-              <Text variant="label" tabularNums style={styles.productPrice}>
-                À partir de {formatFcfa(item.individual_price)}
-              </Text>
-            </Card>
-          </Pressable>
+          <ProductCard
+            name={item.name}
+            merchantName={item.merchant_name}
+            individualPrice={item.individual_price}
+            onPress={() => router.push(`/produit/${item.id}`)}
+          />
         )}
       />
     </View>
@@ -95,6 +89,4 @@ const styles = StyleSheet.create({
     color: colors.brand.ink,
     backgroundColor: colors.surface.white,
   },
-  productCard: { marginTop: spacing.md, gap: spacing.xs },
-  productPrice: { marginTop: spacing.xs },
 });
