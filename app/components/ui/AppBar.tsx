@@ -6,6 +6,7 @@
  */
 import type { ReactNode } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radii, spacing, hitSlop } from '@shared/theme/tokens';
 import { Text } from './Text';
@@ -18,8 +19,12 @@ export interface AppBarProps {
 }
 
 export function AppBar({ title, subtitle, onBack, right }: AppBarProps) {
+  // Sans cet encart, le titre passe sous la barre de statut et sous l'encoche
+  // sur un vrai appareil. Invisible au navigateur, criant sur téléphone.
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={styles.bar}>
+    <View style={[styles.bar, { paddingTop: insets.top + spacing.md }]}>
       {onBack && (
         <Pressable
           onPress={onBack}

@@ -46,7 +46,7 @@ export default function MesGroupesScreen() {
   if (!isAuthenticated) {
     return (
       <View style={styles.screen}>
-        <AppBar title="Mes groupes" onBack={() => router.back()} />
+        <AppBar title="Mes groupes" />
         <EmptyState
           title="Connectez-vous"
           subtitle="Les groupes que vous avez rejoints apparaîtront ici."
@@ -61,7 +61,7 @@ export default function MesGroupesScreen() {
 
   return (
     <View style={styles.screen}>
-      <AppBar title="Mes groupes" onBack={() => router.back()} />
+      <AppBar title="Mes groupes" />
 
       <ScrollView
         contentContainerStyle={styles.list}

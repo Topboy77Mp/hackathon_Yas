@@ -12,7 +12,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
 import { colors, spacing, radii } from '@shared/theme/tokens';
-import { Text, Button, Card, AppBar, EmptyState, Divider } from '../../components/ui';
+import { ActionBar, Text, Button, Card, AppBar, EmptyState, Divider } from '../../components/ui';
 import { generateShareMessage } from '../../lib/api/endpoints';
 import { shareToWhatsApp } from '../../lib/whatsapp-share';
 
@@ -121,14 +121,14 @@ export default function PartagerScreen() {
             ))}
           </ScrollView>
 
-          <View style={styles.actionBar}>
+          <ActionBar>
             <Button
               label="Partager maintenant"
               onPress={() =>
                 shareToWhatsApp(data.variants[0]?.texte ?? data.share_url)
               }
             />
-          </View>
+          </ActionBar>
         </>
       )}
     </View>
@@ -143,10 +143,4 @@ const styles = StyleSheet.create({
   copyLink: { paddingTop: spacing.xs },
   variantCard: { backgroundColor: colors.surface.white, gap: spacing.sm },
   variantActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  actionBar: {
-    padding: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-    backgroundColor: colors.surface.white,
-  },
 });

@@ -7,7 +7,7 @@ import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { colors, spacing } from '@shared/theme/tokens';
-import { Text, Card, TierRow, EmptyState, Button, Badge, ProgressBar, AppBar } from '../../components/ui';
+import { ActionBar, Text, Card, TierRow, EmptyState, Button, Badge, ProgressBar, AppBar } from '../../components/ui';
 import { getProduct } from '../../lib/api/endpoints';
 import { formatFcfa, formatCountdown, pluralizeUnit } from '../../lib/format';
 
@@ -116,12 +116,12 @@ export default function FicheProduitScreen() {
         </View>
       </ScrollView>
 
-      <View style={styles.actionBar}>
+      <ActionBar>
         <Button
           label="Créer un groupe"
           onPress={() => router.push(`/creer-groupe/${product.id}`)}
         />
-      </View>
+      </ActionBar>
     </View>
   );
 }
@@ -133,10 +133,4 @@ const styles = StyleSheet.create({
   section: { marginTop: spacing.xl, gap: spacing.xs },
   groupCard: { marginTop: spacing.xs, gap: spacing.sm, backgroundColor: colors.surface.white },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  actionBar: {
-    padding: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-    backgroundColor: colors.surface.white,
-  },
 });

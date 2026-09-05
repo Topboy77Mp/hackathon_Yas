@@ -15,6 +15,7 @@ import type { GroupDetail } from '@shared/api/types';
 import { colors, spacing, radii } from '@shared/theme/tokens';
 import {
   Text,
+  ActionBar,
   Button,
   Card,
   Divider,
@@ -289,7 +290,7 @@ export function GroupScreen({ queryKey, fetcher, isAuthenticated }: GroupScreenP
       </ScrollView>
 
       {!isTerminal && (
-        <View style={styles.actionBar}>
+        <ActionBar>
           {joined ? (
             <>
               <Button
@@ -325,7 +326,7 @@ export function GroupScreen({ queryKey, fetcher, isAuthenticated }: GroupScreenP
               </View>
             </>
           )}
-        </View>
+        </ActionBar>
       )}
     </View>
   );
@@ -358,14 +359,5 @@ const styles = StyleSheet.create({
   avatarOverlap: { marginLeft: -10 },
   avatarOverflow: { backgroundColor: colors.brand.ink },
   avatarOverflowText: { color: colors.surface.white },
-  actionBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    padding: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-    backgroundColor: colors.surface.white,
-  },
   actionBarPrimary: { flex: 1 },
 });

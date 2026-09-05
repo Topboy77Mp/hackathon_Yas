@@ -11,7 +11,7 @@ import { View, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { colors, spacing } from '@shared/theme/tokens';
-import { Text, Button, Card, Divider, AppBar, EmptyState } from '../../components/ui';
+import { ActionBar, Text, Button, Card, Divider, AppBar, EmptyState } from '../../components/ui';
 import { getOrder } from '../../lib/api/endpoints';
 import { formatFcfa, pluralizeUnit } from '../../lib/format';
 
@@ -128,7 +128,7 @@ export default function ConfirmationScreen() {
         </Text>
       </View>
 
-      <View style={styles.actionBar}>
+      <ActionBar>
         <Button
           label="Voir le groupe"
           variant="secondary"
@@ -141,7 +141,7 @@ export default function ConfirmationScreen() {
             onPress={() => router.push(`/partager/${commande.groupId}`)}
           />
         </View>
-      </View>
+      </ActionBar>
     </View>
   );
 }
@@ -151,14 +151,5 @@ const styles = StyleSheet.create({
   content: { flex: 1, padding: spacing.xl, gap: spacing.lg },
   summaryCard: { gap: spacing.sm, backgroundColor: colors.surface.white },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  actionBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    padding: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-    backgroundColor: colors.surface.white,
-  },
   actionBarPrimary: { flex: 1 },
 });

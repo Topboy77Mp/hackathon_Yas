@@ -5,17 +5,21 @@
  */
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, View, StyleSheet, TextInput, RefreshControl } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, gradients, spacing, radii, shadow, hitSlop } from '@shared/theme/tokens';
-import { Text, Card, ProductCard, EmptyState } from '../components/ui';
-import { listProducts, getImpactStats, listNotifications } from '../lib/api/endpoints';
-import { useAuthToken } from '../lib/hooks/useAuthToken';
-import { formatFcfa } from '../lib/format';
+import { Text, Card, ProductCard, EmptyState } from '../../components/ui';
+import { listProducts, getImpactStats, listNotifications } from '../../lib/api/endpoints';
+import { useAuthToken } from '../../lib/hooks/useAuthToken';
+import { formatFcfa } from '../../lib/format';
 
 export default function AccueilScreen() {
+  // L'accueil n'a pas d'AppBar : il porte lui-même l'encart haut, sinon le
+  // titre passe sous la barre de statut sur un appareil.
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { isAuthenticated } = useAuthToken();
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,7 +49,7 @@ export default function AccueilScreen() {
   return (
     <View style={styles.screen}>
       <FlatList
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingTop: insets.top + spacing.lg }]}
         data={filteredProducts}
         keyExtractor={(item) => String(item.id)}
         showsVerticalScrollIndicator={false}

@@ -25,7 +25,7 @@ export default function ProfilScreen() {
   if (!isAuthenticated) {
     return (
       <View style={styles.screen}>
-        <AppBar title="Profil" onBack={() => router.back()} />
+        <AppBar title="Profil" />
         <EmptyState
           title="Connectez-vous"
           subtitle="Créez un compte ou connectez-vous pour retrouver vos groupes et vos commandes."
@@ -38,7 +38,7 @@ export default function ProfilScreen() {
 
   return (
     <View style={styles.screen}>
-      <AppBar title="Profil" onBack={() => router.back()} />
+      <AppBar title="Profil" />
       <View style={styles.content}>
         {user && (
           <View style={styles.identity}>
@@ -54,8 +54,8 @@ export default function ProfilScreen() {
         <Divider style={styles.divider} />
 
         <View style={styles.links}>
-          <Button label="Mes groupes" variant="secondary" onPress={() => router.push('/mes-groupes')} />
-          <Button label="Mes commandes" variant="secondary" onPress={() => router.push('/mes-commandes')} />
+          {/* « Mes groupes » et « Mes commandes » sont des onglets depuis
+              l'ajout de la barre de navigation : les répéter ici serait du bruit. */}
           <Button label="Notifications" variant="secondary" onPress={() => router.push('/notifications')} />
         </View>
 

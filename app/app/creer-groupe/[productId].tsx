@@ -14,7 +14,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { GroupSuggestion } from '@shared/api/types';
 import { colors, spacing, radii } from '@shared/theme/tokens';
-import { Text, Field, Button, Card, AppBar, Badge, Divider, EmptyState } from '../../components/ui';
+import { ActionBar, Text, Field, Button, Card, AppBar, Badge, Divider, EmptyState } from '../../components/ui';
 import { createGroup, discoverGroups, getProduct } from '../../lib/api/endpoints';
 import { ApiClientError } from '../../lib/api/client';
 import { formatFcfa, pluralizeUnit } from '../../lib/format';
@@ -171,14 +171,14 @@ export default function CreerGroupeScreen() {
           ))}
         </ScrollView>
 
-        <View style={styles.barre}>
+        <ActionBar>
           <Button
             label={creation.isPending ? 'Création…' : 'Créer quand même'}
             variant="secondary"
             loading={creation.isPending}
             onPress={() => creation.mutate()}
           />
-        </View>
+        </ActionBar>
       </View>
     );
   }
@@ -277,7 +277,7 @@ export default function CreerGroupeScreen() {
         </Text>
       </ScrollView>
 
-      <View style={styles.barre}>
+      <ActionBar>
         <Button
           label={
             recherche.isPending
@@ -290,7 +290,7 @@ export default function CreerGroupeScreen() {
           disabled={problemes.length > 0}
           onPress={continuer}
         />
-      </View>
+      </ActionBar>
     </View>
   );
 }
@@ -311,10 +311,4 @@ const styles = StyleSheet.create({
   },
   dureeActive: { borderColor: colors.brand.ink, backgroundColor: colors.brand.yellow },
   problemes: { gap: spacing.xs },
-  barre: {
-    padding: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-    backgroundColor: colors.surface.white,
-  },
 });

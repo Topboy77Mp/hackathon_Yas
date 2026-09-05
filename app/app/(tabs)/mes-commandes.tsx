@@ -55,7 +55,7 @@ export default function MesCommandesScreen() {
   if (!isAuthenticated) {
     return (
       <View style={styles.screen}>
-        <AppBar title="Mes commandes" onBack={() => router.back()} />
+        <AppBar title="Mes commandes" />
         <EmptyState
           title="Connectez-vous"
           subtitle="Vos commandes apparaîtront ici."
@@ -68,7 +68,7 @@ export default function MesCommandesScreen() {
 
   return (
     <View style={styles.screen}>
-      <AppBar title="Mes commandes" onBack={() => router.back()} />
+      <AppBar title="Mes commandes" />
 
       {isError && (
         <EmptyState
