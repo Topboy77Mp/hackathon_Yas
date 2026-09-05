@@ -60,5 +60,18 @@ export const API_BASE_URL = resoudreUrlApi();
 export const API_INJOIGNABLE_DEPUIS_APPAREIL =
   Platform.OS !== 'web' && API_BASE_URL.includes('localhost');
 
+/**
+ * Jeton de démonstration, à faire correspondre au `DEMO_TOKEN` du backend.
+ *
+ * Il ne sert qu'à un endroit : la récupération de mot de passe. Aucune
+ * passerelle SMS n'est au périmètre du contrat, donc en son absence le code ne
+ * peut arriver nulle part. Avec ce jeton, le serveur le renvoie et l'écran
+ * l'affiche dans un encart explicitement marqué « démonstration ».
+ *
+ * Vide en production : le flux reste entier côté serveur, seule la remise du
+ * code manque — et l'écran le dit au lieu de faire semblant.
+ */
+export const DEMO_TOKEN = process.env.EXPO_PUBLIC_DEMO_TOKEN?.trim() ?? '';
+
 /** D6 : l'écran groupe interroge l'API toutes les 2 s au premier plan. */
 export const GROUP_POLL_INTERVAL_MS = 2000;

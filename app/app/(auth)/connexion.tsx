@@ -61,6 +61,12 @@ export default function ConnexionScreen() {
             />
           </View>
 
+          <Link href="/(auth)/mot-de-passe-oublie" style={styles.oublie}>
+            <Text variant="label" tone="muted">
+              Mot de passe oublié ?
+            </Text>
+          </Link>
+
           <View style={styles.footer}>
             <Link href="/(auth)/inscription">
               <View style={styles.footerRow}>
@@ -104,6 +110,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.card,
     padding: spacing.md,
   },
+  oublie: { marginTop: spacing.lg, alignSelf: 'center' },
   footer: { marginTop: 'auto', paddingTop: spacing.xl, alignItems: 'center' },
   footerRow: { flexDirection: 'row', gap: spacing.xs },
 });

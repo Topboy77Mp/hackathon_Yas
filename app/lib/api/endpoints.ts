@@ -11,6 +11,8 @@
  */
 import type {
   AuthResponse,
+  CatalogueQuery,
+  ChangePasswordRequest,
   CreateGroupRequest,
   DiscoverGroupsRequest,
   DiscoverGroupsResponse,
@@ -20,18 +22,24 @@ import type {
   JoinGroupRequest,
   JoinGroupResponse,
   LeaveGroupResponse,
+  ForgotPasswordRequest,
+  ForgotPasswordResponse,
   LoginRequest,
   NotificationsResponse,
+  Preferences,
+  PreferencesInput,
   Order,
   PayOrderResponse,
   ProductCard,
   ProductDetail,
   RegisterRequest,
+  ResetPasswordRequest,
   ShareMessageRequest,
   ShareMessageResponse,
   User,
 } from '@shared/api/types';
 import { apiRequest } from './client';
+import { DEMO_TOKEN } from '../config';
 
 // ---------------------------------------------------------------------------
 // Authentification
@@ -45,12 +53,60 @@ export const login = (payload: LoginRequest) =>
 
 export const me = () => apiRequest<User>('/auth/me');
 
+/**
+ * Le serveur répond `sent: true` que le numéro existe ou non : distinguer les
+ * deux cas ferait de cet endpoint un annuaire des inscrits. L'interface ne doit
+ * donc jamais annoncer « ce numéro est inconnu ».
+ */
+export const forgotPassword = (payload: ForgotPasswordRequest) =>
+  apiRequest<ForgotPasswordResponse>('/auth/forgot-password', {
+    method: 'POST',
+    body: payload,
+    auth: false,
+    // Sans jeton, le serveur ne renvoie pas le code : le flux reste entier mais
+    // sa remise manque, faute de passerelle SMS au périmètre.
+    headers: DEMO_TOKEN ? { 'X-Demo-Token': DEMO_TOKEN } : undefined,
+  });
+
+/** Vrai quand l'écran peut afficher le code, faute d'envoi réel. */
+export const demoCodeDisponible = DEMO_TOKEN.length > 0;
+
+export const resetPassword = (payload: ResetPasswordRequest) =>
+  apiRequest<AuthResponse>('/auth/reset-password', {
+    method: 'POST',
+    body: payload,
+    auth: false,
+  });
+
+export const changePassword = (payload: ChangePasswordRequest) =>
+  apiRequest<User>('/auth/change-password', { method: 'POST', body: payload });
+
+// ---------------------------------------------------------------------------
+// Préférences
+// ---------------------------------------------------------------------------
+
+export const getPreferences = () => apiRequest<Preferences>('/me/preferences');
+
+export const updatePreferences = (payload: PreferencesInput) =>
+  apiRequest<Preferences>('/me/preferences', { method: 'PATCH', body: payload });
+
 // ---------------------------------------------------------------------------
 // Catalogue — public, aucun jeton requis
 // ---------------------------------------------------------------------------
 
-export const listProducts = () =>
-  apiRequest<ProductCard[]>('/products', { auth: false });
+export const listProducts = (options: CatalogueQuery = {}) => {
+  // Recherche et tri sont faits par le serveur : le prix affiché dépend du
+  // groupe ouvert le moins cher, que le client n'a pas les moyens de classer.
+  const params = new URLSearchParams();
+  if (options.q?.trim()) params.set('q', options.q.trim());
+  if (options.sort) params.set('sort', options.sort);
+  if (options.with_open_groups) params.set('with_open_groups', 'true');
+
+  const suffixe = params.toString();
+  return apiRequest<ProductCard[]>(`/products${suffixe ? `?${suffixe}` : ''}`, {
+    auth: false,
+  });
+};
 
 export const getProduct = (id: number) =>
   apiRequest<ProductDetail>(`/products/${id}`, { auth: false });

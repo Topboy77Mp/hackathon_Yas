@@ -128,14 +128,17 @@ export default function MesGroupesScreen() {
                 </View>
 
                 {group.my_membership && (
-                  <>
+                  // Une View plutôt qu'un Fragment : `Card` de react-native-paper
+                  // clone ses enfants directs en leur passant un `index`, qu'un
+                  // Fragment rejette avec un avertissement React.
+                  <View style={styles.part}>
                     <Divider />
                     <Text variant="caption" tone="muted" tabularNums>
                       Ma part : {group.my_membership.quantity}{' '}
                       {pluralizeUnit(group.product.unit_label, group.my_membership.quantity)} ·{' '}
                       {formatFcfa(group.my_membership.total_amount)}
                     </Text>
-                  </>
+                  </View>
                 )}
               </Card>
             </Pressable>
@@ -152,4 +155,5 @@ const styles = StyleSheet.create({
   card: { backgroundColor: colors.surface.white, gap: spacing.sm },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   line: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  part: { gap: spacing.sm },
 });

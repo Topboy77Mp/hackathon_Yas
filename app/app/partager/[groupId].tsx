@@ -13,7 +13,8 @@ import { useQuery } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
 import { colors, spacing, radii } from '@shared/theme/tokens';
 import { ActionBar, Text, Button, Card, AppBar, EmptyState, Divider } from '../../components/ui';
-import { generateShareMessage } from '../../lib/api/endpoints';
+import { generateShareMessage, getPreferences } from '../../lib/api/endpoints';
+import { useAuthToken } from '../../lib/hooks/useAuthToken';
 import { shareToWhatsApp } from '../../lib/whatsapp-share';
 
 /** Libellés lisibles : le backend renvoie des clés brutes. */
@@ -32,6 +33,17 @@ export default function PartagerScreen() {
   const groupIdNum = Number(groupId);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
+  const { isAuthenticated } = useAuthToken();
+
+  // Registre préféré : il remonte la variante correspondante en tête de liste et
+  // devient celle du bouton « Partager maintenant ». Sans cela, le réglage des
+  // paramètres n'aurait aucun effet visible.
+  const { data: preferences } = useQuery({
+    queryKey: ['preferences'],
+    queryFn: getPreferences,
+    enabled: isAuthenticated,
+  });
+
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['share-message', groupIdNum],
     queryFn: () => generateShareMessage({ group_id: groupIdNum }),
@@ -40,6 +52,16 @@ export default function PartagerScreen() {
     // rappeler un modèle de langage à chaque retour sur l'écran.
     staleTime: 5 * 60 * 1000,
   });
+
+  const registrePrefere = preferences?.default_share_register;
+  const variantes = data
+    ? [...data.variants].sort((a, b) => {
+        if (!registrePrefere) return 0;
+        const rangA = a.registre.toLowerCase() === registrePrefere ? 0 : 1;
+        const rangB = b.registre.toLowerCase() === registrePrefere ? 0 : 1;
+        return rangA - rangB;
+      })
+    : [];
 
   async function copier(texte: string, index: number) {
     await Clipboard.setStringAsync(texte);
@@ -94,7 +116,7 @@ export default function PartagerScreen() {
               Choisissez le ton qui correspond à vos proches.
             </Text>
 
-            {data.variants.map((variante, index) => (
+            {variantes.map((variante, index) => (
               <Card variant="elevated" key={variante.registre} style={styles.variantCard}>
                 <Text variant="label">
                   {REGISTRES[variante.registre.toLowerCase()] ?? variante.registre}
@@ -125,7 +147,7 @@ export default function PartagerScreen() {
             <Button
               label="Partager maintenant"
               onPress={() =>
-                shareToWhatsApp(data.variants[0]?.texte ?? data.share_url)
+                shareToWhatsApp(variantes[0]?.texte ?? data.share_url)
               }
             />
           </ActionBar>

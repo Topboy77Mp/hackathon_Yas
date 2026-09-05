@@ -57,6 +57,7 @@ export default function ProfilScreen() {
           {/* « Mes groupes » et « Mes commandes » sont des onglets depuis
               l'ajout de la barre de navigation : les répéter ici serait du bruit. */}
           <Button label="Notifications" variant="secondary" onPress={() => router.push('/notifications')} />
+          <Button label="Paramètres" variant="secondary" onPress={() => router.push('/parametres')} />
         </View>
 
         <Divider style={styles.divider} />

@@ -3,18 +3,67 @@
  * du même endpoint /stats/impact que le tableau de bord jury (ImpactStats), pas un
  * chiffre écrit en dur dans l'écran.
  */
-import { useMemo, useState } from 'react';
-import { FlatList, Pressable, View, StyleSheet, TextInput, RefreshControl } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  FlatList,
+  Pressable,
+  View,
+  StyleSheet,
+  TextInput,
+  RefreshControl,
+  ScrollView,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import type { CatalogueQuery } from '@shared/api/types';
 import { colors, gradients, spacing, radii, shadow, hitSlop } from '@shared/theme/tokens';
 import { Text, Card, ProductCard, EmptyState } from '../../components/ui';
 import { listProducts, getImpactStats, listNotifications } from '../../lib/api/endpoints';
 import { useAuthToken } from '../../lib/hooks/useAuthToken';
 import { formatFcfa } from '../../lib/format';
+
+const TRIS: Array<{ valeur: NonNullable<CatalogueQuery['sort']>; label: string }> = [
+  { valeur: 'name', label: 'A → Z' },
+  { valeur: 'price_asc', label: 'Prix croissant' },
+  { valeur: 'price_desc', label: 'Prix décroissant' },
+  { valeur: 'groups', label: 'Plus de groupes' },
+];
+
+/**
+ * Puce de filtre. L'état actif ne repose pas que sur la couleur : le fond, la
+ * bordure et la coche changent ensemble — la couleur seule ne doit jamais porter
+ * une information.
+ */
+function Puce({
+  label,
+  actif,
+  icone,
+  onPress,
+}: {
+  label: string;
+  actif: boolean;
+  icone?: keyof typeof Ionicons.glyphMap;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: actif }}
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={[styles.puce, actif && styles.puceActive]}
+    >
+      {actif && <Ionicons name="checkmark" size={14} color={colors.brand.ink} />}
+      {!actif && icone && <Ionicons name={icone} size={14} color={colors.text.muted} />}
+      <Text variant="caption" tone={actif ? 'ink' : 'muted'}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
 
 export default function AccueilScreen() {
   // L'accueil n'a pas d'AppBar : il porte lui-même l'encart haut, sinon le
@@ -23,9 +72,21 @@ export default function AccueilScreen() {
   const router = useRouter();
   const { isAuthenticated } = useAuthToken();
   const [searchQuery, setSearchQuery] = useState('');
+  const [recherche, setRecherche] = useState('');
+  const [tri, setTri] = useState<NonNullable<CatalogueQuery['sort']>>('name');
+  const [avecGroupes, setAvecGroupes] = useState(false);
+
+  // La saisie est temporisée : sans cela, chaque lettre déclenchait une requête.
+  useEffect(() => {
+    const minuteur = setTimeout(() => setRecherche(searchQuery), 300);
+    return () => clearTimeout(minuteur);
+  }, [searchQuery]);
+
+  // Recherche et tri sont faits par le serveur : le prix affiché dépend du
+  // groupe ouvert le moins cher, que le client n'a pas les moyens de classer.
   const { data: products, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ['products'],
-    queryFn: listProducts,
+    queryKey: ['products', recherche, tri, avecGroupes],
+    queryFn: () => listProducts({ q: recherche, sort: tri, with_open_groups: avecGroupes }),
   });
 
   // Badge in-app : le contrat exclut le push et accepte explicitement ce
@@ -39,18 +100,11 @@ export default function AccueilScreen() {
   const nonLues = notifications?.unread_count ?? 0;
   const { data: impact } = useQuery({ queryKey: ['impact-stats'], queryFn: getImpactStats });
 
-  const filteredProducts = useMemo(() => {
-    if (!products) return [];
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return products;
-    return products.filter((p) => p.name.toLowerCase().includes(query));
-  }, [products, searchQuery]);
-
   return (
     <View style={styles.screen}>
       <FlatList
         contentContainerStyle={[styles.list, { paddingTop: insets.top + spacing.lg }]}
-        data={filteredProducts}
+        data={products ?? []}
         keyExtractor={(item) => String(item.id)}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.brand.ink} />}
@@ -119,8 +173,30 @@ export default function AccueilScreen() {
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 accessibilityLabel="Chercher un produit"
+                returnKeyType="search"
               />
             </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filtres}
+            >
+              {TRIS.map((option) => (
+                <Puce
+                  key={option.valeur}
+                  actif={tri === option.valeur}
+                  label={option.label}
+                  onPress={() => setTri(option.valeur)}
+                />
+              ))}
+              <Puce
+                actif={avecGroupes}
+                icone="people"
+                label="Avec groupe ouvert"
+                onPress={() => setAvecGroupes((v) => !v)}
+              />
+            </ScrollView>
           </View>
         }
         ListEmptyComponent={
@@ -201,6 +277,19 @@ const styles = StyleSheet.create({
   bentoImpactLabel: { color: 'rgba(255,255,255,0.85)' },
   bentoImpactValue: { color: colors.surface.white },
   searchWrapper: { borderRadius: radii.card, ...shadow.soft },
+  filtres: { gap: spacing.sm, paddingVertical: spacing.sm, paddingRight: spacing.xl },
+  puce: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    minHeight: 36,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface.white,
+  },
+  puceActive: { borderColor: colors.brand.ink, backgroundColor: colors.brand.yellow },
   searchInput: {
     minHeight: 48,
     borderRadius: radii.card,
