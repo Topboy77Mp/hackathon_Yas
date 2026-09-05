@@ -336,4 +336,4 @@ Notifié : non — à diffuser aux autres sessions par l'orchestrateur.
 ---
 
 
-2026-09-05 ? Correction demand?e par l?utilisateur : POST /merchant/products/{id}/tiers recalcule les commandes actives des groupes ouverts dans la transaction. Nouveau refus 409 TIERS_FROZEN en pr?sence de groupes non ouverts/?chus ou de commandes actives pay?es. OpenAPI actualis?. Aucun champ de r?ponse modifi?. Verrou produit partag? avec cr?ation de groupe, verrou groupe partag? avec paiement/participation.
+2026-09-05 — Correction demandée par l’utilisateur : POST /merchant/products/{id}/tiers recalcule les commandes actives des groupes ouverts dans la transaction. Nouveau refus 409 TIERS_FROZEN en présence de groupes non ouverts/échus ou de commandes actives payées. OpenAPI actualisé. Aucun champ de réponse modifié. Verrou produit partagé avec création de groupe, verrou groupe partagé avec paiement/participation.

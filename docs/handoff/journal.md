@@ -95,4 +95,4 @@ Format : `[HH:MM] AGENT_X — fait / bloqué par / attend`
 
 [AGENT_DASH 2026-09-05] Vérification : 153 tests backend + 13 tests adaptateurs dashboard réussis, build Vite réussi. BUG BACK reproduit sur SQLite isolée : POST merchant/products/{id}/tiers change le prix groupe à 18 000 mais laisse commandes et tableau commerçant à 19 000. Reproduction : dashboard/tests/backend_pricing_probe.py ; rapport dashboard/VERIFICATION.md. Corriger transactionnellement ou refuser cette mutation avant raccordements supplémentaires.
 
-[AGENT_DASH 2026-09-05] Correctif backend autoris? : remplacement des paliers transactionnel et refus des grilles finalis?es/pay?es, 157 tests r?ussis + reproduction corrig?e. V?rification navigateur tent?e : inventaire apps/browsers vide ; ?tape visuelle bloqu?e. Rapport dashboard/VERIFICATION.md mis ? jour.
+[AGENT_DASH 2026-09-05] Correctif backend autorisé : remplacement des paliers transactionnel et refus des grilles finalisées/payées, 157 tests réussis + reproduction corrigée. Vérification navigateur tentée : inventaire apps/browsers vide ; étape visuelle bloquée. Rapport dashboard/VERIFICATION.md mis à jour.

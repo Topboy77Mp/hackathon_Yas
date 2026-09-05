@@ -44,6 +44,11 @@ export function demoSnapshot(): Snapshot {
   }
   const orders = data.orders.filter(o => o.order_status !== 'CANCELLED');
   const successful = data.groups.filter(g => ['LOCKED', 'COMPLETED'].includes(g.status)).length;
+  data.activity = {
+    enabled_users: data.users.filter(u => u.status === 'ACTIVE').length,
+    completed_groups: data.groups.filter(g => g.status === 'COMPLETED').length,
+    overdue_open_groups: data.groups.filter(g => g.status === 'OPEN' && Date.parse(g.deadline) <= Date.now()).length,
+  };
   data.impact = {users: data.users.length, merchants: data.shops.length, products: data.products.filter(p => p.status === 'ACTIVE').length, groups_created: data.groups.length, groups_active: data.groups.filter(g => g.status === 'OPEN').length, groups_successful: successful, success_rate: data.groups.length ? successful / data.groups.length : 0, orders: orders.length, units_ordered: orders.reduce((n, o) => n + o.quantity, 0), total_order_value: orders.reduce((n, o) => n + o.total_amount, 0), community_savings: orders.reduce((n, o) => n + ((data.products.find(p => p.id === o.product_id)?.individual_price ?? o.unit_price) - o.unit_price) * o.quantity, 0)};
   data.merchant = {business_name: data.shops[0]?.name ?? '', orders: orders.length, groups: data.groups.length, units: data.impact.units_ordered, revenue_simule: data.impact.total_order_value, pending_orders: orders.filter(o => o.order_status === 'PENDING').length, rows: []};
   return data;

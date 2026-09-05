@@ -9,7 +9,7 @@ export interface Shop { id: number; user_id: number; name: string; description: 
 export interface ManagedProduct extends MerchantProductRow { merchant_id: number; description: string; category: string; location: string; delivery_days: number | null; duration_days: number | null }
 export interface ManagedOrder { id: number; user_id: number; group_id: number; product_id: number; merchant_id: number; quantity: number; unit_price: number; total_amount: number; payment_status: string; order_status: string; delivery_status: string; created_at: string; transaction_reference: string }
 export interface ManagedGroup extends GroupDetail { creator_id?: number; merchant_id?: number; total_amount?: number }
-export interface Snapshot { products: ManagedProduct[]; groups: ManagedGroup[]; users: Person[]; shops: Shop[]; orders: ManagedOrder[]; impact?: ImpactStats; merchant?: MerchantDashboard; missing: string[] }
+export interface Snapshot { products: ManagedProduct[]; groups: ManagedGroup[]; users: Person[]; shops: Shop[]; orders: ManagedOrder[]; impact?: ImpactStats; merchant?: MerchantDashboard; activity?: { enabled_users: number; completed_groups: number; overdue_open_groups: number }; missing: string[] }
 
 export async function loadManagement(): Promise<Snapshot> {
   if (isDemo()) return demoSnapshot();
