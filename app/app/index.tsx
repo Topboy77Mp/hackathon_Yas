@@ -119,8 +119,11 @@ export default function AccueilScreen() {
             name={item.name}
             merchantName={item.merchant_name}
             individualPrice={item.individual_price}
+            unitLabel={item.unit_label}
             bestOpenGroupPrice={item.best_open_group_price}
             openGroupsCount={item.open_groups_count}
+            bestOpenGroupCurrentQuantity={item.best_open_group_current_quantity}
+            bestOpenGroupTargetQuantity={item.best_open_group_target_quantity}
             iconName={iconForProduct(item.id)}
             onPress={() => router.push(`/produit/${item.id}`)}
           />

@@ -134,6 +134,8 @@ export const productCardsFixture: ProductCard[] = [
     status: 'ACTIVE',
     best_open_group_price: groupDetailFixture.current_unit_price,
     open_groups_count: 1,
+    best_open_group_current_quantity: groupDetailFixture.current_quantity,
+    best_open_group_target_quantity: groupDetailFixture.target_quantity,
   },
   {
     id: 'prod_semences_mais',

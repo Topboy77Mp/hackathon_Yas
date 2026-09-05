@@ -134,6 +134,8 @@ export interface RegisterRequest {
   phone: string;
   password: string;
   email?: string;
+  role?: UserRole;
+  business_name?: string;
 }
 
 export interface LoginRequest {
@@ -210,6 +212,10 @@ export interface ProductCard {
    */
   best_open_group_price?: number;
   open_groups_count?: number;
+  /** Progression RÉELLE du groupe le moins cher (même groupe que best_open_group_price) —
+   *  jamais affichée si undefined, jamais une valeur d'exemple comme "45/60". */
+  best_open_group_current_quantity?: number;
+  best_open_group_target_quantity?: number;
 }
 
 export interface GroupCard {
