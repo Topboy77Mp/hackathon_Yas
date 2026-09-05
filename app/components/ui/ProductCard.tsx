@@ -63,7 +63,7 @@ export function ProductCard({
               {discountPercent !== null && <Badge label={`-${discountPercent}%`} tone="success" />}
             </View>
 
-            <Text variant="body" numberOfLines={2}>
+            <Text variant="heading" numberOfLines={2}>
               {name}
             </Text>
 
@@ -77,7 +77,7 @@ export function ProductCard({
                     {bestOpenGroupCurrentQuantity} / {bestOpenGroupTargetQuantity} {pluralizeUnit(unitLabel, bestOpenGroupTargetQuantity!)}
                   </Text>
                 </View>
-                <ProgressBar value={bestOpenGroupCurrentQuantity! / bestOpenGroupTargetQuantity!} height={8} />
+                <ProgressBar value={bestOpenGroupCurrentQuantity! / bestOpenGroupTargetQuantity!} height={12} />
               </View>
             )}
 
@@ -108,12 +108,14 @@ const styles = StyleSheet.create({
   touchable: { marginTop: spacing.lg },
   pressed: { opacity: 0.9 },
   card: { padding: 0, overflow: 'hidden' },
-  row: { flexDirection: 'row', minHeight: 160 },
+  row: { flexDirection: 'row', alignItems: 'stretch' },
   imageBlock: {
-    width: 110,
+    width: 96,
+    aspectRatio: 1,
     backgroundColor: alpha(colors.unlock.green, 0.1),
     alignItems: 'center',
     justifyContent: 'center',
+    alignSelf: 'flex-start',
   },
   info: { flex: 1, padding: spacing.md, justifyContent: 'space-between', gap: spacing.xs },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

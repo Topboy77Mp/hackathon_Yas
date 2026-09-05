@@ -1,8 +1,8 @@
 /**
- * Accueil — catalogue, en-tête « bento ». Aucune donnée inventée : le bloc impact vient
- * du même endpoint /stats/impact que le tableau de bord jury, et les cartes produit
- * n'affichent une progression ou un prix de groupe que quand un vrai groupe existe
- * (best_open_group_price est undefined pour 2 des 3 produits du catalogue démo).
+ * Accueil — catalogue, en-tête « Energetic Bento ». Aucune donnée inventée : le bloc
+ * impact vient du même endpoint /stats/impact que le tableau de bord jury, et les
+ * cartes produit n'affichent une progression ou un prix de groupe que quand un vrai
+ * groupe existe (best_open_group_price est undefined pour 2 des 3 produits démo).
  */
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, View, StyleSheet, TextInput, RefreshControl } from 'react-native';
@@ -48,19 +48,14 @@ export default function AccueilScreen() {
         refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.brand.ink} />}
         ListHeaderComponent={
           <View style={styles.headerContainer}>
+            {/* Grille bento asymétrique : badge marque (large) + profil (compact) */}
             <View style={styles.topRow}>
-              <View>
-                <Text variant="title">KashFlow</Text>
-                {/* Tsévié : lieu réel du commerçant du jeu de démo (Agro-Intrants Zio),
-                    pas une géolocalisation utilisateur qu'on n'a pas. */}
-                <View style={styles.locationPill}>
-                  <Ionicons name="location-sharp" size={12} color={colors.unlock.green} />
-                  <Text variant="caption" style={styles.locationText}>
-                    Tsévié, Togo
-                  </Text>
-                </View>
+              <View style={styles.brandBadge}>
+                <Ionicons name="flash" size={16} color={colors.brand.ink} />
+                <Text variant="heading" style={styles.brandBadgeText}>
+                  KashFlow
+                </Text>
               </View>
-
               <Pressable
                 onPress={() => router.push('/profil')}
                 accessibilityRole="button"
@@ -71,6 +66,15 @@ export default function AccueilScreen() {
               </Pressable>
             </View>
 
+            {/* Tsévié : lieu réel du commerçant du jeu de démo (Agro-Intrants Zio),
+                pas une géolocalisation utilisateur qu'on n'a pas. */}
+            <View style={styles.locationPill}>
+              <Ionicons name="location-sharp" size={12} color={colors.unlock.green} />
+              <Text variant="caption" style={styles.locationText}>
+                Tsévié, Togo
+              </Text>
+            </View>
+
             <Card variant="elevated" style={styles.bentoGreeting}>
               <Text variant="body" tone="muted">
                 Regroupez-vous. Débloquez le meilleur prix.
@@ -79,6 +83,9 @@ export default function AccueilScreen() {
 
             {impact && (
               <LinearGradient colors={gradients.success} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.bentoImpact}>
+                {/* Glow : icône géante en arrière-plan, opacité 0.1, casse le plat du dégradé */}
+                <Ionicons name="trending-up" size={120} color="rgba(255,255,255,0.1)" style={styles.bentoImpactGlow} />
+
                 <View style={styles.bentoImpactIcon}>
                   <Ionicons name="people" size={20} color={colors.surface.white} />
                 </View>
@@ -93,6 +100,7 @@ export default function AccueilScreen() {
               </LinearGradient>
             )}
 
+            {/* Barre de recherche « flottante » : ombre marquée + chevauchement du bloc impact */}
             <View style={styles.searchWrapper}>
               <Ionicons name="search" size={18} color={colors.text.muted} style={styles.searchIcon} />
               <TextInput
@@ -136,8 +144,26 @@ export default function AccueilScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.surface.page },
   list: { padding: spacing.xl, paddingBottom: spacing.xxxl },
-  headerContainer: { gap: spacing.md, marginBottom: spacing.md },
+  headerContainer: { gap: spacing.md, marginBottom: spacing.xl },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  brandBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.brand.yellow,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.pill,
+    ...shadow.soft,
+  },
+  brandBadgeText: { color: colors.brand.ink },
+  profileTouchable: {
+    width: hitSlop.minTouchTarget,
+    height: hitSlop.minTouchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: -spacing.sm,
+  },
   locationPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -146,17 +172,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
     borderRadius: radii.pill,
-    marginTop: spacing.xs,
     alignSelf: 'flex-start',
   },
   locationText: { color: colors.unlock.green },
-  profileTouchable: {
-    width: hitSlop.minTouchTarget,
-    height: hitSlop.minTouchTarget,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: -spacing.sm,
-  },
   bentoGreeting: { backgroundColor: colors.surface.white },
   bentoImpact: {
     borderRadius: radii.card,
@@ -164,7 +182,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+    overflow: 'hidden',
     ...shadow.soft,
+  },
+  bentoImpactGlow: {
+    position: 'absolute',
+    right: -24,
+    top: -24,
   },
   bentoImpactIcon: {
     width: 40,
@@ -183,7 +207,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface.white,
     paddingHorizontal: spacing.lg,
     minHeight: 48,
-    ...shadow.soft,
+    marginTop: -spacing.xl,
+    marginHorizontal: spacing.sm,
+    ...shadow.card,
   },
   searchIcon: { marginRight: spacing.sm },
   searchInput: { flex: 1, fontSize: 16, color: colors.brand.ink },

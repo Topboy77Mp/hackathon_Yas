@@ -2,18 +2,19 @@
  * KashFlow — ProgressBar
  * Seule zone jaune de l'écran groupe hors bouton d'action (cf. <regle_couleur>).
  * S'anime à chaque changement de `value`, y compris hors déblocage de palier — c'est le
- * même mécanisme (cf. docs/design/motion.md).
+ * même mécanisme (cf. docs/design/motion.md). Remplissage en dégradé (gradients.primary,
+ * token existant) plutôt qu'un aplat — aucune couleur nouvelle.
  *
  * Reste custom, pas react-native-paper : le ProgressBar de Paper anime en interne sur une
  * durée fixe qu'on ne contrôle pas depuis l'extérieur, alors que motion.progressBarFillMs
  * (400 ms) est une valeur documentée et vérifiée du contrat de mouvement — celle qui
  * synchronise la barre avec le compteur et le prix pendant la séquence de déblocage.
- * L'échanger contre Paper ferait perdre cette synchronisation sans bénéfice visuel réel
- * (même piste, même remplissage jaune).
+ * L'échanger contre Paper ferait perdre cette synchronisation sans bénéfice visuel réel.
  */
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
-import { colors, motion, radii } from '@shared/theme/tokens';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, gradients, motion, radii } from '@shared/theme/tokens';
 
 export interface ProgressBarProps {
   /** 0..1 */
@@ -37,19 +38,27 @@ export function ProgressBar({ value, height = 12 }: ProgressBarProps) {
     <View style={[styles.track, { height, borderRadius: radii.pill }]}>
       <Animated.View
         style={[
-          styles.fill,
+          styles.fillWrap,
           {
             height,
             borderRadius: radii.pill,
             width: widthAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
           },
         ]}
-      />
+      >
+        <LinearGradient
+          colors={gradients.primary}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.fillGradient}
+        />
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   track: { backgroundColor: colors.surface.raised, overflow: 'hidden' },
-  fill: { backgroundColor: colors.brand.yellow },
+  fillWrap: { overflow: 'hidden' },
+  fillGradient: { width: '100%', height: '100%' },
 });
