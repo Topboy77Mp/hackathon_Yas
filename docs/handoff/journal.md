@@ -122,3 +122,14 @@ Format : `[HH:MM] AGENT_X — fait / bloqué par / attend`
 [19:50] AGENT_BACK — README : procédure de test sur téléphone, uvicorn sur `0.0.0.0` compris (par défaut il n'écoute que sur 127.0.0.1, injoignable depuis un appareil)
 [19:50] AGENT_BACK — API vérifiée joignable depuis le réseau local sur l'IP de la machine
 [19:50] AGENT_BACK — attend : phase UI/UX, puis compilation de l'APK
+[06:20] AGENT_BACK — session autonome de 2 h sur directives de l'orchestrateur (`YAS_..._Master_Prompt.md`). Audit, puis UI/UX, structure de navigation et préparation du build
+[06:20] AGENT_BACK — **contradiction de charte NON tranchée** : le fichier de directives veut le vert en couleur primaire d'action, `<regle_couleur>` du contrat veut le jaune (« le jaune signifie tu peux agir ici »). `CLAUDE.md` interdit d'arbitrer seul dans `<design_tokens>`. Aucun hexadécimal touché, décision laissée à l'humain — détail dans AUTONOMOUS_WORK_REPORT.md
+[06:20] AGENT_BACK — fait : safe areas. **Aucun écran n'en utilisait** : sur appareil, les titres passent sous la barre de statut et les boutons sous la barre de geste. Invisible au navigateur. AppBar porte l'encart haut, nouveau primitif ActionBar porte l'encart bas
+[06:20] AGENT_BACK — fait : navigation par onglets. Deux des quatre destinations utiles étaient à trois touchers, derrière le profil. Groupe `(tabs)` — chemins d'URL inchangés, aucun lien cassé
+[06:20] AGENT_BACK — fait : onboarding trois écrans, une seule fois. Splash tenu jusqu'à la décision de redirection
+[06:20] AGENT_BACK — défaut trouvé au test : l'état « introduction vue » n'était jamais rafraîchi, l'utilisateur restait **enfermé dans une boucle** après « Commencer ». État rendu observable
+[06:20] AGENT_BACK — fait : splash et icône adaptative aux tokens (l'icône Android portait un bleu clair générique hors charte), package `tg.kashflow.app`, œil d'affichage du mot de passe, état d'erreur manquant sur Mes groupes
+[06:20] AGENT_BACK — build : `expo export --platform web` réussi, `expo prebuild --platform android` réussi sans avertissement. **APK non compilable** : ni SDK Android, ni gradle, ni eas-cli sur la machine, registre npm injoignable
+[06:20] AGENT_BACK — écrans volontairement non créés, motivés au rapport : mot de passe oublié (aucun endpoint, hors périmètre), paramètres (rien à régler), filtres (trois produits), permissions Android (l'app n'accède à rien)
+[06:20] AGENT_BACK — 164 tests backend verts, typecheck app propre, 40 contrôles navigateur, responsive 320/390/480 px sans débordement, zéro erreur console
+[06:20] AGENT_BACK — attend : arbitrage de charte, choix de la voie APK (EAS ou SDK local), déploiement backend, fusion sur `main`
