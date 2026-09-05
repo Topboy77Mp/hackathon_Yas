@@ -103,6 +103,47 @@ class LoginIn(BaseModel):
     password: str
 
 
+class ForgotPasswordIn(BaseModel):
+    phone: str = Field(min_length=6, max_length=20)
+
+
+class ForgotPasswordOut(BaseModel):
+    """Réponse volontairement identique, que le numéro existe ou non.
+
+    Distinguer les deux cas transformerait l'endpoint en annuaire : on saurait
+    quels numéros sont inscrits sur KashFlow simplement en les essayant.
+    """
+
+    sent: bool
+    #: Renseigné uniquement quand un jeton de démonstration valide accompagne la
+    #: requête. Aucune passerelle SMS n'est au périmètre du contrat ; plutôt que
+    #: de simuler un envoi, on assume le canal de démonstration.
+    demo_code: str | None = None
+
+
+class ResetPasswordIn(BaseModel):
+    phone: str = Field(min_length=6, max_length=20)
+    code: str = Field(min_length=4, max_length=12)
+    new_password: str = Field(min_length=6, max_length=128)
+
+
+class ChangePasswordIn(BaseModel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: str = Field(min_length=6, max_length=128)
+
+
+class PreferencesOut(BaseModel):
+    notifications_enabled: bool
+    default_share_register: str
+
+
+class PreferencesIn(BaseModel):
+    """Champs omis = inchangés. Un PATCH partiel, pas un remplacement."""
+
+    notifications_enabled: bool | None = None
+    default_share_register: str | None = Field(default=None, max_length=30)
+
+
 class UserOut(BaseModel):
     id: int
     first_name: str

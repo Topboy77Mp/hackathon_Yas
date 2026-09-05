@@ -159,3 +159,45 @@ class Notification(SQLModel, table=True):
     message: str
     read: bool = Field(default=False)
     created_at: datetime = Field(default_factory=utcnow)
+
+
+class PasswordResetCode(SQLModel, table=True):
+    """Code de réinitialisation de mot de passe, à usage unique.
+
+    Le code n'est jamais stocké en clair : seule son empreinte l'est, comme un
+    mot de passe. Une fuite de la base ne permettrait donc pas de prendre la
+    main sur un compte.
+
+    Aucune passerelle SMS n'est au périmètre du contrat (`<exclus>` : aucun
+    service externe). La remise du code passe donc par le canal de démonstration,
+    documenté comme tel — pas par un envoi simulé qui laisserait croire à un SMS.
+    """
+
+    __tablename__ = "password_reset_codes"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+    code_hash: str
+    expires_at: datetime
+    used_at: datetime | None = Field(default=None)
+    created_at: datetime = Field(default_factory=utcnow)
+
+
+class UserPreference(SQLModel, table=True):
+    """Préférences d'un utilisateur. Une ligne au plus par compte.
+
+    Volontairement pauvre : le contrat exclut l'i18n de l'interface et les
+    notifications push. Ne restent que des réglages qui changent réellement
+    quelque chose dans l'application.
+    """
+
+    __tablename__ = "user_preferences"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True, unique=True)
+    #: Coupe le badge et la liste in-app. Le serveur continue d'écrire les
+    #: notifications : c'est l'affichage qui se tait, pas l'historique.
+    notifications_enabled: bool = Field(default=True)
+    #: Registre proposé par défaut à l'écran de partage (IA-2).
+    default_share_register: str = Field(default="famille")
+    updated_at: datetime = Field(default_factory=utcnow)

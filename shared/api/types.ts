@@ -71,6 +71,58 @@ export interface LoginRequest {
 }
 
 // ---------------------------------------------------------------------------
+// Récupération et changement de mot de passe
+// ---------------------------------------------------------------------------
+
+export interface ForgotPasswordRequest {
+  phone: string;
+}
+
+export interface ForgotPasswordResponse {
+  /** Toujours `true` : la réponse ne révèle pas si le numéro est inscrit. */
+  sent: boolean;
+  /**
+   * Renseigné uniquement quand un jeton de démonstration valide accompagne la
+   * requête. Aucune passerelle SMS n'est au périmètre du contrat.
+   */
+  demo_code: string | null;
+}
+
+export interface ResetPasswordRequest {
+  phone: string;
+  code: string;
+  new_password: string;
+}
+
+export interface ChangePasswordRequest {
+  current_password: string;
+  new_password: string;
+}
+
+// ---------------------------------------------------------------------------
+// Préférences
+// ---------------------------------------------------------------------------
+
+export interface Preferences {
+  notifications_enabled: boolean;
+  /** Registre proposé par défaut à l'écran de partage (IA-2). */
+  default_share_register: string;
+}
+
+/** PATCH partiel : un champ omis reste inchangé. */
+export interface PreferencesInput {
+  notifications_enabled?: boolean;
+  default_share_register?: string;
+}
+
+/** Options de `GET /products`. */
+export interface CatalogueQuery {
+  q?: string;
+  sort?: 'name' | 'price_asc' | 'price_desc' | 'groups';
+  with_open_groups?: boolean;
+}
+
+// ---------------------------------------------------------------------------
 // Paliers
 // ---------------------------------------------------------------------------
 

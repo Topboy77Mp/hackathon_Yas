@@ -13,7 +13,7 @@ from sqlmodel import Session, func, select
 
 from auth import current_user
 from db import get_session
-from models import Notification, User
+from models import Notification, User, UserPreference
 from schemas import ErrorOut, NotificationOut, NotificationsOut
 
 router = APIRouter(tags=["notifications"])
@@ -43,6 +43,15 @@ def list_notifications(
             .where(Notification.user_id == user.id, Notification.read == False)  # noqa: E712
         ).one()
     )
+
+    # Préférence utilisateur : le serveur continue d'écrire les notifications,
+    # c'est le compteur qui se tait. L'historique reste consultable — couper le
+    # badge ne doit pas effacer ce qui s'est passé.
+    pref = session.exec(
+        select(UserPreference).where(UserPreference.user_id == user.id)
+    ).first()
+    if pref is not None and not pref.notifications_enabled:
+        unread = 0
 
     return NotificationsOut(
         unread_count=unread,

@@ -31,11 +31,28 @@ def _open_groups(product_id: int, session: Session) -> list[Group]:
     )
 
 
-@router.get("/products", response_model=list[ProductCard])
-def list_products(session: Session = Depends(get_session)) -> list[ProductCard]:
-    products = session.exec(
-        select(Product).where(Product.status == ProductStatus.ACTIVE)
-    ).all()
+@router.get(
+    "/products",
+    response_model=list[ProductCard],
+    summary="Catalogue public, filtrable et triable",
+)
+def list_products(
+    q: str | None = None,
+    sort: str = "name",
+    with_open_groups: bool = False,
+    session: Session = Depends(get_session),
+) -> list[ProductCard]:
+    """Recherche et tri côté serveur.
+
+    Le tri par prix ne peut pas se faire en SQL : le prix affiché dépend du
+    groupe ouvert le moins cher, qui se calcule ligne par ligne. On trie donc
+    après construction des cartes — sur trois produits c'est sans conséquence,
+    et cela garde le classement cohérent avec ce qui est affiché.
+    """
+    requete = select(Product).where(Product.status == ProductStatus.ACTIVE)
+    if q and q.strip():
+        requete = requete.where(Product.name.ilike(f"%{q.strip()}%"))
+    products = session.exec(requete).all()
 
     cards = []
     for product in products:
@@ -71,6 +88,22 @@ def list_products(session: Session = Depends(get_session)) -> list[ProductCard]:
                 best_open_group_price=min(open_prices) if open_prices else None,
             )
         )
+
+    if with_open_groups:
+        cards = [c for c in cards if c.open_groups_count > 0]
+
+    def prix_affiche(carte: ProductCard) -> int:
+        return carte.best_open_group_price or carte.individual_price
+
+    if sort == "price_asc":
+        cards.sort(key=prix_affiche)
+    elif sort == "price_desc":
+        cards.sort(key=prix_affiche, reverse=True)
+    elif sort == "groups":
+        cards.sort(key=lambda c: c.open_groups_count, reverse=True)
+    else:
+        cards.sort(key=lambda c: c.name.lower())
+
     return cards
 
 
