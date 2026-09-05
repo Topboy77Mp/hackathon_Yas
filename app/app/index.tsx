@@ -1,7 +1,8 @@
 /**
  * Accueil — catalogue, en-tête « bento ». Aucune donnée inventée : le bloc impact vient
- * du même endpoint /stats/impact que le tableau de bord jury (ImpactStats), pas un
- * chiffre écrit en dur dans l'écran.
+ * du même endpoint /stats/impact que le tableau de bord jury, et les cartes produit
+ * n'affichent une progression ou un prix de groupe que quand un vrai groupe existe
+ * (best_open_group_price est undefined pour 2 des 3 produits du catalogue démo).
  */
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, View, StyleSheet, TextInput, RefreshControl } from 'react-native';
@@ -9,10 +10,17 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, gradients, spacing, radii, shadow, hitSlop } from '@shared/theme/tokens';
+import { colors, gradients, spacing, radii, shadow, hitSlop, alpha } from '@shared/theme/tokens';
 import { Text, Card, ProductCard, EmptyState } from '../components/ui';
 import { listProducts, getImpactStats } from '../lib/api/endpoints';
 import { formatFcfa } from '../lib/format';
+
+/** Icône décorative par produit connu du catalogue démo — pas une catégorie du contrat. */
+function iconForProduct(id: string): keyof typeof Ionicons.glyphMap {
+  if (id.includes('npk')) return 'leaf';
+  if (id.includes('semences')) return 'nutrition';
+  return 'school';
+}
 
 export default function AccueilScreen() {
   const router = useRouter();
@@ -41,14 +49,25 @@ export default function AccueilScreen() {
         ListHeaderComponent={
           <View style={styles.headerContainer}>
             <View style={styles.topRow}>
-              <Text variant="title">KashFlow</Text>
+              <View>
+                <Text variant="title">KashFlow</Text>
+                {/* Tsévié : lieu réel du commerçant du jeu de démo (Agro-Intrants Zio),
+                    pas une géolocalisation utilisateur qu'on n'a pas. */}
+                <View style={styles.locationPill}>
+                  <Ionicons name="location-sharp" size={12} color={colors.unlock.green} />
+                  <Text variant="caption" style={styles.locationText}>
+                    Tsévié, Togo
+                  </Text>
+                </View>
+              </View>
+
               <Pressable
                 onPress={() => router.push('/profil')}
                 accessibilityRole="button"
                 accessibilityLabel="Profil"
                 style={styles.profileTouchable}
               >
-                <Ionicons name="person-circle-outline" size={28} color={colors.brand.ink} />
+                <Ionicons name="person-circle-outline" size={30} color={colors.brand.ink} />
               </Pressable>
             </View>
 
@@ -75,6 +94,7 @@ export default function AccueilScreen() {
             )}
 
             <View style={styles.searchWrapper}>
+              <Ionicons name="search" size={18} color={colors.text.muted} style={styles.searchIcon} />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Chercher un produit"
@@ -101,6 +121,7 @@ export default function AccueilScreen() {
             individualPrice={item.individual_price}
             bestOpenGroupPrice={item.best_open_group_price}
             openGroupsCount={item.open_groups_count}
+            iconName={iconForProduct(item.id)}
             onPress={() => router.push(`/produit/${item.id}`)}
           />
         )}
@@ -114,6 +135,18 @@ const styles = StyleSheet.create({
   list: { padding: spacing.xl, paddingBottom: spacing.xxxl },
   headerContainer: { gap: spacing.md, marginBottom: spacing.md },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  locationPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: alpha(colors.unlock.green, 0.1),
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: radii.pill,
+    marginTop: spacing.xs,
+    alignSelf: 'flex-start',
+  },
+  locationText: { color: colors.unlock.green },
   profileTouchable: {
     width: hitSlop.minTouchTarget,
     height: hitSlop.minTouchTarget,
@@ -140,13 +173,15 @@ const styles = StyleSheet.create({
   },
   bentoImpactLabel: { color: 'rgba(255,255,255,0.85)' },
   bentoImpactValue: { color: colors.surface.white },
-  searchWrapper: { borderRadius: radii.card, ...shadow.soft },
-  searchInput: {
-    minHeight: 48,
+  searchWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: radii.card,
-    paddingHorizontal: spacing.lg,
-    fontSize: 16,
-    color: colors.brand.ink,
     backgroundColor: colors.surface.white,
+    paddingHorizontal: spacing.lg,
+    minHeight: 48,
+    ...shadow.soft,
   },
+  searchIcon: { marginRight: spacing.sm },
+  searchInput: { flex: 1, fontSize: 16, color: colors.brand.ink },
 });
