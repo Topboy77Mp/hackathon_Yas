@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { libelleStatut } from '../lib/format';
+import { KpiTooltip } from '../components/KpiTooltip';
 export function Badge({value}: {value: string}) {
   const tone = value === 'PENDING' ? 'attention'
     : ['FAILED', 'REJECTED'].includes(value) ? 'error'
@@ -7,7 +8,7 @@ export function Badge({value}: {value: string}) {
     : 'neutre';
   return <span className={`status status-${tone}`}>{libelleStatut(value)}</span>;
 }
-export function Metric({label, value, note, emphasis = false}: {label: string; value: ReactNode; note?: string; emphasis?: boolean}) {return <div className={`metric${emphasis ? " metric-emphasis" : ""}`}><span>{label}</span><strong>{value}</strong>{note && <small>{note}</small>}</div>;}
+export function Metric({label, value, note, description, icon}: {label: string; value: ReactNode; note?: string; description?: string; icon?: ReactNode}) {return <div className="metric"><div className="metric-heading">{icon && <span className="metric-icon" aria-hidden="true">{icon}</span>}<span className="metric-label">{label}</span>{description && <KpiTooltip label={label} description={description} />}</div><strong>{value}</strong>{note && <small>{note}</small>}</div>;}
 export function Notice({children}: {children: ReactNode}) {return <p className="notice">{children}</p>;}
 export function Panel({title, close, children}: {title: string; close: () => void; children: ReactNode}) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -16,7 +17,7 @@ export function Panel({title, close, children}: {title: string; close: () => voi
 }
 export function Confirm({title, description, accept, close}: {title: string; description: string; accept: () => Promise<void>; close: () => void}) {
   const [busy, setBusy] = useState(false); const [error, setError] = useState('');
-  return <Panel title={title} close={close}><p>{description}</p>{error && <p role="alert" className="form-error">{error}</p>}<div className="actions"><button autoFocus onClick={close} disabled={busy}>Conserver</button><button className={/^(Supprimer|Annuler|Suspendre|D?sactiver|Refuser)/.test(title) ? "button-danger" : "button-primary"} disabled={busy} onClick={async () => {setBusy(true); try {await accept(); close();} catch(e) {setError((e as Error).message);} finally {setBusy(false);}}}>{busy ? 'Enregistrement…' : 'Confirmer'}</button></div></Panel>;
+  return <Panel title={title} close={close}><p>{description}</p>{error && <p role="alert" className="form-error">{error}</p>}<div className="actions"><button autoFocus onClick={close} disabled={busy}>Conserver</button><button className={/^(Supprimer|Annuler|Suspendre|Désactiver|Refuser)/.test(title) ? "button-danger" : "button-primary"} disabled={busy} onClick={async () => {setBusy(true); try {await accept(); close();} catch(e) {setError((e as Error).message);} finally {setBusy(false);}}}>{busy ? 'Enregistrement…' : 'Confirmer'}</button></div></Panel>;
 }
 export interface Column<T> { label: string; render: (row: T) => ReactNode; secondary?: boolean; align?: "right" }
 export function DataTable<T extends {id: number}>({rows, columns, title, search, filters = []}: {rows: T[]; columns: Column<T>[]; title: string; search: (row: T) => string; filters?: {label: string; value: (row: T) => string}[]}) {

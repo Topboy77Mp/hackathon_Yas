@@ -1,5 +1,8 @@
+import { useState, type MouseEvent } from "react";
 import { fcfa, pluriel, remise, unites } from "../lib/format";
 import { paliersuivant, type EditableTier } from "../lib/tiers";
+import { suggestTiers } from "../lib/api/endpoints";
+import { isDemo } from "../lib/demo";
 
 interface Props {
   tiers: EditableTier[];
@@ -8,6 +11,7 @@ interface Props {
   stock: number;
   unitLabel: string;
   errors: string[];
+  productName?: string;
 }
 
 /**
@@ -24,7 +28,34 @@ export function TierEditor({
   stock,
   unitLabel,
   errors,
+  productName,
 }: Props) {
+  const [assistantBusy, setAssistantBusy] = useState(false);
+  const [assistantMessage, setAssistantMessage] = useState("");
+
+  async function proposer(event: MouseEvent<HTMLButtonElement>) {
+    if (retailPrice <= 0 || stock <= 0) return;
+    const formName = (event.currentTarget.closest("form")?.elements.namedItem("name") as HTMLInputElement | null)?.value;
+    const assistantProductName = productName?.trim() || formName?.trim() || "Produit";
+    setAssistantBusy(true);
+    setAssistantMessage("");
+    try {
+      const suggestions = isDemo()
+        ? [
+            { min_quantity: 1, unit_price: retailPrice },
+            { min_quantity: Math.max(2, Math.round(stock * 0.25)), unit_price: Math.max(1, Math.round(retailPrice * 0.94)) },
+            { min_quantity: Math.max(3, Math.round(stock * 0.5)), unit_price: Math.max(1, Math.round(retailPrice * 0.88)) },
+          ]
+        : (await suggestTiers({ product_name: assistantProductName, retail_price: retailPrice, stock })).tiers;
+      const uniques = suggestions.filter((tier, index, list) => index === list.findIndex((item) => item.min_quantity === tier.min_quantity));
+      onChange(uniques.map((tier, index) => ({ id: `assistant-${Date.now()}-${index}`, minQuantity: tier.min_quantity, unitPrice: tier.unit_price })));
+      setAssistantMessage(isDemo() ? "Proposition de démonstration appliquée. Vous pouvez la modifier." : "Proposition appliquée. Vérifiez-la avant l’enregistrement.");
+    } catch (reason) {
+      setAssistantMessage(reason instanceof Error ? reason.message : "L’assistant est momentanément indisponible.");
+    } finally {
+      setAssistantBusy(false);
+    }
+  }
   function modifier(id: string, champ: "minQuantity" | "unitPrice", valeur: string) {
     const nombre = Number(valeur);
     onChange(
@@ -45,14 +76,17 @@ export function TierEditor({
           <h2>Grille des paliers</h2>
           <p>Le prix baisse à mesure que le volume total commandé augmente.</p>
         </div>
-        <button
-          className="button button-secondary"
-          disabled={retailPrice <= 0 || stock <= 0}
-          onClick={() => onChange([...tiers, paliersuivant(tiers, stock, retailPrice)])}
-          type="button"
-        >
-          + Ajouter un palier
-        </button>
+        <div className="tier-actions">
+          <button className="button button-ai" disabled={assistantBusy || retailPrice <= 0 || stock <= 0} onClick={proposer} type="button">{assistantBusy ? "Préparation…" : "Proposer avec l’IA"}</button>
+          <button
+            className="button button-secondary"
+            disabled={retailPrice <= 0 || stock <= 0}
+            onClick={() => onChange([...tiers, paliersuivant(tiers, stock, retailPrice)])}
+            type="button"
+          >
+            + Ajouter un palier
+          </button>
+        </div>
       </div>
 
       <div className="tier-table" role="table" aria-label="Paliers de prix">
@@ -127,6 +161,8 @@ export function TierEditor({
           stock disponible {unites(stock, unitLabel)}
         </p>
       )}
+
+      {assistantMessage && <p className="assistant-message" role="status">{assistantMessage}</p>}
     </div>
   );
 }

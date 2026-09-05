@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { shareMessage } from "../lib/api/endpoints";
 import type { ShareMessageOut } from "../lib/api/types";
+import { isDemo } from "../lib/demo";
 
 /**
  * Lien de partage et messages prêts à envoyer (IA-2).
@@ -19,7 +20,20 @@ export function ShareBox({ groupId }: { groupId: number }) {
     setEnCours(true);
     setErreur(null);
     try {
-      setDonnees(await shareMessage(groupId));
+      if (isDemo()) {
+        const shareUrl = `${window.location.origin}/groupes/${groupId}`;
+        setDonnees({
+          share_url: shareUrl,
+          source: "repli",
+          variants: [
+            { registre: "Direct", texte: `Rejoignez notre achat groupé KashFlow : ${shareUrl}` },
+            { registre: "Convivial", texte: `On achète ensemble pour payer moins ! Découvrez le groupe : ${shareUrl}` },
+            { registre: "Urgent", texte: `Le groupe avance, participez avant la clôture : ${shareUrl}` },
+          ],
+        });
+      } else {
+        setDonnees(await shareMessage(groupId));
+      }
     } catch (reason) {
       setErreur(reason instanceof Error ? reason.message : "Génération impossible.");
     } finally {
@@ -36,13 +50,13 @@ export function ShareBox({ groupId }: { groupId: number }) {
 
   return (
     <section className="share-box" aria-labelledby="share-title">
-      <span className="aside-kicker">Partage</span>
-      <h2 id="share-title">Faire venir plus de monde</h2>
+      <span className="aside-kicker">Assistant IA</span>
+      <h2 id="share-title">Préparer le partage</h2>
 
       {!donnees && (
         <>
           <p className="muted">
-            Génère le lien du groupe et trois messages prêts à envoyer sur WhatsApp.
+            Obtenez trois messages prêts à envoyer pour mobiliser les acheteurs.
           </p>
           <button
             className="button button-secondary"
