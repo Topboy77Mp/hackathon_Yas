@@ -53,11 +53,17 @@ function resoudreUrlApi(): string {
 export const API_BASE_URL = resoudreUrlApi();
 
 /**
- * Vrai quand l'application tourne sur un appareil en visant `localhost` : la
- * configuration est alors certainement fausse. Sert à afficher un diagnostic
- * utile plutôt qu'une erreur réseau opaque.
+ * Vrai quand l'application tourne sur un appareil en visant `localhost`.
+ *
+ * Ce n'est **pas** forcément une erreur : avec `adb reverse tcp:8000 tcp:8000`,
+ * `localhost` sur le téléphone désigne bien le PC, et c'est même la façon la
+ * plus fiable de tester par câble. Sans redirection en revanche, `localhost`
+ * désigne le téléphone lui-même et rien ne répondra.
+ *
+ * L'application ne peut pas distinguer les deux cas — elle mentionne donc les
+ * deux, au lieu d'affirmer une cause qu'elle ignore.
  */
-export const API_INJOIGNABLE_DEPUIS_APPAREIL =
+export const API_LOCALHOST_SUR_APPAREIL =
   Platform.OS !== 'web' && API_BASE_URL.includes('localhost');
 
 /**

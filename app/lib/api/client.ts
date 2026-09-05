@@ -4,7 +4,7 @@
  * chaque endpoint typé vit dans lib/api/endpoints.ts.
  */
 import type { ApiError } from '@shared/api/types';
-import { API_BASE_URL, API_INJOIGNABLE_DEPUIS_APPAREIL } from '../config';
+import { API_BASE_URL, API_LOCALHOST_SUR_APPAREIL } from '../config';
 import { getToken, setToken } from './auth-storage';
 
 export class ApiClientError extends Error {
@@ -46,14 +46,16 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     });
   } catch {
     // Panne réseau ou API arrêtée : un message utile, jamais « TypeError: Failed to fetch ».
-    // Sur un appareil, `localhost` désigne le téléphone : c'est une erreur de
-    // configuration, pas de réseau, et le dire fait gagner une heure.
+    // Sur un appareil, `localhost` a deux sens possibles — le téléphone, ou le
+    // PC si `adb reverse` est actif. On nomme les deux plutôt que d'affirmer
+    // une cause qu'on ignore.
     throw new ApiClientError(0, {
-      detail: API_INJOIGNABLE_DEPUIS_APPAREIL
-        ? `L'application vise ${API_BASE_URL}, or « localhost » désigne ce téléphone. `
-          + "Renseignez EXPO_PUBLIC_API_BASE_URL avec l'adresse IP du serveur."
+      detail: API_LOCALHOST_SUR_APPAREIL
+        ? `L'application vise ${API_BASE_URL}. Sur un téléphone, « localhost » ne `
+          + 'désigne le PC que si `adb reverse tcp:8000 tcp:8000` est actif. '
+          + "Sinon, renseignez EXPO_PUBLIC_API_BASE_URL avec l'adresse IP du serveur."
         : 'Connexion impossible. Vérifiez votre réseau puis réessayez.',
-      code: API_INJOIGNABLE_DEPUIS_APPAREIL ? 'BAD_API_BASE_URL' : 'NETWORK_ERROR',
+      code: API_LOCALHOST_SUR_APPAREIL ? 'API_LOCALHOST' : 'NETWORK_ERROR',
     });
   }
 
