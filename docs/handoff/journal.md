@@ -133,3 +133,15 @@ Format : `[HH:MM] AGENT_X — fait / bloqué par / attend`
 [06:20] AGENT_BACK — écrans volontairement non créés, motivés au rapport : mot de passe oublié (aucun endpoint, hors périmètre), paramètres (rien à régler), filtres (trois produits), permissions Android (l'app n'accède à rien)
 [06:20] AGENT_BACK — 164 tests backend verts, typecheck app propre, 40 contrôles navigateur, responsive 320/390/480 px sans débordement, zéro erreur console
 [06:20] AGENT_BACK — attend : arbitrage de charte, choix de la voie APK (EAS ou SDK local), déploiement backend, fusion sur `main`
+[07:10] AGENT_BACK — autorisation de l'orchestrateur : créer les écrans manquants avec leurs API et leurs tables. Trois livrés, plus le traitement des permissions Android
+[07:10] AGENT_BACK — fait : **récupération de mot de passe**. Table `password_reset_codes`, code jamais stocké en clair, valable 15 min, à usage unique, une nouvelle demande invalide la précédente. Réponse identique que le numéro existe ou non — sinon l'endpoint devient un annuaire des inscrits
+[07:10] AGENT_BACK — décision : aucune passerelle SMS n'étant au périmètre, le code n'est renvoyé qu'avec un jeton de démonstration et l'écran l'annonce comme tel. Un écran qui dit « code envoyé » sans rien envoyer est un mensonge
+[07:10] AGENT_BACK — fait : `POST /auth/change-password`, avec refus d'un nouveau mot de passe identique à l'ancien
+[07:10] AGENT_BACK — fait : **préférences**. Table `user_preferences`, GET et PATCH partiel. Les deux réglages sont réellement branchés : l'interrupteur pilote le badge sans effacer l'historique, le registre remonte la bonne variante en tête du partage
+[07:10] AGENT_BACK — fait : **catalogue triable et filtrable** (`q`, `sort`, `with_open_groups`). Tri fait côté serveur : le prix affiché dépend du groupe ouvert le moins cher, que SQL ne peut pas classer
+[07:10] AGENT_BACK — fait : **permissions Android**. Le gabarit Expo déclarait READ/WRITE_EXTERNAL_STORAGE, SYSTEM_ALERT_WINDOW et VIBRATE — l'application n'utilise aucune des quatre. Seule INTERNET est conservée, vérifié dans le manifeste généré
+[07:10] AGENT_BACK — défaut corrigé : le client HTTP **perdait le `code` d'erreur** de l'API. Il n'attendait que la forme imbriquée alors que le backend aplatit `{detail, code}` : l'interface ne pouvait réagir qu'au texte
+[07:10] AGENT_BACK — défaut corrigé : six avertissements React par rendu. `react-native-paper` clone les enfants directs d'une `Card` avec un `index`, qu'un Fragment rejette
+[07:10] AGENT_BACK — 191 tests backend verts. 31 opérations sur 28 chemins, 53 schémas. 14 contrôles navigateur sur les nouveaux écrans, 40 en non-régression, zéro erreur console
+[07:10] AGENT_BACK — fait : `BUILD_APK.md`, guide de compilation. **L'APK reste non compilable ici** : ni SDK Android, ni Gradle, ni eas-cli. Deux voies documentées, EAS ou build local
+[07:10] AGENT_BACK — attend : choix de la voie de compilation, arbitrage de charte (vert ou jaune en couleur d'action), déploiement backend, fusion sur `main`

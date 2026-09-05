@@ -4,7 +4,7 @@
 
 **Date** : 5 septembre 2026, session autonome d'environ 2 h
 **Branche** : `front/phase-2` (publiée sur `origin/front/phase-2`)
-**Commits ajoutés** : 2 — `03423ce`, `a215521`
+**Commits ajoutés** : 4 — `03423ce`, `a215521`, `fc2a7dd`, `a7e8b6f`
 **Rôle** : Senior Android / UI-UX Engineer + Tech Lead, exécution autonome
 
 Point de départ : `fe2dac0`. Le backend, le dashboard et le câblage complet de
@@ -85,6 +85,33 @@ Tout champ `secureTextEntry` reçoit d'office l'œil d'affichage. Saisir un mot 
 passe sans pouvoir le relire, sur un clavier Android, est la première cause
 d'échec de connexion.
 
+### Mot de passe oublié — écran + API + table
+`POST /auth/forgot-password` et `POST /auth/reset-password`, table
+`password_reset_codes`. Le code n'est **jamais stocké en clair**, il vaut quinze
+minutes, ne sert qu'une fois, et une nouvelle demande invalide la précédente.
+La réponse ne révèle pas si le numéro est inscrit.
+
+### Changement de mot de passe depuis le compte
+`POST /auth/change-password`, avec vérification de l'actuel et refus d'un
+nouveau mot de passe identique à l'ancien.
+
+### Paramètres — écran + API + table
+`GET` et `PATCH /me/preferences`, table `user_preferences`. Deux réglages, tous
+deux réellement branchés : l'interrupteur des notifications pilote le badge de
+l'accueil sans effacer l'historique, et le registre choisi remonte la bonne
+variante en tête de l'écran de partage.
+
+### Filtres et tri du catalogue
+`GET /products` accepte `q`, `sort` et `with_open_groups`. Recherche temporisée à
+300 ms côté interface. Le tri est fait par le serveur : le prix affiché dépend du
+groupe ouvert le moins cher, que le client ne peut pas classer.
+
+### Permissions Android
+Le gabarit Expo déclarait `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`,
+`SYSTEM_ALERT_WINDOW` et `VIBRATE`. **L'application n'utilise aucune des
+quatre.** Seule `INTERNET` est conservée ; les autres sont explicitement retirées
+à la fusion du manifeste (vérifié dans le manifeste généré).
+
 ### États et accessibilité
 - « Mes groupes » n'avait aucun état d'erreur : une API injoignable y affichait
   *« vous ne participez à aucun groupe »* — faux et décourageant.
@@ -129,11 +156,12 @@ d'échec de connexion.
 
 | Suite | Résultat |
 |---|---|
-| Backend `pytest` | **164 passés**, 50 s |
+| Backend `pytest` | **191 passés**, 65 s |
 | Typecheck app (`tsc --noEmit`) | **0 erreur** |
 | Navigation + responsive (Chromium) | **11 / 11** |
 | Parcours acheteur complet (Chromium) | **16 / 16** |
 | Livrables P0 (Chromium) | **13 / 13** |
+| Nouveaux écrans (Chromium) | **14 / 14** |
 | Erreurs console | **aucune** |
 
 Responsive vérifié à **320, 390 et 480 px** : aucun débordement horizontal.
@@ -173,7 +201,14 @@ génère proprement. Il ne manque que la chaîne de compilation.
 3. **Écrans sous la barre de statut** — voir safe areas.
 4. **Icône Android hors charte** — `#E6F4FE`.
 5. **Absence d'état d'erreur sur « Mes groupes »**.
-6. **Scripts npm cassés par `prebuild`** — il les avait basculés vers `expo
+6. **`code` d'erreur perdu par le client HTTP** — il n'attendait que la forme
+   imbriquée, alors que le backend aplatit `{detail, code}`. Le code réel était
+   remplacé par un `HTTP_4xx` générique : l'interface ne pouvait plus réagir
+   qu'au texte du message.
+7. **Six avertissements React par rendu** — `react-native-paper` clone les
+   enfants directs d'une `Card` en leur passant un `index`, qu'un Fragment
+   rejette. Deux écrans étaient concernés.
+8. **Scripts npm cassés par `prebuild`** — il les avait basculés vers `expo
    run:android` alors qu'`android/` n'est pas versionné : un coéquipier lançant
    `npm run android` sans prebuild aurait eu un échec incompréhensible.
 
@@ -195,16 +230,17 @@ génère proprement. Il ne manque que la chaîne de compilation.
 
 1. **Ne pas inverser la palette** — motivé plus haut. La décision la plus
    conservatrice, et la seule compatible avec `CLAUDE.md`.
-2. **Ne pas créer « Mot de passe oublié »** (PROMPT 05). Aucun endpoint de
-   récupération n'existe et la fonctionnalité est hors `<perimetre>`. Un écran
-   qui prétend envoyer un code sans rien envoyer serait un mensonge à l'écran.
-   Le fichier de directives dit lui-même *« selon le cahier des charges »*.
-3. **Ne pas créer « Paramètres »** (PROMPT 16) — rien à y régler : aucune
-   préférence, pas d'i18n (exclue), pas de notifications push (exclues).
-4. **Ne pas créer « Filtres / Tri »** (PROMPT 10) — trois produits au catalogue.
-   Un filtre sur trois éléments est du bruit ; la recherche existe déjà.
-5. **Pas de permissions Android** (PROMPT 21) — l'application n'accède ni à la
-   caméra, ni au stockage, ni à la position. En demander serait injustifiable.
+2. **Remise du code de réinitialisation par le canal de démonstration.** Aucune
+   passerelle SMS n'est au périmètre. Plutôt qu'un écran annonçant « code
+   envoyé » sans rien envoyer, le code s'affiche dans un encart marqué « mode
+   démonstration » qui dit qu'en production il arriverait par SMS.
+3. **Réponse identique que le numéro existe ou non** sur `forgot-password` :
+   sinon l'endpoint devient un annuaire des inscrits, essayable numéro par
+   numéro.
+4. **Paramètres volontairement pauvres** — seuls des réglages réellement câblés.
+   Un écran rempli d'interrupteurs qui ne font rien est pire que pas d'écran.
+5. **Une seule permission Android conservée** (`INTERNET`). Les quatre autres
+   venaient du gabarit Expo.
 6. **Retirer `userInterfaceStyle`** plutôt que d'attendre un réseau défaillant.
 7. **Groupe `(tabs)` plutôt qu'une barre maison** — chemins d'URL préservés,
    aucun lien cassé, comportement natif (retour Android, état par onglet).
