@@ -92,7 +92,12 @@ export default function FicheProduitScreen() {
             />
           ) : (
             product.open_groups.map((group) => (
-              <Pressable key={group.id} onPress={() => router.push(`/groupe/${group.id}`)}>
+              <Pressable
+                key={group.id}
+                accessibilityRole="button"
+                accessibilityLabel={`Voir le groupe ${group.name}`}
+                onPress={() => router.push(`/groupe/${group.id}`)}
+              >
                 <Card variant="elevated" style={styles.groupCard}>
                   <View style={styles.row}>
                     <Text variant="label">{group.name}</Text>

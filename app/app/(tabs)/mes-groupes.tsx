@@ -21,7 +21,7 @@ export default function MesGroupesScreen() {
   const router = useRouter();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuthToken();
 
-  const { data: orders, isLoading, refetch, isFetching } = useQuery({
+  const { data: orders, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ['orders'],
     queryFn: listOrders,
     enabled: isAuthenticated,
@@ -69,7 +69,16 @@ export default function MesGroupesScreen() {
           <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.brand.ink} />
         }
       >
-        {!isLoading && groupIds.length === 0 && (
+        {isError && (
+          <EmptyState
+            title="Groupes indisponibles"
+            subtitle={error instanceof Error ? error.message : undefined}
+            actionLabel="Réessayer"
+            onAction={() => refetch()}
+          />
+        )}
+
+        {!isLoading && !isError && groupIds.length === 0 && (
           <EmptyState
             title="Vous ne participez à aucun groupe"
             subtitle="Rejoignez-en un pour faire baisser le prix avec d'autres acheteurs."
