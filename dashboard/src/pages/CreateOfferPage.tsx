@@ -4,7 +4,6 @@ import { TierEditor } from "../components/TierEditor";
 import { createProduct, suggestTiers } from "../lib/api/endpoints";
 import { fcfa } from "../lib/format";
 import {
-  grilleParDefaut,
   toApiTiers,
   validateTiers,
   type EditableTier,
@@ -14,12 +13,12 @@ export function CreateOfferPage() {
   const navigate = useNavigate();
 
   const [nom, setNom] = useState("");
-  const [libelleUnite, setLibelleUnite] = useState("sac");
-  const [prixDetail, setPrixDetail] = useState(22000);
-  const [stock, setStock] = useState(600);
+  const [libelleUnite, setLibelleUnite] = useState("");
+  const [prixDetail, setPrixDetail] = useState<number | "">("");
+  const [stock, setStock] = useState<number | "">("");
   const [prixPlancher, setPrixPlancher] = useState<number | "">("");
 
-  const [tiers, setTiers] = useState<EditableTier[]>(() => grilleParDefaut(22000, 600));
+  const [tiers, setTiers] = useState<EditableTier[]>([]);
   const [justifications, setJustifications] = useState<string[]>([]);
   const [assistantUtilise, setAssistantUtilise] = useState(false);
 
@@ -27,11 +26,20 @@ export function CreateOfferPage() {
   const [enEnvoi, setEnEnvoi] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
 
-  const erreursGrille = useMemo(() => validateTiers(tiers, stock), [tiers, stock]);
+  const prixDetailNombre = prixDetail === "" ? 0 : prixDetail;
+  const stockNombre = stock === "" ? 0 : stock;
+  const erreursGrille = useMemo(
+    () => validateTiers(tiers, stockNombre),
+    [tiers, stockNombre],
+  );
 
   async function proposerPaliers() {
     if (!nom.trim()) {
       setErreur("Renseignez le nom du produit avant de demander une suggestion.");
+      return;
+    }
+    if (prixDetailNombre <= 0 || stockNombre <= 0) {
+      setErreur("Renseignez un prix et un stock valides avant de demander une suggestion.");
       return;
     }
 
@@ -40,8 +48,8 @@ export function CreateOfferPage() {
     try {
       const reponse = await suggestTiers({
         product_name: nom.trim(),
-        retail_price: prixDetail,
-        stock,
+        retail_price: prixDetailNombre,
+        stock: stockNombre,
         floor_price: prixPlancher === "" ? null : prixPlancher,
       });
 
@@ -65,7 +73,7 @@ export function CreateOfferPage() {
 
   async function envoyer(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (erreursGrille.length > 0) {
+    if (prixDetailNombre <= 0 || stockNombre <= 0 || erreursGrille.length > 0) {
       setErreur("Corrigez la grille de paliers avant de publier.");
       return;
     }
@@ -75,9 +83,9 @@ export function CreateOfferPage() {
     try {
       await createProduct({
         name: nom.trim(),
-        unit_label: libelleUnite.trim() || "unité",
-        stock,
-        individual_price: prixDetail,
+        unit_label: libelleUnite.trim(),
+        stock: stockNombre,
+        individual_price: prixDetailNombre,
         tiers: toApiTiers(tiers),
       });
       navigate("/offres", { replace: true });
@@ -118,7 +126,7 @@ export function CreateOfferPage() {
                 <span>Prix de détail unitaire (FCFA)</span>
                 <input
                   min="1"
-                  onChange={(event) => setPrixDetail(Number(event.target.value))}
+                  onChange={(event) => setPrixDetail(event.target.value === "" ? "" : Number(event.target.value))}
                   required
                   type="number"
                   value={prixDetail}
@@ -128,7 +136,7 @@ export function CreateOfferPage() {
                 <span>Stock disponible</span>
                 <input
                   min="1"
-                  onChange={(event) => setStock(Number(event.target.value))}
+                  onChange={(event) => setStock(event.target.value === "" ? "" : Number(event.target.value))}
                   required
                   type="number"
                   value={stock}
@@ -164,8 +172,8 @@ export function CreateOfferPage() {
           <TierEditor
             errors={erreursGrille}
             onChange={setTiers}
-            retailPrice={prixDetail}
-            stock={stock}
+            retailPrice={prixDetailNombre}
+            stock={stockNombre}
             tiers={tiers}
             unitLabel={libelleUnite || "unité"}
           />
@@ -173,14 +181,16 @@ export function CreateOfferPage() {
           <div className="form-actions">
             <button
               className="button button-primary"
-              disabled={enEnvoi || erreursGrille.length > 0}
+              disabled={enEnvoi || tiers.length === 0 || erreursGrille.length > 0}
               type="submit"
             >
               {enEnvoi ? "Publication…" : "Publier l’offre"}
             </button>
-            <span>
-              Prix le plus bas de la grille : {fcfa(Math.min(...tiers.map((t) => t.unitPrice)))}
-            </span>
+            {tiers.length > 0 && (
+              <span>
+                Prix le plus bas de la grille : {fcfa(Math.min(...tiers.map((t) => t.unitPrice)))}
+              </span>
+            )}
           </div>
 
           {erreur && <p className="form-error" role="alert">{erreur}</p>}

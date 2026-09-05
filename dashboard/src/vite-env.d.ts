@@ -2,8 +2,6 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL?: string;
-  /** Jeton du simulateur de démonstration. Vide = panneau masqué. */
-  readonly VITE_DEMO_TOKEN?: string;
 }
 
 interface ImportMeta {

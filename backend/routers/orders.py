@@ -7,7 +7,7 @@ from sqlmodel import Session, select
 
 from auth import current_user
 from db import get_session
-from models import Order, OrderStatus, Payment, PaymentStatus, User
+from models import Group, Order, OrderStatus, Payment, PaymentStatus, User
 from schemas import ErrorOut, OrderOut, PayOut, PaymentOut
 from services import build_order_out
 
@@ -63,6 +63,9 @@ def pay_order(
             status_code=404,
             detail={"detail": "Commande introuvable.", "code": "ORDER_NOT_FOUND"},
         )
+    # Sérialiser paiement, participation et remplacement de grille sur le groupe.
+    session.exec(select(Group).where(Group.id == order.group_id).with_for_update()).first()
+    session.refresh(order)
     if order.order_status == OrderStatus.CANCELLED:
         raise HTTPException(
             status_code=409,

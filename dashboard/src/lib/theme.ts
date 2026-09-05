@@ -4,8 +4,10 @@ import { fontWeights, typeScale } from "@shared/theme/typography";
 const px = (value: number) => `${value}px`;
 
 export const themeVariables = {
+  // Nuances relevées dans le PNG original (le logo contient plusieurs nuances).
+  "--brand-primary": "#012C75",
   "--brand-ink": colors.brand.ink,
-  "--brand-yellow": colors.brand.yellow,
+  "--brand-yellow": "#FEC40E",
   "--accent-navy": colors.accent.navy,
   "--alert-red": colors.alert.red,
   "--surface-white": colors.surface.white,
@@ -14,8 +16,8 @@ export const themeVariables = {
   "--text-muted": colors.text.muted,
   "--unlock-green": colors.unlock.green,
   "--unlock-green-soft": colors.unlock.greenSoft,
-  "--font-numbers": "Roboto Flex",
-  "--font-body": "Roboto Flex",
+  "--font-numbers": "system-ui",
+  "--font-body": "system-ui",
   "--weight-semibold": fontWeights.numbersSemiBold,
   "--weight-bold": fontWeights.numbersBold,
   "--display-size": px(typeScale.display.size),

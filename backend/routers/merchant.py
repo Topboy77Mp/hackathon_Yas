@@ -10,9 +10,11 @@ from auth import require_merchant
 from db import get_session
 from models import (
     Group,
+    GroupStatus,
     Merchant,
     Order,
     OrderStatus,
+    PaymentStatus,
     PriceTier,
     Product,
     ProductStatus,
@@ -26,7 +28,7 @@ from schemas import (
     TierOut,
     TiersIn,
 )
-from services import product_tiers
+from services import apply_group_pricing, product_tiers, seconds_remaining
 
 router = APIRouter(tags=["commerçant"])
 
@@ -172,7 +174,8 @@ def create_product(
 @router.post(
     "/merchant/products/{product_id}/tiers",
     response_model=list[TierOut],
-    responses={**INVALID, 404: {"model": ErrorOut, "description": "Produit introuvable"}},
+    responses={**INVALID, 404: {"model": ErrorOut, "description": "Produit introuvable"},
+               409: {"model": ErrorOut, "description": "Grille figée après paiement ou clôture"}},
     summary="Remplacer la grille de paliers d'un produit",
 )
 def set_tiers(
@@ -181,7 +184,7 @@ def set_tiers(
     merchant: Merchant = Depends(require_merchant),
     session: Session = Depends(get_session),
 ) -> list[TierOut]:
-    product = session.get(Product, product_id)
+    product = session.exec(select(Product).where(Product.id == product_id).with_for_update()).first()
     if product is None or product.merchant_id != merchant.id:
         raise HTTPException(
             status_code=404,
@@ -197,6 +200,22 @@ def set_tiers(
                 "code": "INVALID_TIERS",
             },
         )
+
+    # Même verrou produit que la création de groupe ; les joins verrouillent
+    # leur groupe. Aucun participant ne peut observer une grille à moitié appliquée.
+    groups = session.exec(
+        select(Group).where(Group.product_id == product.id).order_by(Group.id).with_for_update()
+    ).all()
+    paid = session.exec(select(Order).where(
+        Order.product_id == product.id,
+        Order.order_status != OrderStatus.CANCELLED,
+        Order.payment_status == PaymentStatus.SUCCESS,
+    )).first()
+    if paid or any(g.status != GroupStatus.OPEN or seconds_remaining(g) == 0 for g in groups):
+        raise HTTPException(status_code=409, detail={
+            "detail": "La grille ne peut plus être modifiée : un groupe est clôturé, arrivé à échéance ou une commande est déjà payée.",
+            "code": "TIERS_FROZEN",
+        })
 
     for existing in session.exec(
         select(PriceTier).where(PriceTier.product_id == product.id)
@@ -216,6 +235,9 @@ def set_tiers(
     # Une grille valide rend le produit vendable.
     product.status = ProductStatus.ACTIVE
     session.add(product)
+    session.flush()
+    for group in groups:
+        apply_group_pricing(group, session)
     session.commit()
 
     ordered = pricing.sort_tiers(product_tiers(product.id, session))

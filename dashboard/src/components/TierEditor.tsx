@@ -47,7 +47,8 @@ export function TierEditor({
         </div>
         <button
           className="button button-secondary"
-          onClick={() => onChange([...tiers, paliersuivant(tiers, stock)])}
+          disabled={retailPrice <= 0 || stock <= 0}
+          onClick={() => onChange([...tiers, paliersuivant(tiers, stock, retailPrice)])}
           type="button"
         >
           + Ajouter un palier
@@ -120,10 +121,12 @@ export function TierEditor({
         </ul>
       )}
 
-      <p className="muted">
-        Meilleur prix de la grille : {fcfa(Math.min(...tiers.map((t) => t.unitPrice)))} ·
-        stock disponible {unites(stock, unitLabel)}
-      </p>
+      {tiers.length > 0 && (
+        <p className="muted">
+          Meilleur prix de la grille : {fcfa(Math.min(...tiers.map((t) => t.unitPrice)))} ·
+          stock disponible {unites(stock, unitLabel)}
+        </p>
+      )}
     </div>
   );
 }

@@ -1,11 +1,5 @@
-/**
- * Un appel par endpoint du backend utilisé par le dashboard.
- *
- * Aucune règle métier ici : le contrat interdit tout calcul de prix côté client.
- * Le dashboard affiche ce que l'API renvoie, sans le recalculer.
- */
+/** Appels vers les endpoints utilisés par le dashboard. */
 
-import { DEMO_TOKEN } from "../config";
 import { api } from "./client";
 import type {
   AuthOut,
@@ -16,13 +10,12 @@ import type {
   NotificationsOut,
   ProductDetail,
   ShareMessageOut,
-  SimulateJoinsOut,
   SuggestTiersOut,
   Tier,
   TierIn,
 } from "./types";
 
-// ── Authentification ───────────────────────────────────────────────
+// Authentification
 
 export function login(phone: string, password: string): Promise<AuthOut> {
   return api<AuthOut>("/auth/login", {
@@ -32,7 +25,7 @@ export function login(phone: string, password: string): Promise<AuthOut> {
   });
 }
 
-// ── Espace commerçant ──────────────────────────────────────────────
+// Espace commerçant
 
 export function getMerchantDashboard(): Promise<MerchantDashboard> {
   return api<MerchantDashboard>("/merchant/dashboard");
@@ -45,6 +38,7 @@ export async function getMerchantProducts(): Promise<MerchantProductRow[]> {
 
 export interface CreateProductInput {
   name: string;
+  image_url?: string | null;
   description?: string | null;
   unit_label: string;
   stock: number;
@@ -63,7 +57,7 @@ export function replaceTiers(productId: number, tiers: TierIn[]): Promise<Tier[]
   });
 }
 
-// ── Groupes et catalogue ───────────────────────────────────────────
+// Groupes et catalogue
 
 export function getGroup(groupId: number): Promise<GroupDetail> {
   return api<GroupDetail>(`/groups/${groupId}`);
@@ -73,13 +67,13 @@ export function getProduct(productId: number): Promise<ProductDetail> {
   return api<ProductDetail>(`/products/${productId}`);
 }
 
-// ── Statistiques ───────────────────────────────────────────────────
+// Statistiques
 
 export function getImpact(): Promise<ImpactStats> {
   return api<ImpactStats>("/stats/impact");
 }
 
-// ── Notifications ──────────────────────────────────────────────────
+// Notifications
 
 export function getNotifications(): Promise<NotificationsOut> {
   return api<NotificationsOut>("/notifications");
@@ -89,7 +83,7 @@ export function markNotificationRead(id: number): Promise<unknown> {
   return api(`/notifications/${id}/read`, { method: "POST" });
 }
 
-// ── Assistants IA ──────────────────────────────────────────────────
+// Assistants métier
 
 export interface SuggestTiersInput {
   product_name: string;
@@ -106,21 +100,5 @@ export function shareMessage(groupId: number): Promise<ShareMessageOut> {
   return api<ShareMessageOut>("/ai/share-message", {
     method: "POST",
     body: { group_id: groupId },
-  });
-}
-
-// ── Simulateur de démonstration ────────────────────────────────────
-
-export const demoAvailable = DEMO_TOKEN.length > 0;
-
-export function simulateJoins(
-  groupId: number,
-  count: number,
-  quantity: number,
-): Promise<SimulateJoinsOut> {
-  return api<SimulateJoinsOut>("/demo/simulate-joins", {
-    method: "POST",
-    body: { group_id: groupId, count, quantity },
-    headers: { "X-Demo-Token": DEMO_TOKEN },
   });
 }

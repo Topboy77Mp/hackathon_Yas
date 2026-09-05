@@ -815,6 +815,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Grille figée après paiement ou clôture",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
           }
         }
       }

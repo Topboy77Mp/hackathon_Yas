@@ -32,6 +32,7 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
 
   const headers = new Headers({ Accept: "application/json", ...extra });
   const token = getAuthToken();
+  if (token?.startsWith('local-demo:')) throw new ApiError('Cette action API est indisponible dans la démonstration locale.', 'DEMO_ONLY', 403);
   if (token) headers.set("Authorization", `Bearer ${token}`);
   if (body !== undefined) headers.set("Content-Type", "application/json");
 

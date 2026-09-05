@@ -4,7 +4,6 @@ import { TierEditor } from "../components/TierEditor";
 import { getMerchantProducts, replaceTiers, suggestTiers } from "../lib/api/endpoints";
 import { fcfa, unites } from "../lib/format";
 import {
-  grilleParDefaut,
   tierFromApi,
   toApiTiers,
   validateTiers,
@@ -34,11 +33,7 @@ export function EditTiersPage() {
 
   useEffect(() => {
     if (!produit || tiers !== null) return;
-    setTiers(
-      produit.tiers.length > 0
-        ? tierFromApi(produit.tiers)
-        : grilleParDefaut(produit.individual_price, produit.stock),
-    );
+    setTiers(tierFromApi(produit.tiers));
   }, [produit, tiers]);
 
   const erreursGrille = useMemo(

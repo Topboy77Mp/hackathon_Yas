@@ -90,3 +90,9 @@ Format : `[HH:MM] AGENT_X — fait / bloqué par / attend`
 [18:10] AGENT_BACK — fait : `back/phase-2` fusionné sur `main` sur instruction de l'orchestrateur. `back/phase-1a` y était déjà. Backend complet sur `main` : 26 opérations, 24 chemins, 153 tests
 [18:10] AGENT_BACK — validé sur `main` en base PostgreSQL : parcours 146 → 200 sacs avec bascule rétroactive, et 20 joins simultanés au compteur exact (186 sacs, un seul prix). Base de démonstration réinitialisée après essai
 [18:10] AGENT_BACK — attend : l'intégration de `dash/phase-2` (dashboard) et de `UI` (application acheteur) sur `main`, décision de l'orchestrateur
+
+[AGENT_DASH 2026-09-05] Refonte du dashboard : navigation par rôle, écrans admin/commerçant, API existantes conservées et adaptateur local explicite pour les API manquantes. Quantités distinctes des participants ; économies réalisées non isolées par le backend. Raccordements et limites : dashboard/INTEGRATION.md. Build et 13 tests des adaptateurs validés ; contrôle visuel navigateur restant.
+
+[AGENT_DASH 2026-09-05] Vérification : 153 tests backend + 13 tests adaptateurs dashboard réussis, build Vite réussi. BUG BACK reproduit sur SQLite isolée : POST merchant/products/{id}/tiers change le prix groupe à 18 000 mais laisse commandes et tableau commerçant à 19 000. Reproduction : dashboard/tests/backend_pricing_probe.py ; rapport dashboard/VERIFICATION.md. Corriger transactionnellement ou refuser cette mutation avant raccordements supplémentaires.
+
+[AGENT_DASH 2026-09-05] Correctif backend autoris? : remplacement des paliers transactionnel et refus des grilles finalis?es/pay?es, 157 tests r?ussis + reproduction corrig?e. V?rification navigateur tent?e : inventaire apps/browsers vide ; ?tape visuelle bloqu?e. Rapport dashboard/VERIFICATION.md mis ? jour.

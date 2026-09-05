@@ -130,7 +130,9 @@ def create_group(
     user: User = Depends(current_user),
     session: Session = Depends(get_session),
 ) -> GroupDetail:
-    product = session.get(Product, payload.product_id)
+    product = session.exec(
+        select(Product).where(Product.id == payload.product_id).with_for_update()
+    ).first()
     if product is None or product.status != ProductStatus.ACTIVE:
         raise HTTPException(
             status_code=404,

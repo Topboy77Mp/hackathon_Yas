@@ -1,48 +1,51 @@
-import type { CSSProperties } from "react";
-import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
-import AssessmentOutlined from "@mui/icons-material/AssessmentOutlined";
-import DashboardRounded from "@mui/icons-material/DashboardRounded";
-import HelpOutlineRounded from "@mui/icons-material/HelpOutlineRounded";
-import LogoutRounded from "@mui/icons-material/LogoutRounded";
-import NotificationsNoneRounded from "@mui/icons-material/NotificationsNoneRounded";
-import SellOutlined from "@mui/icons-material/SellOutlined";
-import { AppBar, Avatar, Box, Button, Divider, Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography } from "@mui/material";
-import { colors } from "@shared/theme/tokens";
-import { NotificationBell } from "./components/NotificationBell";
-import { RequireMerchant } from "./components/RequireMerchant";
-import { themeVariables } from "./lib/theme";
-import { closeSession } from "./lib/session";
-import { useSession } from "./lib/useSession";
-import { CreateOfferPage } from "./pages/CreateOfferPage";
-import { EditTiersPage } from "./pages/EditTiersPage";
-import { GroupDetailPage } from "./pages/GroupDetailPage";
-import { ImpactPage } from "./pages/ImpactPage";
-import { MerchantLoginPage } from "./pages/MerchantLoginPage";
-import { OffersPage } from "./pages/OffersPage";
-import { OverviewPage } from "./pages/OverviewPage";
+﻿import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { Navigate, NavLink, Outlet, Route, Routes, Link, useLocation } from 'react-router-dom';
+import DashboardOutlined from '@mui/icons-material/DashboardOutlined';
+import PeopleOutline from '@mui/icons-material/PeopleOutlineOutlined';
+import StorefrontOutlined from '@mui/icons-material/StorefrontOutlined';
+import Inventory2Outlined from '@mui/icons-material/Inventory2Outlined';
+import GroupsOutlined from '@mui/icons-material/GroupsOutlined';
+import ReceiptLongOutlined from '@mui/icons-material/ReceiptLongOutlined';
+import SellOutlined from '@mui/icons-material/SellOutlined';
+import { themeVariables } from './lib/theme';
+import { useSession } from './lib/useSession';
+import { closeSession, openSession } from './lib/session';
+import { api } from './lib/api/client';
+import type { UserOut } from './lib/api/types';
+import { demoLogin, isDemo } from './lib/demo';
+import { useAsyncResource } from './lib/useAsyncResource';
+import { ManagementPage, ManagementOverview, ManagedGroupPage, ProductFormPage, TierFormPage } from './pages/ManagementPages';
+import { Notice } from './pages/ManagementUI';
 
-const drawerWidth = 258;
-const navigation = [
-  { label: "Vue d’ensemble", path: "/", icon: <DashboardRounded /> },
-  { label: "Offres", path: "/offres", icon: <SellOutlined /> },
-  { label: "Impact", path: "/impact", icon: <AssessmentOutlined /> },
-];
+const adminNav = [['/', 'Vue d’ensemble', DashboardOutlined], ['/utilisateurs', 'Utilisateurs', PeopleOutline], ['/commercants', 'Commerçants', StorefrontOutlined], ['/produits', 'Produits', Inventory2Outlined], ['/groupes', 'Groupes', GroupsOutlined], ['/commandes', 'Commandes', ReceiptLongOutlined]] as const;
+const merchantNav = [['/', 'Vue d’ensemble', DashboardOutlined], ['/boutique', 'Ma boutique', StorefrontOutlined], ['/produits', 'Produits', Inventory2Outlined], ['/offres', 'Offres', SellOutlined], ['/commandes', 'Commandes', ReceiptLongOutlined]] as const;
 
-function Sidebar() {
+function DashboardEntry() {
   const session = useSession();
-  const navigate = useNavigate();
-  function signOut() { closeSession(); navigate("/connexion", { replace: true }); }
-
-  return <Drawer sx={{ width: drawerWidth, flexShrink: 0, "& .MuiDrawer-paper": { width: drawerWidth, boxSizing: "border-box", border: 0, color: "common.white", backgroundColor: colors.accent.navy } }} variant="permanent"><Box sx={{ display: "flex", height: "100%", flexDirection: "column", px: 2.25, py: 4 }}><Typography component={NavLink} to="/" variant="h4" sx={{ color: "common.white", fontWeight: 700, letterSpacing: "-0.055em", lineHeight: 1, textDecoration: "none" }}>Kash<Box component="span" sx={{ color: "secondary.main" }}>Flow</Box></Typography><List sx={{ display: "grid", gap: 0.75, mt: 5 }}>{navigation.map((item) => <ListItemButton component={NavLink} key={item.label} to={item.path} sx={{ borderRadius: 1, color: "common.white", minHeight: 56, "&.active": { bgcolor: "primary.main" }, "&:hover": { bgcolor: "action.hover" }, "&.active:hover": { bgcolor: "primary.main" } }}><ListItemIcon sx={{ color: "inherit", minWidth: 46 }}>{item.icon}</ListItemIcon><ListItemText primary={<Typography sx={{ fontWeight: 500 }}>{item.label}</Typography>} /></ListItemButton>)}</List><Box sx={{ mt: "auto" }}><Divider sx={{ borderColor: "primary.main", mb: 2 }} /><List disablePadding sx={{ display: "grid", gap: 0.75 }}><ListItemButton sx={{ borderRadius: 1, color: "common.white" }}><ListItemIcon sx={{ color: "inherit", minWidth: 46 }}><HelpOutlineRounded /></ListItemIcon><ListItemText primary="Aide et support" /></ListItemButton>{session && <ListItemButton onClick={signOut} sx={{ borderRadius: 1, color: "common.white" }}><ListItemIcon sx={{ color: "inherit", minWidth: 46 }}><LogoutRounded /></ListItemIcon><ListItemText primary="Déconnexion" /></ListItemButton>}</List></Box></Box></Drawer>;
+  useEffect(() => {
+    if (!session) openSession(demoLogin('admin', 'demo'));
+  }, [session]);
+  return session ? <AuthorizedShell key={session.token} /> : <p role="status">Ouverture du dashboard?</p>;
 }
-
-function Header() {
-  const location = useLocation();
+function AuthorizedShell() {
   const session = useSession();
-  const title = location.pathname === "/impact" ? "Impact" : location.pathname.startsWith("/groupes") ? "Groupe" : location.pathname.startsWith("/offres/nouvelle") ? "Créer une offre" : location.pathname.startsWith("/offres") ? "Offres" : "Vue d’ensemble";
-  return <AppBar color="inherit" elevation={0} position="static" sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "background.paper" }}><Toolbar sx={{ minHeight: "88px !important", px: "36px !important" }}><Typography component="h1" sx={{ flexGrow: 1 }} variant="h4">{title}</Typography>{session ? <><Box sx={{ mr: 1.5 }}><NotificationBell /></Box><IconButton aria-label="Notifications" sx={{ display: "none" }}><NotificationsNoneRounded /></IconButton><Avatar sx={{ bgcolor: "primary.main", fontWeight: 700 }}>{session.user.first_name.slice(0, 1)}{session.user.last_name.slice(0, 1)}</Avatar><Typography sx={{ ml: 1.5, fontWeight: 500 }}>Bonjour, {session.user.first_name}</Typography></> : <Button component={NavLink} to="/connexion" variant="text">Connexion</Button>}</Toolbar></AppBar>;
+  const verified = useAsyncResource(async () => {
+    if (!session) return null;
+    if (isDemo()) { const account = demoLogin(session.user.phone, 'demo'); if (account.token !== session.token || account.user.role !== session.user.role) throw new Error('Session invalide.'); return account.user; }
+    const user = await api<UserOut>('/auth/me');
+    if (JSON.stringify(user) !== JSON.stringify(session.user)) openSession({...session, user});
+    return user;
+  }, [session?.token]);
+  if (!session) return null;
+  if (verified.isLoading) return <p className="login" role="status">Vérification du compte…</p>;
+  if (verified.error || !verified.data || verified.data.role === 'USER') return <div className="login"><h1>Accès indisponible</h1><p role="alert">{verified.error?.message ?? 'Un compte administrateur ou commerçant est requis.'}</p><button onClick={verified.refresh}>Réessayer</button><button onClick={closeSession}>Se déconnecter</button></div>;
+  return <Shell key={`${session.token}:${verified.data.role}`} admin={verified.data.role === 'ADMIN'} />;
 }
-
-export function App() {
-  return <Box className="app" style={themeVariables as CSSProperties} sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}><Sidebar /><Box sx={{ minWidth: 0, flexGrow: 1 }}><Header /><Box component="main" sx={{ width: "min(100% - 72px, 1280px)", mx: "auto", py: 2.25 }}><Routes><Route path="/impact" element={<ImpactPage />} /><Route path="/connexion" element={<MerchantLoginPage />} /><Route path="/" element={<RequireMerchant><OverviewPage /></RequireMerchant>} /><Route path="/offres" element={<RequireMerchant><OffersPage /></RequireMerchant>} /><Route path="/offres/nouvelle" element={<RequireMerchant><CreateOfferPage /></RequireMerchant>} /><Route path="/offres/:productId/paliers" element={<RequireMerchant><EditTiersPage /></RequireMerchant>} /><Route path="/groupes/:groupId" element={<RequireMerchant><GroupDetailPage /></RequireMerchant>} /><Route path="*" element={<Navigate replace to="/" />} /></Routes></Box></Box></Box>;
+function Shell({admin}: {admin: boolean}) {
+  const session = useSession()!; const [mobile, setMobile] = useState(false); const path = useLocation().pathname;
+  const nav = admin ? adminNav : merchantNav;
+  const title = nav.find(([href]) => href !== '/' && path.startsWith(href))?.[1] ?? (path.startsWith('/groupes/') ? 'Détail du groupe' : 'Vue d’ensemble');
+  return <div className="workspace"><a className="skip-link" href="#main">Aller au contenu</a><aside className={`sidebar ${mobile ? 'is-open' : ''}`}><Link className="brand" to="/" onClick={() => setMobile(false)} aria-label="KashFlow ? accueil"><img className="brand-logo" src="/kashflow-logo.png" alt="KashFlow" width="1774" height="887" /></Link><p className="space-label">{admin ? 'Administration' : 'Espace commerçant'}</p><nav aria-label="Navigation principale">{nav.map(([href, label, Icon]) => <NavLink end={href === '/'} key={href} to={href} onClick={() => setMobile(false)}><Icon fontSize="small" /><span>{label}</span></NavLink>)}</nav><div className="sidebar-footer">Achats groupés<br/><span>Des volumes partagés, des paiements individuels.</span></div></aside><div className="workspace-body"><header className="workspace-header"><button className="menu-toggle" aria-expanded={mobile} onClick={() => setMobile(!mobile)}>Menu</button><h1>{title}</h1><div className="account"><span>{session.user.first_name} {session.user.last_name}<small>{admin ? 'Administrateur' : 'Commerçant'}</small></span><button onClick={closeSession}>Déconnexion</button></div></header><main id="main" tabIndex={-1}>{isDemo() && <Notice><strong>Démonstration locale</strong> · Données fictives et actions simulées, enregistrées uniquement dans ce navigateur.</Notice>}<Outlet /></main></div></div>;
 }
+function RolePage({adminOnly = false, merchantOnly = false, children}: {adminOnly?: boolean; merchantOnly?: boolean; children: ReactNode}) {const role = useSession()?.user.role; return (adminOnly && role !== 'ADMIN') || (merchantOnly && role !== 'MERCHANT') ? <Navigate to="/" replace /> : children;}
+export function App() {return <div className="app" style={themeVariables as CSSProperties}><Routes><Route path="/connexion" element={<Navigate to="/" replace />} /><Route path="/demo/connexion" element={<Navigate to="/" replace />} /><Route element={<DashboardEntry />}><Route index element={<ManagementOverview />} />{[['utilisateurs', 'users'], ['commercants', 'shops'], ['groupes', 'groups']].map(([path, kind]) => <Route key={path} path={path} element={<RolePage adminOnly><ManagementPage key={kind} kind={kind as 'users' | 'shops' | 'groups'} /></RolePage>} />)}<Route path="boutique" element={<RolePage merchantOnly><ManagementPage kind="shops" key="boutique" /></RolePage>} /><Route path="produits" element={<ManagementPage kind="products" key="products" />} /><Route path="offres" element={<RolePage merchantOnly><ManagementPage kind="products" offers key="offers" /></RolePage>} /><Route path="commandes" element={<ManagementPage kind="orders" key="orders" />} /><Route path="groupes/:groupId" element={<ManagedGroupPage />} /><Route path="produits/nouveau" element={<RolePage merchantOnly><ProductFormPage /></RolePage>} /><Route path="produits/:productId/modifier" element={<ProductFormPage />} /><Route path="offres/nouvelle" element={<RolePage merchantOnly><ProductFormPage offer /></RolePage>} /><Route path="offres/:productId/paliers" element={<RolePage merchantOnly><TierFormPage /></RolePage>} /><Route path="impact" element={<RolePage adminOnly><ManagementOverview /></RolePage>} /></Route><Route path="*" element={<Navigate to="/" replace />} /></Routes></div>;}

@@ -31,24 +31,19 @@ export function tierFromApi(tiers: Tier[]): EditableTier[] {
   }));
 }
 
-export function grilleParDefaut(prixDetail: number, stock: number): EditableTier[] {
-  return [
-    { id: nouvelIdentifiant(), minQuantity: 1, unitPrice: prixDetail },
-    {
-      id: nouvelIdentifiant(),
-      minQuantity: Math.max(Math.round(stock * 0.1), 2),
-      unitPrice: Math.round(prixDetail * 0.94),
-    },
-  ];
-}
-
-export function paliersuivant(tiers: EditableTier[], stock: number): EditableTier {
+export function paliersuivant(
+  tiers: EditableTier[],
+  stock: number,
+  retailPrice: number,
+): EditableTier {
   const dernier = tiers.at(-1);
   const seuil = dernier ? dernier.minQuantity * 2 : 1;
   return {
     id: nouvelIdentifiant(),
-    minQuantity: Math.min(Math.max(seuil, 2), Math.max(stock, 2)),
-    unitPrice: Math.max(Math.round((dernier?.unitPrice ?? 1000) * 0.92), 1),
+    minQuantity: dernier ? Math.min(Math.max(seuil, 2), Math.max(stock, 2)) : 1,
+    unitPrice: dernier
+      ? Math.max(Math.round(dernier.unitPrice * 0.92), 1)
+      : Math.max(Math.round(retailPrice), 1),
   };
 }
 
@@ -73,10 +68,10 @@ export function validateTiers(tiers: EditableTier[], stock: number): string[] {
   const tries = [...tiers].sort((a, b) => a.minQuantity - b.minQuantity);
 
   for (const tier of tries) {
-    if (!Number.isFinite(tier.minQuantity) || tier.minQuantity < 1) {
+    if (!Number.isInteger(tier.minQuantity) || tier.minQuantity < 1) {
       erreurs.push("Un seuil de palier doit être supérieur ou égal à 1.");
     }
-    if (!Number.isFinite(tier.unitPrice) || tier.unitPrice < 1) {
+    if (!Number.isInteger(tier.unitPrice) || tier.unitPrice < 1) {
       erreurs.push("Un prix de palier doit être strictement positif.");
     }
   }

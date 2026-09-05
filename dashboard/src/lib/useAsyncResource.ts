@@ -43,29 +43,35 @@ export function useAsyncResource<T>(
 
   const actif = useRef(true);
   const aDesDonnees = useRef(false);
+  const requestVersion = useRef(0);
+  const pending = useRef(false);
 
   useEffect(() => {
     actif.current = true;
-    return () => { actif.current = false; };
+    return () => { actif.current = false; requestVersion.current += 1; };
   }, []);
 
   const executer = useCallback(async (arrierePlan: boolean) => {
+    if (arrierePlan && pending.current) return;
+    const version = ++requestVersion.current;
+    pending.current = true;
     if (arrierePlan) setIsRefreshing(true);
     else setIsLoading(true);
 
     try {
       const resultat = await loadRef.current();
-      if (!actif.current) return;
+      if (!actif.current || version !== requestVersion.current) return;
       setData(resultat);
       setError(null);
       aDesDonnees.current = true;
     } catch (raison) {
-      if (!actif.current) return;
+      if (!actif.current || version !== requestVersion.current) return;
       const echec = raison instanceof Error ? raison : new Error("Une erreur est survenue.");
       // Un échec de rafraîchissement ne doit pas effacer ce qui est affiché.
-      if (!arrierePlan || !aDesDonnees.current) setError(echec);
+      setError(echec);
     } finally {
-      if (!actif.current) return;
+      if (!actif.current || version !== requestVersion.current) return;
+      pending.current = false;
       setIsLoading(false);
       setIsRefreshing(false);
     }
@@ -74,6 +80,7 @@ export function useAsyncResource<T>(
   // Premier chargement, et rechargement complet quand les dépendances changent.
   useEffect(() => {
     aDesDonnees.current = false;
+    setData(null);
     setError(null);
     void executer(false);
     // Les dépendances sont déclarées explicitement au point d'usage.

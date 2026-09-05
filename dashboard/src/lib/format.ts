@@ -54,11 +54,27 @@ export function delai(secondes: number): string {
 const LIBELLES: Record<string, string> = {
   OPEN: "Ouvert",
   LOCKED: "Objectif atteint",
-  COMPLETED: "Livré",
+  COMPLETED: "Terminé",
   CANCELLED: "Annulé",
   ACTIVE: "En ligne",
   DRAFT: "Brouillon",
   CLOSED: "Retiré",
+  PENDING: 'En attente',
+  CONFIRMED: 'Confirmée',
+  SUCCESS: 'Réussi',
+  FAILED: 'Échoué',
+  REFUNDED: 'Remboursé (simulé)',
+  INACTIVE: 'Désactivé',
+  APPROVED: 'Validée',
+  REJECTED: 'Refusée',
+  SUSPENDED: 'Suspendue',
+  NEW: 'Nouvelle',
+  PREPARED: 'Préparée',
+  SHIPPED: 'Expédiée',
+  DELIVERED: 'Livrée',
+  USER: 'Acheteur',
+  MERCHANT: 'Commerçant',
+  ADMIN: 'Administrateur',
 };
 
 export function libelleStatut(statut: string): string {

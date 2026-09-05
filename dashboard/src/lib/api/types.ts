@@ -188,12 +188,3 @@ export interface ShareMessageOut {
   variants: ShareVariant[];
   source: string;
 }
-
-export interface SimulateJoinsOut {
-  added_participants: number;
-  added_quantity: number;
-  previous_unit_price: number;
-  new_unit_price: number;
-  tier_unlocked: boolean;
-  group: GroupDetail;
-}
