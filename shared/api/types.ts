@@ -63,6 +63,15 @@ export interface RegisterRequest {
   phone: string;
   password: string;
   email?: string | null;
+
+  /**
+   * Renseigné = le compte est créé avec le rôle MERCHANT et sa boutique.
+   * Le rôle est décidé par le serveur, jamais envoyé par le client : accepter
+   * un champ `role` laisserait n'importe qui s'inscrire administrateur.
+   */
+  business_name?: string | null;
+  business_location?: string | null;
+  business_description?: string | null;
 }
 
 export interface LoginRequest {

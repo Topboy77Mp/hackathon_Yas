@@ -16,6 +16,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radii, alpha } from '@shared/theme/tokens';
 import { Text, Field, Button } from '../../components/ui';
+import { Pressable } from 'react-native';
 import { register } from '../../lib/api/endpoints';
 import { setToken } from '../../lib/api/auth-storage';
 
@@ -27,8 +28,24 @@ export default function InscriptionScreen() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
 
+  // Le contrat prévoit deux profils : acheteur et commerçant. Un seul écran
+  // pour les deux — le rôle est décidé par le serveur à partir du nom de
+  // boutique, jamais envoyé par le client.
+  const [estCommercant, setEstCommercant] = useState(false);
+  const [boutique, setBoutique] = useState('');
+  const [lieu, setLieu] = useState('');
+
   const mutation = useMutation({
-    mutationFn: () => register({ first_name: firstName, last_name: lastName, phone, password }),
+    mutationFn: () =>
+      register({
+        first_name: firstName,
+        last_name: lastName,
+        phone,
+        password,
+        ...(estCommercant
+          ? { business_name: boutique.trim(), business_location: lieu.trim() || null }
+          : {}),
+      }),
     onSuccess: async ({ token }) => {
       await setToken(token);
       router.replace((redirectTo as Href) ?? '/');
@@ -57,6 +74,55 @@ export default function InscriptionScreen() {
             <Field label="Nom" value={lastName} onChangeText={setLastName} />
             <Field label="Numéro de téléphone" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
             <Field label="Mot de passe" secureTextEntry value={password} onChangeText={setPassword} />
+
+            <View style={styles.roles}>
+              {[
+                { valeur: false, label: 'Je suis acheteur' },
+                { valeur: true, label: 'Je suis commerçant' },
+              ].map((role) => {
+                const actif = estCommercant === role.valeur;
+                return (
+                  <Pressable
+                    key={role.label}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: actif }}
+                    accessibilityLabel={role.label}
+                    onPress={() => setEstCommercant(role.valeur)}
+                    style={[styles.role, actif && styles.roleActif]}
+                  >
+                    <Ionicons
+                      name={role.valeur ? 'storefront' : 'cart'}
+                      size={16}
+                      color={actif ? colors.brand.ink : colors.text.muted}
+                    />
+                    <Text variant="label" tone={actif ? 'ink' : 'muted'}>
+                      {role.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {estCommercant && (
+              <>
+                <Field
+                  label="Nom de votre commerce"
+                  placeholder="Agro-Intrants Zio"
+                  value={boutique}
+                  onChangeText={setBoutique}
+                />
+                <Field
+                  label="Ville (facultatif)"
+                  placeholder="Tsévié"
+                  value={lieu}
+                  onChangeText={setLieu}
+                />
+                <Text variant="caption" tone="muted">
+                  Vous pourrez publier vos produits et suivre vos groupes depuis
+                  l’espace commerçant.
+                </Text>
+              </>
+            )}
 
             {mutation.isError && (
               <View style={styles.errorBox}>
@@ -112,6 +178,21 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   form: { gap: spacing.md },
+  roles: { flexDirection: 'row', gap: spacing.sm },
+  role: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    minHeight: 48,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.card,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface.white,
+  },
+  roleActif: { borderColor: colors.brand.ink, backgroundColor: colors.brand.yellow },
   errorBox: {
     backgroundColor: alpha(colors.alert.red, 0.08),
     borderWidth: 1,

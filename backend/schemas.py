@@ -97,6 +97,14 @@ class RegisterIn(BaseModel):
     password: str = Field(min_length=6, max_length=128)
     email: str | None = None
 
+    #: Renseigné = le compte est créé avec le rôle MERCHANT et sa boutique.
+    #: Absent = simple acheteur. Un seul endpoint pour les deux parcours : le
+    #: contrat n'en prévoit pas d'autre, et en ajouter un dupliquerait la
+    #: validation du téléphone et le hachage du mot de passe.
+    business_name: str | None = Field(default=None, min_length=2, max_length=120)
+    business_location: str | None = Field(default=None, max_length=120)
+    business_description: str | None = Field(default=None, max_length=400)
+
 
 class LoginIn(BaseModel):
     phone: str

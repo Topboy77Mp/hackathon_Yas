@@ -12,7 +12,7 @@ from sqlmodel import Session, select
 from auth import create_access_token, current_user, hash_password, verify_password
 from config import DEMO_TOKEN
 from db import get_session
-from models import PasswordResetCode, User, UserPreference, utcnow
+from models import Merchant, PasswordResetCode, User, UserPreference, UserRole, utcnow
 from schemas import (
     AuthOut,
     ChangePasswordIn,
@@ -49,14 +49,32 @@ def register(payload: RegisterIn, session: Session = Depends(get_session)) -> Au
             detail={"detail": "Ce numéro est déjà inscrit.", "code": "PHONE_TAKEN"},
         )
 
+    # Un nom de boutique fait du compte un commerçant. Le rôle est décidé ici,
+    # jamais envoyé par le client : accepter un `role` dans le payload
+    # laisserait n'importe qui s'inscrire administrateur.
+    est_commercant = bool(payload.business_name and payload.business_name.strip())
+
     user = User(
         first_name=payload.first_name.strip(),
         last_name=payload.last_name.strip(),
         phone=phone,
         email=payload.email,
         password_hash=hash_password(payload.password),
+        role=UserRole.MERCHANT if est_commercant else UserRole.USER,
     )
     session.add(user)
+    session.flush()
+
+    if est_commercant:
+        session.add(
+            Merchant(
+                user_id=user.id,
+                business_name=payload.business_name.strip(),
+                location=(payload.business_location or "").strip() or None,
+                description=(payload.business_description or "").strip() or None,
+            )
+        )
+
     session.commit()
     session.refresh(user)
     return _auth_out(user)
