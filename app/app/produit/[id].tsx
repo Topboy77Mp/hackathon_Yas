@@ -5,6 +5,7 @@
  */
 import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRetour } from '../../lib/hooks/useRetour';
 import { useQuery } from '@tanstack/react-query';
 import { colors, spacing } from '@shared/theme/tokens';
 import { ActionBar, Text, Card, TierRow, EmptyState, Button, Badge, ProgressBar, AppBar } from '../../components/ui';
@@ -15,6 +16,7 @@ export default function FicheProduitScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const productId = Number(id);
   const router = useRouter();
+  const retour = useRetour();
 
   const { data: product, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['product', productId],
@@ -30,7 +32,7 @@ export default function FicheProduitScreen() {
   if (isError || !product) {
     return (
       <View style={styles.screen}>
-        <AppBar title="Produit" onBack={() => router.back()} />
+        <AppBar title="Produit" onBack={retour} />
         <EmptyState
           title="Produit indisponible"
           subtitle={error instanceof Error ? error.message : undefined}
@@ -45,7 +47,7 @@ export default function FicheProduitScreen() {
 
   return (
     <View style={styles.screen}>
-      <AppBar title={product.name} subtitle={product.merchant_name} onBack={() => router.back()} />
+      <AppBar title={product.name} subtitle={product.merchant_name} onBack={retour} />
 
       <ScrollView contentContainerStyle={styles.content}>
         {product.description && (

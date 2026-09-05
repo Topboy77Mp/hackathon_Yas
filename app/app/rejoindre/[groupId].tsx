@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRetour } from '../../lib/hooks/useRetour';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { spacing } from '@shared/theme/tokens';
 import { Text, Field, Button, Sheet } from '../../components/ui';
@@ -14,6 +15,7 @@ export default function RejoindreScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
   const groupIdNum = Number(groupId);
   const router = useRouter();
+  const retour = useRetour();
   const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState('1');
 
@@ -38,7 +40,7 @@ export default function RejoindreScreen() {
   });
 
   return (
-    <Sheet title="Combien de sacs voulez-vous commander ?" onClose={() => router.back()}>
+    <Sheet title="Combien de sacs voulez-vous commander ?" onClose={retour}>
       <Field
         label="Quantité"
         keyboardType="number-pad"

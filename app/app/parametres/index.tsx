@@ -10,6 +10,7 @@
 import { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, Switch, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useRetour } from '../../lib/hooks/useRetour';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Constants from 'expo-constants';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,6 +29,7 @@ const REGISTRES = [
 
 export default function ParametresScreen() {
   const router = useRouter();
+  const retour = useRetour();
   const queryClient = useQueryClient();
   const { isAuthenticated, isLoading: authEnCours } = useAuthToken();
 
@@ -79,7 +81,7 @@ export default function ParametresScreen() {
   if (!isAuthenticated) {
     return (
       <View style={styles.screen}>
-        <AppBar title="Paramètres" onBack={() => router.back()} />
+        <AppBar title="Paramètres" onBack={retour} />
         <EmptyState
           title="Connectez-vous"
           subtitle="Les paramètres concernent votre compte."
@@ -94,7 +96,7 @@ export default function ParametresScreen() {
 
   return (
     <View style={styles.screen}>
-      <AppBar title="Paramètres" onBack={() => router.back()} />
+      <AppBar title="Paramètres" onBack={retour} />
 
       <ScrollView contentContainerStyle={styles.content}>
         <Text variant="label" tone="muted">Compte</Text>

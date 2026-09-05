@@ -36,7 +36,7 @@ export default function InscriptionScreen() {
   });
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -97,7 +97,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface.page,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.xxxl,
-    paddingBottom: spacing.xl,
+    // Assez de marge pour que le dernier champ passe au-dessus du clavier
+    // une fois la fenêtre redimensionnée par Android.
+    paddingBottom: spacing.xxxl,
   },
   header: { marginBottom: spacing.xxl, alignItems: 'flex-start', gap: spacing.xs },
   logo: {

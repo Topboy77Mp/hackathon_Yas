@@ -7,6 +7,7 @@
  */
 import { View, StyleSheet, FlatList, Pressable, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useRetour } from '../../lib/hooks/useRetour';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import type { Notification } from '@shared/api/types';
@@ -24,6 +25,7 @@ const ICONES: Record<string, keyof typeof Ionicons.glyphMap> = {
 
 export default function NotificationsScreen() {
   const router = useRouter();
+  const retour = useRetour();
   const queryClient = useQueryClient();
   const { isAuthenticated, isLoading: authEnCours } = useAuthToken();
 
@@ -45,7 +47,7 @@ export default function NotificationsScreen() {
   if (!isAuthenticated) {
     return (
       <View style={styles.screen}>
-        <AppBar title="Notifications" onBack={() => router.back()} />
+        <AppBar title="Notifications" onBack={retour} />
         <EmptyState
           title="Connectez-vous"
           subtitle="Vous serez prévenu dès qu'un palier est débloqué dans vos groupes."
@@ -58,7 +60,7 @@ export default function NotificationsScreen() {
 
   return (
     <View style={styles.screen}>
-      <AppBar title="Notifications" onBack={() => router.back()} />
+      <AppBar title="Notifications" onBack={retour} />
 
       {isError && (
         <EmptyState

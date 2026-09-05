@@ -20,6 +20,7 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useRetour } from '../../lib/hooks/useRetour';
 import { useMutation } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,6 +33,7 @@ type Etape = 'demande' | 'saisie' | 'termine';
 
 export default function MotDePasseOublieScreen() {
   const router = useRouter();
+  const retour = useRetour();
   const insets = useSafeAreaInsets();
 
   const [etape, setEtape] = useState<Etape>('demande');
@@ -69,11 +71,11 @@ export default function MotDePasseOublieScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.flex}
     >
       <View style={styles.screen}>
-        <AppBar title="Mot de passe oublié" onBack={() => router.back()} />
+        <AppBar title="Mot de passe oublié" onBack={retour} />
 
         <ScrollView
           contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxxl }]}

@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRetour } from '../../lib/hooks/useRetour';
 import { useQuery } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
 import { colors, spacing, radii } from '@shared/theme/tokens';
@@ -30,6 +31,7 @@ const REGISTRES: Record<string, string> = {
 export default function PartagerScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
   const router = useRouter();
+  const retour = useRetour();
   const groupIdNum = Number(groupId);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
@@ -71,7 +73,7 @@ export default function PartagerScreen() {
 
   return (
     <View style={styles.screen}>
-      <AppBar title="Inviter des proches" onBack={() => router.back()} />
+      <AppBar title="Inviter des proches" onBack={retour} />
 
       {isLoading && (
         <View style={styles.content}>

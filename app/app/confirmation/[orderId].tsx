@@ -9,6 +9,7 @@
  */
 import { View, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { useRetour } from '../../lib/hooks/useRetour';
 import { useQuery } from '@tanstack/react-query';
 import { colors, spacing } from '@shared/theme/tokens';
 import { ActionBar, Text, Button, Card, Divider, AppBar, EmptyState } from '../../components/ui';
@@ -27,6 +28,7 @@ export default function ConfirmationScreen() {
     totalAmount?: string;
   }>();
   const router = useRouter();
+  const retour = useRetour();
 
   const orderId = Number(params.orderId);
   const viaParams = !!params.groupId && Number(params.quantity ?? 0) > 0;
@@ -63,7 +65,7 @@ export default function ConfirmationScreen() {
   if (!commande) {
     return (
       <View style={styles.screen}>
-        <AppBar title="Ma commande" onBack={() => router.back()} />
+        <AppBar title="Ma commande" onBack={retour} />
         {isLoading ? (
           <View />
         ) : (
@@ -88,7 +90,7 @@ export default function ConfirmationScreen() {
 
   return (
     <View style={styles.screen}>
-      <AppBar title="Commande confirmée" onBack={() => router.back()} />
+      <AppBar title="Commande confirmée" onBack={retour} />
 
       <View style={styles.content}>
         <Text variant="heading" tone="success">

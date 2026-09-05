@@ -11,6 +11,7 @@
 import { useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRetour } from '../../lib/hooks/useRetour';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { GroupSuggestion } from '@shared/api/types';
 import { colors, spacing, radii } from '@shared/theme/tokens';
@@ -26,6 +27,7 @@ export default function CreerGroupeScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
   const idProduit = Number(productId);
   const router = useRouter();
+  const retour = useRetour();
   const queryClient = useQueryClient();
   const { isAuthenticated, isLoading: authEnCours } = useAuthToken();
 
@@ -118,7 +120,7 @@ export default function CreerGroupeScreen() {
   if (!isAuthenticated) {
     return (
       <View style={styles.screen}>
-        <AppBar title="Créer un groupe" onBack={() => router.back()} />
+        <AppBar title="Créer un groupe" onBack={retour} />
         <EmptyState
           title="Connectez-vous"
           subtitle="Il faut un compte pour lancer un groupe d’achat."
@@ -189,7 +191,7 @@ export default function CreerGroupeScreen() {
       <AppBar
         title="Créer un groupe"
         subtitle={produit?.name}
-        onBack={() => router.back()}
+        onBack={retour}
       />
 
       <ScrollView contentContainerStyle={styles.content}>

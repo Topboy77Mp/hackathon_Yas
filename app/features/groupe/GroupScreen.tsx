@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useRetour } from '../../lib/hooks/useRetour';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import type { QueryKey } from '@tanstack/react-query';
@@ -66,6 +67,7 @@ function ParticipantsStack({ count }: { count: number }) {
 
 export function GroupScreen({ queryKey, fetcher, isAuthenticated }: GroupScreenProps) {
   const router = useRouter();
+  const retour = useRetour();
   const { data: group, isLoading, isError, refetch, tierJustUnlocked, acknowledgeTierUnlock } =
     useGroupPolling(queryKey, fetcher);
 
@@ -161,7 +163,7 @@ export function GroupScreen({ queryKey, fetcher, isAuthenticated }: GroupScreenP
       <AppBar
         title={group.name}
         subtitle={`Code ${group.share_code} · ${group.product.name}`}
-        onBack={() => router.back()}
+        onBack={retour}
         right={
           <Badge
             label={formatCountdown(group.seconds_remaining).replace('Se termine dans ', 'fin dans ')}
